@@ -2,33 +2,44 @@
   import "../app.css";
 
   import { ModeWatcher } from "mode-watcher";
-  import SunIcon from "@lucide/svelte/icons/sun";
-  import MoonIcon from "@lucide/svelte/icons/moon";
-
-  import { toggleMode } from "mode-watcher";
-  import { Button } from "$lib/components/ui/button/index.js";
-
-  const { children } = $props();
+  import AppSidebar from "$lib/components/app-sidebar.svelte";
+  import { Separator } from "$lib/components/ui/separator/index.js";
+  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import BreadcrumbNav from "$lib/components/breadcrumb-nav.svelte";
+  import type { User } from "$lib/types/app";
+  import { appUser } from "$lib/globals.svelte";
+  const { children, data } = $props();
+  const { user }: { user: User | null } = data;
+  if (user) {
+    if (user.tokenValidity + 15 * 60 * 1000 < Date.now()) {
+    }
+    appUser.user = user;
+  } else {
+    appUser.user = null;
+    localStorage.removeItem("user");
+  }
 </script>
 
 <ModeWatcher />
-<nav>
-  <div>
-    Navigation Bar
 
-    <Button onclick={toggleMode} variant="outline" size="icon">
-      <SunIcon
-        class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-      />
-      <MoonIcon
-        class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-      />
-      <span class="sr-only">Toggle theme</span>
-    </Button>
-  </div>
-</nav>
+<Sidebar.Provider>
+  <AppSidebar />
+  <Sidebar.Inset>
+    <header
+      class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
+    >
+      <div class="flex items-center gap-2 px-4">
+        <Sidebar.Trigger class="-ml-1" />
+        <Separator
+          orientation="vertical"
+          class="mr-2 data-[orientation=vertical]:h-4"
+        />
+        <BreadcrumbNav />
+      </div>
+    </header>
 
-{@render children()}
-
-<style lang="scss">
-</style>
+    <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
+      {@render children()}
+    </div>
+  </Sidebar.Inset>
+</Sidebar.Provider>
