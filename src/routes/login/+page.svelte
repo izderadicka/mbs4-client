@@ -1,31 +1,40 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { apiClient } from "$lib/api/client";
   import LoginForm from "$lib/components/login-form.svelte";
+  import { Sub } from "$lib/components/ui/dropdown-menu";
   import { appUser } from "$lib/globals.svelte";
   console.log("login");
 
   async function login(event: Event) {
+    event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const email: string = formData.get("email")?.toString()!;
     const password = formData.get("password")?.toString()!;
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log(`User logged in with email ${email}`);
+    try {
+      const user = await apiClient.login(email, password);
+      console.log(
+        `User logged in with email ${email} and got claim ${JSON.stringify(user)}`
+      );
 
-    const user = {
-      email,
-      token: "token",
-      tokenValidity: Date.now() + 365 * 24 * 60 * 60 * 1000,
-    };
+      appUser.user = user;
+      appUser.failedLogin = false;
+      localStorage.setItem("user", JSON.stringify(user));
+      goto("/");
+    } catch (e) {
+      console.error(e);
+      appUser.failedLogin = true;
+    }
+  }
 
-    appUser.user = user;
-    localStorage.setItem("user", JSON.stringify(user));
-    goto("/");
+  function redirectToSSO(provider: string) {
+    apiClient.redirectToSSO(provider);
   }
 </script>
 
 <div class="flex h-screen w-full items-center justify-center px-4">
   <form action="#" onsubmit={login} class="w-full max-w-sm">
-    <LoginForm />
+    <LoginForm failed={appUser.failedLogin} ssoAction={redirectToSSO} />
   </form>
 </div>

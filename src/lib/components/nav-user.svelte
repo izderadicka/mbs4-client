@@ -1,23 +1,21 @@
 <script lang="ts">
   import { appUser } from "$lib/globals.svelte";
-  import * as Avatar from "$lib/components/ui/avatar/index.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import { useSidebar } from "$lib/components/ui/sidebar/index.js";
   import BadgeCheckIcon from "@lucide/svelte/icons/badge-check";
-  import BellIcon from "@lucide/svelte/icons/bell";
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
-  import CreditCardIcon from "@lucide/svelte/icons/credit-card";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
-  import SparklesIcon from "@lucide/svelte/icons/sparkles";
   import UserIcon from "@lucide/svelte/icons/user";
   import { goto } from "$app/navigation";
+  import { apiClient } from "$lib/api/client";
 
   const sidebar = useSidebar();
 
   function logout() {
     appUser.user = null;
     localStorage.removeItem("user");
+    apiClient.logout();
     goto("/login");
   }
 </script>

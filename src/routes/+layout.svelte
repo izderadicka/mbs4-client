@@ -11,7 +11,7 @@
   const { children, data } = $props();
   const { user }: { user: User | null } = data;
   if (user) {
-    if (user.tokenValidity + 15 * 60 * 1000 < Date.now()) {
+    if (user.tokenValidity + 5 * 60 * 1000 < Date.now()) {
     }
     appUser.user = user;
   } else {

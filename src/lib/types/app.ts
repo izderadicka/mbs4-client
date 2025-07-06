@@ -1,5 +1,5 @@
 export type User = {
     email: string;
-    token: string;
+    roles: string[];
     tokenValidity: number;
 }
