@@ -8,6 +8,7 @@
   import BreadcrumbNav from "$lib/components/breadcrumb-nav.svelte";
   import type { User } from "$lib/types/app";
   import { appUser } from "$lib/globals.svelte";
+  import { onMount } from "svelte";
   const { children, data } = $props();
   const { user }: { user: User | null } = data;
   if (user) {
@@ -18,6 +19,14 @@
     appUser.user = null;
     localStorage.removeItem("user");
   }
+
+  onMount(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("trt")) {
+      url.searchParams.delete("trt");
+      history.replaceState({}, "", url.toString());
+    }
+  });
 </script>
 
 <ModeWatcher />

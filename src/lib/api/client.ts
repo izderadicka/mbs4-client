@@ -63,26 +63,23 @@ export class ApiClient {
         this.token = null;
     }
 
-    // TODO: reconsider this as it's open for CSRF - will need some kind of nonce 
-    async retrieveToken(): Promise<User | null> {
-        try {
-            const response = await fetch(this.fullUrl("/auth/token"), {
-                method: "GET",
-                credentials: "include"
+    async retrieveToken(trToken: string): Promise<User> {
 
-            });
-            if (response.ok) {
-                const data = await response.text();
-                const user = this.extractPayload(data);
-                this.token = data;
-                return user
+        const response = await fetch(this.fullUrl(`/auth/token?trt=${trToken}`), {
+            method: "GET",
+            credentials: "include"
 
-            }
-        } catch (error) {
-            console.log(error);
+        });
+        if (response.ok) {
+            const data = await response.text();
+            const user = this.extractPayload(data);
+            this.token = data;
+            return user
+
         }
-
-        return null;
+        else {
+            throw new Error("Login failed");
+        }
 
     }
 
