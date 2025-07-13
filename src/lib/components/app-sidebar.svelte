@@ -20,7 +20,7 @@
         items: [
           {
             title: "Ebooks",
-            url: "#",
+            url: "/ebook",
           },
           {
             title: "Authors",

@@ -38,6 +38,7 @@
           type="email"
           name="email"
           placeholder="m@example.com"
+          autocomplete="username"
           required
         />
       </div>
@@ -48,7 +49,12 @@
 						Forgot your password?
 					</a> -->
         </div>
-        <Input id="password-{id}" type="password" name="password" />
+        <Input
+          id="password-{id}"
+          type="password"
+          name="password"
+          autocomplete="current-password"
+        />
       </div>
       <Button type="submit" class="w-full">Login</Button>
       <Button

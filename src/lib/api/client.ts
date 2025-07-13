@@ -1,13 +1,20 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
 import type { TokenPayload } from ".";
+import { appUser } from "$lib/globals.svelte";
+import { goto } from "$app/navigation";
 
 export class ApiClient {
     token: string | null = null;
     baseUrl: string;
+    fetch: typeof fetch = globalThis.fetch;
     constructor(baseUrl: string) {
         console.log("API client created");
         this.baseUrl = baseUrl;
+    }
+
+    setFetch(fetchFn: typeof fetch) {
+        this.fetch = fetchFn;
     }
 
 
@@ -65,7 +72,7 @@ export class ApiClient {
 
     async retrieveToken(trToken: string): Promise<User> {
 
-        const response = await fetch(this.fullUrl(`/auth/token?trt=${trToken}`), {
+        const response = await this.fetch(this.fullUrl(`/auth/token?trt=${trToken}`), {
             method: "GET",
             credentials: "include"
 
@@ -81,6 +88,35 @@ export class ApiClient {
             throw new Error("Login failed");
         }
 
+    }
+
+    private async makeRequest(path: string, method: string, body?: any) {
+        const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+
+        }
+        if (this.token) {
+            headers["Authorization"] = `Bearer ${this.token}`;
+        }
+        const response = await this.fetch(this.fullUrl(path), {
+            method,
+            headers,
+            body,
+            credentials: "include"
+        });
+        if (response.status === 401) {
+            appUser.user = null;
+            goto("/login");
+            throw new Error("Unauthorized");
+        }
+        if (!response.ok) {
+            throw new Error("Request failed");
+        }
+        return await response.json();
+    }
+
+    async listEbooks() {
+        return this.makeRequest("/api/ebook", "GET");
     }
 
 }

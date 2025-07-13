@@ -5,6 +5,8 @@
   import { Sub } from "$lib/components/ui/dropdown-menu";
   import { appUser } from "$lib/globals.svelte";
   console.log("login");
+  appUser.user = null;
+  localStorage.removeItem("user");
 
   async function login(event: Event) {
     event.preventDefault();

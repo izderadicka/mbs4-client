@@ -9,6 +9,7 @@
   import type { User } from "$lib/types/app";
   import { appUser } from "$lib/globals.svelte";
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
   const { children, data } = $props();
   const { user }: { user: User | null } = data;
   if (user) {
@@ -24,7 +25,7 @@
     const url = new URL(window.location.href);
     if (url.searchParams.has("trt")) {
       url.searchParams.delete("trt");
-      history.replaceState({}, "", url.toString());
+      goto(url.pathname + url.search, { replaceState: true, noScroll: true });
     }
   });
 </script>

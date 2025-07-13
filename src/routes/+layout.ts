@@ -1,11 +1,11 @@
 import { apiClient } from "$lib/api/client";
 import type { User } from "$lib/types/app";
-import { fail } from "@sveltejs/kit";
 
 export const ssr = false;
 
 
-export async function load({ url }) {
+export async function load({ url, fetch }) {
+    apiClient.setFetch(fetch);
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
         const user: User = JSON.parse(storedUser);
