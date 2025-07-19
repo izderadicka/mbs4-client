@@ -48,6 +48,7 @@ export class ApiClient {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ email, password }),
+            credentials: "include"
         });
 
         if (!response.ok) {
@@ -66,8 +67,21 @@ export class ApiClient {
         window.location.href = `${this.baseUrl}/auth/login?oidc_provider=${provider}`;;
     }
 
-    logout() {
+    async logout() {
         this.token = null;
+        try {
+            const response = await this.fetch(this.fullUrl("/auth/logout"), {
+                method: "GET",
+                credentials: "include"
+
+            });
+            if (!response.ok) {
+                throw new Error("Logout error " + response.status);
+            }
+        } catch (error) {
+            console.log("Logout failed", error);
+        }
+
     }
 
     async retrieveToken(trToken: string): Promise<User> {
@@ -118,6 +132,7 @@ export class ApiClient {
     async listEbooks() {
         return this.makeRequest("/api/ebook", "GET");
     }
+
 
 }
 
