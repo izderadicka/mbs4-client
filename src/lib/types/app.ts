@@ -3,3 +3,8 @@ export type User = {
     roles: string[];
     tokenValidity: number;
 }
+
+export type BreadcrumbItem = {
+    name: string;
+    path: string | null;
+}

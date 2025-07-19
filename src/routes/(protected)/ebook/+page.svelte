@@ -1,7 +1,10 @@
 <script lang="ts">
   import * as Table from "$lib/components/ui/table/index.js";
+  import { breadcrumb } from "$lib/globals.svelte.js";
   const { data } = $props();
   const { ebooks } = data;
+
+  breadcrumb.path = [{ name: "Ebooks", path: "/ebook" }];
 </script>
 
 <Table.Root>

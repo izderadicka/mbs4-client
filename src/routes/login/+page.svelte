@@ -2,8 +2,10 @@
   import { goto } from "$app/navigation";
   import { apiClient } from "$lib/api/client";
   import LoginForm from "$lib/components/login-form.svelte";
-  import { Sub } from "$lib/components/ui/dropdown-menu";
   import { appUser } from "$lib/globals.svelte";
+  import { breadcrumb } from "$lib/globals.svelte";
+
+  breadcrumb.path = [{ name: "Login", path: "/login" }];
   console.log("login");
   appUser.user = null;
   localStorage.removeItem("user");
