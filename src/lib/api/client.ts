@@ -105,10 +105,10 @@ export class ApiClient {
     }
 
     private async makeRequest(path: string, method: string, body?: any) {
-        const headers: Record<string, string> = {
+        const headers: Record<string, string> = body instanceof FormData ? {} : {
             "Content-Type": "application/json",
 
-        }
+        };
         if (this.token) {
             headers["Authorization"] = `Bearer ${this.token}`;
         }
@@ -129,6 +129,10 @@ export class ApiClient {
         return await response.json();
     }
 
+    async uploadFile(form: FormData) {
+        return this.makeRequest("/files/upload/form", "POST", form);
+
+    }
     async listEbooks() {
         return this.makeRequest("/api/ebook", "GET");
     }

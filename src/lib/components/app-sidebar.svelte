@@ -19,6 +19,10 @@
         isActive: true,
         items: [
           {
+            title: "Upload new Ebook",
+            url: "/upload",
+          },
+          {
             title: "Ebooks",
             url: "/ebook",
           },
