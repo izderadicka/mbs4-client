@@ -10,6 +10,7 @@
   import { appUser } from "$lib/globals.svelte";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
+  import EventsInbox from "$lib/components/events-inbox.svelte";
   const { children, data } = $props();
   const { user }: { user: User | null } = data;
   if (user) {
@@ -38,13 +39,16 @@
     <header
       class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
     >
-      <div class="flex items-center gap-2 px-4">
+      <div class="flex flex-1 items-center gap-2 px-4">
         <Sidebar.Trigger class="-ml-1" />
         <Separator
           orientation="vertical"
           class="mr-2 data-[orientation=vertical]:h-4"
         />
         <BreadcrumbNav />
+        <div class="ml-auto">
+          <EventsInbox maxItems={20} url="http://localhost:3000/events" />
+        </div>
       </div>
     </header>
 

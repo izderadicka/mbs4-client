@@ -1,10 +1,17 @@
-export type User = {
+export interface User {
     email: string;
     roles: string[];
     tokenValidity: number;
-}
+};
 
-export type BreadcrumbItem = {
+export interface BreadcrumbItem {
     name: string;
     path: string | null;
-}
+};
+
+export interface EventItem {
+    id?: string | null;
+    data: unknown; // parsed JSON or string
+    receivedAt: string; // ISO time
+    read: boolean;
+};
