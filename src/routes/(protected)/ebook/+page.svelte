@@ -23,7 +23,7 @@
         <Table.Cell class="font-medium">{ebook.id}</Table.Cell>
         <Table.Cell>{"tbd"}</Table.Cell>
         <Table.Cell>{ebook.title}</Table.Cell>
-        <Table.Cell>{"tbd"}</Table.Cell>
+        <Table.Cell>{ebook.series?.title}</Table.Cell>
       </Table.Row>
     {/each}
   </Table.Body>

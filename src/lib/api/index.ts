@@ -5,6 +5,12 @@ export type TokenPayload = {
     roles: string[];
 }
 
+export interface ListParams {
+    page?: number;
+    page_size?: number;
+    sort?: string;
+};
+
 export function decodeJwt<T = unknown>(token: string): T {
     try {
         const [, payload] = token.split('.');

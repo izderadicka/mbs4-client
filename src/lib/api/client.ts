@@ -1,20 +1,30 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { TokenPayload } from ".";
+import type { ListParams, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
+import createClient, { type Client } from "openapi-fetch";
+import type { paths, components } from "./types";
+
 
 export class ApiClient {
     token: string | null = null;
     baseUrl: string;
     fetch: typeof fetch = globalThis.fetch;
+    client: Client<paths>;
     constructor(baseUrl: string) {
         console.log("API client created");
         this.baseUrl = baseUrl;
+        this.client = this.newClient();
     }
 
     setFetch(fetchFn: typeof fetch) {
         this.fetch = fetchFn;
+        this.client = this.newClient();
+    }
+
+    private newClient() {
+        return createClient<paths>({ baseUrl: this.baseUrl, fetch: this.fetch, credentials: "include" });
     }
 
 
@@ -104,6 +114,25 @@ export class ApiClient {
 
     }
 
+
+    private checkResponse<T>(response: Response, data?: T): T {
+        if (response.status === 401) {
+            appUser.user = null;
+            goto("/login");
+            throw new Error("Unauthorized");
+        }
+        if (!response.ok) {
+            throw new Error("Request failed");
+        }
+
+        if (!data) {
+            throw new Error("No data");
+        }
+
+        return data;
+
+    }
+
     private async makeRequest(path: string, method: string, body?: any) {
         const headers: Record<string, string> = body instanceof FormData ? {} : {
             "Content-Type": "application/json",
@@ -118,23 +147,25 @@ export class ApiClient {
             body,
             credentials: "include"
         });
-        if (response.status === 401) {
-            appUser.user = null;
-            goto("/login");
-            throw new Error("Unauthorized");
-        }
-        if (!response.ok) {
-            throw new Error("Request failed");
-        }
+
+        this.checkResponse(response);
+
         return await response.json();
     }
 
+
+
     async uploadFile(form: FormData) {
-        return this.makeRequest("/files/upload/form", "POST", form);
+        // return this.makeRequest("/files/upload/form", "POST", form);
+        // @ts-ignore
+        const { data, response } = await this.client.POST("/files/upload/form", { body: form });
+        return this.checkResponse(response, data);
 
     }
-    async listEbooks() {
-        return this.makeRequest("/api/ebook", "GET");
+    async listEbooks(queryParams?: ListParams) {
+        const { data, response } = await this.client.GET("/api/ebook", { params: { query: queryParams } });
+        return this.checkResponse(response, data);
+
     }
 
 

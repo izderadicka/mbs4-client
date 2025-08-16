@@ -24,20 +24,21 @@
   }
 </script>
 
-<h1>Upload</h1>
+<h1 class="text-2xl font-bold mb-6">Upload</h1>
 <form
   bind:this={form}
   action="/upload"
   method="POST"
   enctype="multipart/form-data"
 >
-  <div class="mb-4">
+  <div class="mb-4 space-y-4">
     <Label for="file-input-{id}">Upload a file</Label>
     <Input
       type="file"
       name="file"
       id="file-input-{id}"
       onchange={handleFileChange}
+      class="w-auto"
     />
     <Button onclick={handleFileUpload} disabled={!fileSelected}>Upload</Button>
   </div>

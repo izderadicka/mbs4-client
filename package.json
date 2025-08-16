@@ -40,6 +40,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
-		"mode-watcher": "^1.0.8"
+		"mode-watcher": "^1.0.8",
+		"openapi-fetch": "^0.14.0"
 	}
 }
