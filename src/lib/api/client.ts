@@ -134,7 +134,8 @@ export class ApiClient {
     }
 
     private async makeRequest(path: string, method: string, body?: any) {
-        const headers: Record<string, string> = body instanceof FormData ? {} : {
+        const raw = body instanceof FormData;
+        const headers: Record<string, string> = raw ? {} : {
             "Content-Type": "application/json",
 
         };
@@ -144,11 +145,12 @@ export class ApiClient {
         const response = await this.fetch(this.fullUrl(path), {
             method,
             headers,
-            body,
-            credentials: "include"
+            body: raw ? body : JSON.stringify(body),
+            credentials: "include",
+
         });
 
-        this.checkResponse(response);
+        this.checkResponse(response, true);
 
         return await response.json();
     }
@@ -166,6 +168,11 @@ export class ApiClient {
         const { data, response } = await this.client.GET("/api/ebook", { params: { query: queryParams } });
         return this.checkResponse(response, data);
 
+    }
+
+    async retrieveMetadata(uploadInfo: components["schemas"]["UploadInfo"]) {
+        const { data, response } = await this.client.POST("/api/convert/extract_meta", { body: uploadInfo });
+        return this.checkResponse(response, data);
     }
 
 

@@ -14,8 +14,10 @@
   async function handleFileUpload(event: Event) {
     event.preventDefault();
     const formData = new FormData(form);
-    const response = await apiClient.uploadFile(formData);
-    console.log(response);
+    const uploadInfo = await apiClient.uploadFile(formData);
+    console.log(uploadInfo);
+    const metaTicket = await apiClient.retrieveMetadata(uploadInfo);
+    console.log(metaTicket);
   }
 
   function handleFileChange(event: Event) {

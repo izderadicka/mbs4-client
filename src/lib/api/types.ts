@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/convert/extract_meta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["extract_meta"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ebook": {
         parameters: {
             query?: never;
@@ -729,6 +745,11 @@ export interface components {
             email: string;
             password: string;
         };
+        OperationTicket: {
+            id: string;
+            /** Format: date-time */
+            created: string;
+        };
         Page_AuthorShort: {
             /** Format: int32 */
             page: number;
@@ -1162,6 +1183,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_EbookShort"];
+                };
+            };
+        };
+    };
+    extract_meta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadInfo"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationTicket"];
                 };
             };
         };
