@@ -16,10 +16,11 @@
   // Icon (lucide-svelte)
   import BellRing from "@lucide/svelte/icons/bell-ring";
   import { onMount, untrack } from "svelte";
-  import { events } from "$lib/globals.svelte";
+  import { appUser, events } from "$lib/globals.svelte";
   import type { EventItem } from "$lib/types/app";
+  import { apiClient } from "$lib/api/client";
 
-  const { url, maxItems = 20 }: { url: string; maxItems?: number } = $props();
+  const { maxItems = 20 }: { maxItems?: number } = $props();
   /** SSE endpoint (Axum route), e.g. "/sse" */
 
   const withCredentials: boolean = false;
@@ -54,16 +55,17 @@
   // ---- SSE connection
   let es: EventSource | null = null;
 
+  // if appUser changes restart events
+  $effect(() => {
+    if (appUser.user) {
+      stopEvents();
+      startEvents();
+    }
+  });
+
   function startEvents() {
     console.log("Staring events");
-    es = new EventSource(
-      lastEventId
-        ? `${url}?lastEventId=${encodeURIComponent(lastEventId)}`
-        : url,
-      {
-        withCredentials: true,
-      }
-    );
+    es = apiClient.createEventSource(lastEventId);
 
     es.onopen = () => (connected = true);
     es.onerror = (e) => {
@@ -85,7 +87,7 @@
   }
 
   onMount(() => {
-    startEvents();
+    // startEvents();
 
     return () => {
       stopEvents();

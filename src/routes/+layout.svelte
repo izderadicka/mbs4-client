@@ -14,8 +14,6 @@
   const { children, data } = $props();
   const { user }: { user: User | null } = data;
   if (user) {
-    if (user.tokenValidity + 5 * 60 * 1000 < Date.now()) {
-    }
     appUser.user = user;
   } else {
     appUser.user = null;
@@ -47,7 +45,7 @@
         />
         <BreadcrumbNav />
         <div class="ml-auto">
-          <EventsInbox maxItems={20} url="http://localhost:3000/events" />
+          <EventsInbox maxItems={20} />
         </div>
       </div>
     </header>

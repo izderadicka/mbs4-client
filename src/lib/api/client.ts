@@ -5,6 +5,23 @@ import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";
+import { DEV_API_URL } from "$lib/config";
+
+
+function getApiBaseUrl(): string {
+    const { protocol, hostname, origin } = window.location;
+
+    // Check for localhost + http
+    if (
+        hostname === 'localhost' &&
+        protocol === 'http:'
+    ) {
+        return DEV_API_URL
+    }
+
+    // Otherwise return the base URL of the current window
+    return origin;
+}
 
 
 export class ApiClient {
@@ -12,9 +29,9 @@ export class ApiClient {
     baseUrl: string;
     fetch: typeof fetch = globalThis.fetch;
     client: Client<paths>;
-    constructor(baseUrl: string) {
+    constructor() {
         console.log("API client created");
-        this.baseUrl = baseUrl;
+        this.baseUrl = getApiBaseUrl();
         this.client = this.newClient();
     }
 
@@ -175,6 +192,16 @@ export class ApiClient {
         return this.checkResponse(response, data);
     }
 
+    createEventSource(lastEventId: string | null): EventSource {
+        let url = this.fullUrl("/events");
+        if (lastEventId) {
+            url += `?lastEventId=${lastEventId}`;
+        }
+        return new EventSource(url, {
+            withCredentials: true,
+        });
+    }
+
 
 }
 
@@ -182,4 +209,4 @@ export class ApiClient {
 
 
 
-export const apiClient = new ApiClient("http://localhost:3000");
+export const apiClient = new ApiClient();

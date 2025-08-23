@@ -1,3 +1,8 @@
+import type { components } from "./types";
+
+export type OperationTicket = components["schemas"]["OperationTicket"];
+export type UploadInfo = components["schemas"]["UploadInfo"];
+
 export interface TokenPayload {
     sub: string;
     exp: number;
