@@ -45,7 +45,7 @@
           align="end"
           sideOffset={4}
         >
-          <DropdownMenu.Label class="p-0 font-normal">
+          <DropdownMenu.Label class="p-0 font-normal m-2">
             <UserIcon class="size-5 float-left" />
 
             <div class="grid flex-1 text-left text-sm leading-tight px-2">
@@ -55,13 +55,17 @@
           <DropdownMenu.Separator />
 
           <DropdownMenu.Group>
-            <DropdownMenu.Item>
-              <BadgeCheckIcon />
-              Account Info
+            <DropdownMenu.Item class="cursor-pointer">
+              {#snippet child({ props })}
+                <a href="/current-user" {...props}>
+                  <BadgeCheckIcon />
+                  User Info
+                </a>
+              {/snippet}
             </DropdownMenu.Item>
           </DropdownMenu.Group>
           <DropdownMenu.Separator />
-          <DropdownMenu.Item onSelect={logout}>
+          <DropdownMenu.Item onSelect={logout} class="cursor-pointer">
             <LogOutIcon />
             Log out
           </DropdownMenu.Item>

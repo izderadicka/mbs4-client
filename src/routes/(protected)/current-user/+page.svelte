@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { appUser } from "$lib/globals.svelte";
+  import { appUser, breadcrumb } from "$lib/globals.svelte";
+  import Title from "$lib/components/title.svelte";
+
+  breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
 </script>
 
-<h1>Your details</h1>
+<Title>Your details</Title>
 
 <pre>{JSON.stringify(appUser.user, null, 2)}</pre>

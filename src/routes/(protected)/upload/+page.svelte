@@ -4,7 +4,14 @@
   import { Label } from "$lib/components/ui/label/index.js";
   import { apiClient } from "$lib/api/client";
   import { breadcrumb, lastEvent } from "$lib/globals.svelte";
-  import type { OperationTicket, UploadInfo } from "$lib/api";
+  import type {
+    EbookMetadata,
+    MetaResult,
+    OperationTicket,
+    UploadInfo,
+  } from "$lib/api";
+  import Title from "$lib/components/title.svelte";
+  import Subtitle from "$lib/components/subtitle.svelte";
 
   breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
 
@@ -19,7 +26,8 @@
   let metaTicket: OperationTicket | null = null;
   let uploadInfo: UploadInfo | null = null;
   // svelte-ignore non_reactive_update
-  let metadata: any = null;
+  let metadata: EbookMetadata | null = null;
+  let error: string | null = $state(null);
 
   async function handleFileUpload(event: Event) {
     if (!form) throw new Error("No form found");
@@ -38,20 +46,30 @@
   }
 
   $effect(() => {
-    if (stage === "metadata") {
+    if (stage === "metadata" && metaTicket) {
       const event = lastEvent();
       if (event && event.data) {
-        metadata = event.data;
-        stage = "select";
+        const result = (event.data as any).data as MetaResult;
+        if (result.operation_id === metaTicket.id) {
+          if (result.success && result.metadata) {
+            metadata = result.metadata;
+            stage = "select";
+          } else {
+            console.error("Failed to retrieve metadata", result);
+            error = result.error || "Unknown error while retrieving metadata";
+            stage = "select";
+          }
+          metaTicket = null;
+        }
       }
     }
   });
 </script>
 
-<h1 class="text-4xl2xl font-bold mb-6">Upload file to new or existing ebook</h1>
+<Title>Upload file to new or existing ebook</Title>
 
 {#if stage === "upload"}
-  <h2 class="text-2xl font-bold mb-6">1. Upload</h2>
+  <Subtitle>1. Upload</Subtitle>
   <form
     bind:this={form}
     action="/upload"
@@ -78,6 +96,6 @@
 {/if}
 
 {#if stage === "select"}
-  <h2 class="text-2xl font-bold mb-6">2. Select or create ebook</h2>
+  <Subtitle>2. Select or create ebook</Subtitle>
   <pre>{JSON.stringify(metadata, null, 2)}</pre>
 {/if}

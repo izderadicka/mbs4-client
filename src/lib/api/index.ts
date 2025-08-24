@@ -16,6 +16,33 @@ export interface ListParams {
     sort?: string;
 };
 
+interface ConversionResult {
+    operation_id: string;
+    created: string;   // time::OffsetDateTime will be serialized as an ISO 8601 string
+    success: boolean;
+    error: string | null;
+}
+
+export interface EbookMetadata {
+    title: string | null;
+    authors: {
+        first_name: string | null;
+        last_name: string;
+    }[];
+    genres: string[];
+    language: string | null;
+    series: {
+        title: string;
+        index: number;
+    } | null;
+    cover_file: string | null;
+    comments: string | null;
+}
+
+export interface MetaResult extends ConversionResult {
+    metadata: EbookMetadata | null;
+}
+
 export function decodeJwt<T = unknown>(token: string): T {
     try {
         const [, payload] = token.split('.');
