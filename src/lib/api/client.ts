@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { ListParams, TokenPayload } from ".";
+import type { ListParams, SearchEbookItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -189,6 +189,11 @@ export class ApiClient {
 
     async retrieveMetadata(uploadInfo: components["schemas"]["UploadInfo"]) {
         const { data, response } = await this.client.POST("/api/convert/extract_meta", { body: uploadInfo });
+        return this.checkResponse(response, data);
+    }
+
+    async search(query: string, limit?: number): Promise<SearchEbookItem[]> {
+        const { data, response } = await this.client.GET("/search", { params: { query: { query, num_results: limit } } });
         return this.checkResponse(response, data);
     }
 
