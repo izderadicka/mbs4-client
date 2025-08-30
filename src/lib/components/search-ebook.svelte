@@ -2,7 +2,7 @@
   import { type Snippet } from "svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { Input } from "$lib/components/ui/input";
-  import { ScrollArea } from "$lib/components/ui/scroll-area";
+  import { ScrollArea, Scrollbar } from "$lib/components/ui/scroll-area";
   import Loader2 from "@lucide/svelte/icons/loader-circle";
   import { on } from "svelte/events";
   import type { SearchEbookItem, SearchEbookMeta } from "$lib/api";
@@ -14,7 +14,7 @@
   // ---- Props (Svelte 5 runes) ----
   const {
     load, // required (q) => Promise<BookItem[]>
-    maxResults = 8,
+    maxResults = 1000, // as safety limit
     placeholder = "Search books…",
     debounceMs = 400,
     minChars = 2,
@@ -117,22 +117,23 @@
   }
 
   // ---- Keep highlighted row visible (Svelte 5 rune) ----
+  // svelte-ignore non_reactive_update
+  let listRoot: HTMLElement | null = null;
   $effect(() => {
-    // react to `open`, `highlight`, and `results`
     if (!open || highlight < 0 || highlight >= results.length) return;
-    const list = document.querySelector<HTMLElement>("[data-ba-list]");
-    const active = document.querySelector<HTMLElement>(
-      "[data-ba-active='true']"
-    );
-    if (!list || !active) return;
 
-    const top = active.offsetTop;
-    const bottom = top + active.offsetHeight;
-    if (top < list.scrollTop) {
-      list.scrollTop = top;
-    } else if (bottom > list.scrollTop + list.clientHeight) {
-      list.scrollTop = bottom - list.clientHeight;
-    }
+    // Wait for DOM update so the highlighted row exists
+    requestAnimationFrame(() => {
+      const root = listRoot;
+      if (!root) return;
+
+      // Find the currently highlighted row within THIS popover
+      const active = root.querySelector<HTMLElement>('[data-ba-active="true"]');
+      if (!active) return;
+
+      // This scrolls the nearest scrollable ancestor (ScrollArea viewport)
+      active.scrollIntoView({ block: "nearest" });
+    });
   });
 
   function fmtAuthors(authors: { name: string; id: number }[]) {
@@ -177,8 +178,8 @@
     onCloseAutoFocus={(e) => e.preventDefault()}
   >
     {#if results.length > 0}
-      <ScrollArea class="max-h-72">
-        <ul role="listbox" data-ba-list>
+      <ScrollArea class="h-72">
+        <ul role="listbox" data-ba-list bind:this={listRoot}>
           {#each results as book, i}
             <li>
               <button
@@ -186,7 +187,7 @@
                 role="option"
                 aria-selected={i === highlight}
                 data-ba-active={i === highlight}
-                class="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground data-[ba-active=true]:bg-accent data-[ba-active=true]:text-accent-foreground"
+                class="w-full text-left px-3 py-2 hover:bg-accent/60 hover:text-accent-foreground data-[ba-active=true]:bg-accent data-[ba-active=true]:text-accent-foreground"
                 onmouseenter={() => {
                   //highlight = i)
                 }}
@@ -212,6 +213,11 @@
             </li>
           {/each}
         </ul>
+        <Scrollbar
+          orientation="vertical"
+          forceMount
+          class="!opacity-100 transition-none"
+        />
       </ScrollArea>
     {:else if !loading && query.trim().length >= minChars}
       <div class="px-3 py-2 text-sm text-muted-foreground">{emptyText}</div>
