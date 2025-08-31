@@ -48,6 +48,8 @@
   let inFlightController: AbortController | null = null;
   let requestSequence = 0;
 
+  let lastQuery: string | null = null;
+
   onDestroy(() => {
     inFlightController?.abort();
     inFlightController = null;
@@ -56,6 +58,8 @@
   });
 
   function onInput(q: string) {
+    if (q.trim() === lastQuery) return;
+    lastQuery = q.trim();
     query = q;
     if (debounceId) clearTimeout(debounceId);
     debounceId = window.setTimeout(() => runSearch(query), debounceMs);
@@ -174,9 +178,11 @@
   }
 </script>
 
+<!-- {@debug open} -->
+
 <!-- Always-visible input; Popover opens only when results exist -->
 <Popover.Root bind:open>
-  <Popover.Trigger>
+  <Popover.Trigger disabled>
     <div class="w-full">
       <div class="relative">
         <Input
@@ -188,6 +194,7 @@
             onInput((e.currentTarget as HTMLInputElement).value);
           }}
           onkeydown={onKeydown}
+          class="w-full"
         />
         {#if loading}
           <Loader2
@@ -200,21 +207,31 @@
 
   <Popover.Content
     align="start"
-    class="w-[--radix-popover-trigger-width] p-0"
+    class="p-0 overflow-hidden
+         w-[min(100vw-1rem,var(--radix-popover-trigger-width))]
+         sm:w-[--radix-popover-trigger-width]
+         max-w-[calc(100vw-1rem)]"
     onOpenAutoFocus={(e) => e.preventDefault()}
     onCloseAutoFocus={(e) => e.preventDefault()}
+    sideOffset={4}
+    collisionPadding={8}
   >
     {#if results.length > 0}
-      <ScrollArea class="h-72 min-w-3xs">
-        <ul role="listbox" data-ba-list bind:this={listRoot}>
+      <ScrollArea class="h-72 overflow-x-hidden min-w-0">
+        <ul
+          role="listbox"
+          data-ba-list
+          bind:this={listRoot}
+          class="w-full min-w-0"
+        >
           {#each results as book, i}
-            <li>
+            <li class="min-w-0">
               <button
                 type="button"
                 role="option"
                 aria-selected={i === highlight}
                 data-ba-active={i === highlight}
-                class="w-full text-left px-3 py-2 hover:bg-accent/60 hover:text-accent-foreground data-[ba-active=true]:bg-accent data-[ba-active=true]:text-accent-foreground"
+                class="w-full min-w-0 text-left px-3 py-2 hover:bg-accent/60 hover:text-accent-foreground data-[ba-active=true]:bg-accent data-[ba-active=true]:text-accent-foreground"
                 onmouseenter={() => {
                   //highlight = i)
                 }}
@@ -226,9 +243,13 @@
                 {#if renderItem}
                   {@render renderItem({ book })}
                 {:else}
-                  <div class="flex flex-col">
-                    <span class="truncate font-medium">{book.doc.title}</span>
-                    <span class="truncate text-xs text-muted-foreground">
+                  <div class="flex min-w-0 flex-col">
+                    <span class="truncate min-w-0 font-medium"
+                      >{book.doc.title}</span
+                    >
+                    <span
+                      class="truncate min-w-0 text-xs text-muted-foreground"
+                    >
                       {fmtAuthors(book.doc.authors)}
                       {#if book.doc.series}
                         · {fmtSeries(book.doc)}
