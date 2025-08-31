@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+  import { onDestroy, type Snippet } from "svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { Input } from "$lib/components/ui/input";
   import { ScrollArea, Scrollbar } from "$lib/components/ui/scroll-area";
@@ -7,7 +7,7 @@
   import { on } from "svelte/events";
   import type { SearchEbookItem, SearchEbookMeta } from "$lib/api";
 
-  type Loader = (q: string) => Promise<SearchEbookItem[]>;
+  type Loader = (q: string, signal: AbortSignal) => Promise<SearchEbookItem[]>;
   type SelectHandler = (i: number) => void;
   type SearchHandler = (q: string) => void;
 
@@ -16,7 +16,7 @@
     load, // required (q) => Promise<BookItem[]>
     maxResults = 1000, // as safety limit
     placeholder = "Search books…",
-    debounceMs = 400,
+    debounceMs = 600,
     minChars = 2,
     emptyText = "No matches",
     autoSelectFirst = false,
@@ -45,6 +45,16 @@
 
   // ---- Debounce ----
   let debounceId: number | null = null;
+  let inFlightController: AbortController | null = null;
+  let requestSequence = 0;
+
+  onDestroy(() => {
+    inFlightController?.abort();
+    inFlightController = null;
+    if (debounceId) clearTimeout(debounceId);
+    debounceId = null;
+  });
+
   function onInput(q: string) {
     query = q;
     if (debounceId) clearTimeout(debounceId);
@@ -58,14 +68,28 @@
       highlight = -1;
       return;
     }
+    inFlightController?.abort();
+    const controller = new AbortController();
+    inFlightController = controller;
+    const seq = ++requestSequence;
     loading = true;
     try {
-      const data = await load(q);
+      const data = await load(q, controller.signal);
+      if (seq !== requestSequence) return; // stale response
       results = (data ?? []).slice(0, maxResults);
       open = results.length > 0;
       highlight = autoSelectFirst && results.length ? 0 : -1;
+    } catch (e: any) {
+      if (e.name === "AbortError") {
+        console.log("Search aborted");
+      } else {
+        console.error("Search error", e);
+        results = [];
+        open = false;
+        highlight = -1;
+      }
     } finally {
-      loading = false;
+      if (seq === requestSequence) loading = false;
     }
   }
 
@@ -159,7 +183,10 @@
           {placeholder}
           value={query}
           autocomplete="off"
-          oninput={(e) => onInput((e.currentTarget as HTMLInputElement).value)}
+          oninput={(e) => {
+            e.stopPropagation();
+            onInput((e.currentTarget as HTMLInputElement).value);
+          }}
           onkeydown={onKeydown}
         />
         {#if loading}
@@ -178,7 +205,7 @@
     onCloseAutoFocus={(e) => e.preventDefault()}
   >
     {#if results.length > 0}
-      <ScrollArea class="h-72">
+      <ScrollArea class="h-72 min-w-3xs">
         <ul role="listbox" data-ba-list bind:this={listRoot}>
           {#each results as book, i}
             <li>

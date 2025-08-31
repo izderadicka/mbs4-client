@@ -192,8 +192,8 @@ export class ApiClient {
         return this.checkResponse(response, data);
     }
 
-    async search(query: string, limit?: number): Promise<SearchEbookItem[]> {
-        const { data, response } = await this.client.GET("/search", { params: { query: { query, num_results: limit } } });
+    async search(query: string, limit?: number, signal?: AbortSignal): Promise<SearchEbookItem[]> {
+        const { data, response } = await this.client.GET("/search", { signal, params: { query: { query, num_results: limit } } });
         return this.checkResponse(response, data);
     }
 

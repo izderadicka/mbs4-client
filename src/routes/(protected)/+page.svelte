@@ -5,11 +5,15 @@
   import { goto } from "$app/navigation";
   import type { SearchEbookItem } from "$lib/api";
   import { apiClient } from "$lib/api/client";
+  import { MAX_SEARCH_RESULTS } from "$lib/config";
 
-  const load = async (q: string): Promise<SearchEbookItem[]> => {
+  const load = async (
+    q: string,
+    signal: AbortSignal
+  ): Promise<SearchEbookItem[]> => {
     if (!q.trim()) return [];
 
-    const ebooks = await apiClient.search(q, 50);
+    const ebooks = await apiClient.search(q, MAX_SEARCH_RESULTS, signal);
     return ebooks;
   };
 
