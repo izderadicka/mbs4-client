@@ -173,7 +173,7 @@
   function fmtSeries(ebook: SearchEbookMeta) {
     if (!ebook.series) return "";
     return ebook.series_id != null
-      ? `${ebook.series} #${ebook.series_id}`
+      ? `${ebook.series} #${ebook.series_index}`
       : ebook.series;
   }
 </script>

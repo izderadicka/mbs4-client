@@ -164,6 +164,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ebook/{id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateEbookCover"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ebook/{id}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listEbookSources"];
+        put?: never;
+        post: operations["createEbookSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/format": {
         parameters: {
             query?: never;
@@ -612,6 +644,7 @@ export interface components {
         BookResult: {
             title: string;
             series: string;
+            series_index: string;
             /** Format: int64 */
             series_id?: number | null;
             authors: components["schemas"]["AuthorSummary"][];
@@ -687,6 +720,21 @@ export interface components {
             created: string;
             /** Format: date-time */
             modified: string;
+        };
+        EbookCoverInfo: {
+            cover_file?: string | null;
+            /** Format: int64 */
+            ebook_id: number;
+            /** Format: int64 */
+            ebook_version: number;
+        };
+        EbookFileInfo: {
+            uploaded_file: string;
+            /** Format: int64 */
+            size: number;
+            hash: string;
+            /** Format: float */
+            quality?: number | null;
         };
         EbookShort: {
             /** Format: int64 */
@@ -1358,6 +1406,80 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    updateEbookCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EbookCoverInfo"];
+            };
+        };
+        responses: {
+            /** @description Updated Ebook Cover */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ebook"];
+                };
+            };
+        };
+    };
+    listEbookSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List Ebook Sources */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"][];
+                };
+            };
+        };
+    };
+    createEbookSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EbookFileInfo"];
+            };
+        };
+        responses: {
+            /** @description Created Ebook Source */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+        };
     };
     listFormat: {
         parameters: {
