@@ -1,6 +1,7 @@
 import { apiClient } from "$lib/api/client";
 import type { User } from "$lib/types/app";
 import { TOKEN_VALIDITY_MINUTES_MINIMUM } from "$lib/config";
+import { AUTOLOGIN } from "$lib/dev.js";
 
 export const ssr = false;
 
@@ -26,6 +27,16 @@ export async function load({ url, fetch }) {
             };
         }
     } else {
+        if (AUTOLOGIN) {
+            console.log("Auto login for dev");
+            return {
+                user: {
+                    name: "Auto login",
+                    email: "auto-login",
+                    tokenValidity: Date.now() + TOKEN_VALIDITY_MINUTES_MINIMUM * 60000 * 1000
+                }
+            }
+        }
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             const user: User = JSON.parse(storedUser);
