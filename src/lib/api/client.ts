@@ -6,6 +6,7 @@ import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";
 import { DEV_API_URL } from "$lib/config";
+import { IS_DEV } from "$lib/dev";
 
 
 function getApiBaseUrl(): string {
@@ -14,7 +15,7 @@ function getApiBaseUrl(): string {
     // Check for localhost + http
     if (
         hostname === 'localhost' &&
-        protocol === 'http:'
+        protocol === 'http:' && IS_DEV
     ) {
         return DEV_API_URL
     }

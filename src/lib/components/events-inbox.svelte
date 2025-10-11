@@ -19,6 +19,7 @@
   import { appUser, events } from "$lib/globals.svelte";
   import type { EventItem } from "$lib/types/app";
   import { apiClient } from "$lib/api/client";
+  import { AUTOLOGIN } from "$lib/dev";
 
   const { maxItems = 20 }: { maxItems?: number } = $props();
   /** SSE endpoint (Axum route), e.g. "/sse" */
@@ -57,7 +58,7 @@
 
   // if appUser changes restart events
   $effect(() => {
-    if (appUser.user) {
+    if (appUser.user && !AUTOLOGIN) {
       stopEvents();
       startEvents();
     }
@@ -87,8 +88,6 @@
   }
 
   onMount(() => {
-    // startEvents();
-
     return () => {
       stopEvents();
     };

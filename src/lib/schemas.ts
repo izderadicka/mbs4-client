@@ -12,12 +12,12 @@ export const ebookSchema = z.object({
     // })),
     // genres: z.array(z.string()),
     // language: z.nullable(z.string()),
-    // series: z.nullable(z.object({
-    //     id: z.bigint().positive(),
-    //     title: z.string(),
+    series: z.nullable(z.object({
+        id: z.bigint().positive(),
+        title: z.string(),
 
-    // })),
-    // series_index: z.nullable(z.int().min(0)),
+    })),
+    seriesIndex: z.nullable(z.number().min(0)),
     // cover_file: z.nullable(z.string()),
     // version: z.nullable(z.bigint().positive()),
 
