@@ -6,6 +6,7 @@
 
   import { ebookSchema } from "$lib/schemas.js";
   import { Textarea } from "./ui/textarea";
+  import SeriesField from "./fields/series-field.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
@@ -33,6 +34,8 @@
     <Form.FieldErrors />
     <Form.Description>Title of the ebook (without series)</Form.Description>
   </Form.Field>
+
+  <SeriesField {form} />
 
   <Form.Field {form} name="series-index">
     <Form.Control>
