@@ -22,7 +22,7 @@
   import { tick } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
-  import { Button } from "$lib/components/ui/button";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
   import { cn } from "$lib/utils.js";
   import type { SuperForm } from "sveltekit-superforms";
 
@@ -54,22 +54,24 @@
     <Form.Control>
       {#snippet children({ props })}
         <Form.Label>Series</Form.Label>
-        <Popover.Trigger bind:ref={triggerRef}>
-          <Button
-            {...props}
-            variant="outline"
-            class="w-full justify-between"
-            role="combobox"
-            aria-expanded={open}
-          >
-            {selectedValue || "Select a series..."}
-            <ChevronsUpDownIcon class="opacity-50" />
-          </Button>
+        <Popover.Trigger
+          bind:ref={triggerRef}
+          type="button"
+          {...props}
+          class={cn(
+            buttonVariants({ variant: "outline" }),
+            "w-full justify-between"
+          )}
+          role="combobox"
+          aria-expanded={open}
+        >
+          {selectedValue || "Select a series..."}
+          <ChevronsUpDownIcon class="opacity-50" />
         </Popover.Trigger>
       {/snippet}
     </Form.Control>
 
-    <Popover.Content class="w-[200px] p-0">
+    <Popover.Content class="w-full p-0" align="start">
       <Command.Root>
         <Command.Input placeholder="Search series..." bind:value={filter} />
         <Command.List>
