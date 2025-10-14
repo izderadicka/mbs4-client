@@ -35,18 +35,24 @@
     <Form.Description>Title of the ebook (without series)</Form.Description>
   </Form.Field>
 
-  <SeriesField {form} />
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="md:col-span-3">
+      <SeriesField {form} bind:value={$formData.series} />
+    </div>
 
-  <Form.Field {form} name="series-index">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Series Index</Form.Label>
-        <Input {...props} bind:value={$formData.seriesIndex} />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-    <Form.Description>Index in series</Form.Description>
-  </Form.Field>
+    <div class="md:col-span-1">
+      <Form.Field {form} name="series-index">
+        <Form.Control>
+          {#snippet children({ props })}
+            <Form.Label>Series Index</Form.Label>
+            <Input {...props} bind:value={$formData.seriesIndex} />
+          {/snippet}
+        </Form.Control>
+        <Form.FieldErrors />
+        <Form.Description>Index in series</Form.Description>
+      </Form.Field>
+    </div>
+  </div>
 
   <Form.Field {form} name="description">
     <Form.Control>

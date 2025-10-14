@@ -29,12 +29,14 @@
   let {
     form,
     value = $bindable(null),
-  }: { form: SuperForm<any>; value: number | null } = $props();
+  }: { form: SuperForm<any>; value: { id: number; title: string } | null } =
+    $props();
 
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement | null>(null);
 
-  const selectedValue = $derived(series.find((f) => f.id === value)?.title);
+  const selectedValue = $derived(series.find((f) => f.id === value?.id)?.title);
+  let filter = $state("");
 
   // We want to refocus the trigger button when the user selects
   // an item from the list so users can continue navigating the
@@ -47,7 +49,7 @@
   }
 </script>
 
-<Form.Field {form} name="title">
+<Form.Field {form} name="series">
   <Popover.Root bind:open>
     <Form.Control>
       {#snippet children({ props })}
@@ -56,7 +58,7 @@
           <Button
             {...props}
             variant="outline"
-            class="w-[200px] justify-between"
+            class="w-full justify-between"
             role="combobox"
             aria-expanded={open}
           >
@@ -69,18 +71,20 @@
 
     <Popover.Content class="w-[200px] p-0">
       <Command.Root>
-        <Command.Input placeholder="Search series..." />
+        <Command.Input placeholder="Search series..." bind:value={filter} />
         <Command.List>
           <Command.Empty>No series found.</Command.Empty>
           <Command.Group value="series">
             {#each series as ser (ser.id)}
               <Command.Item
                 onSelect={() => {
-                  value = ser.id;
+                  value = ser;
                   closeAndFocusTrigger();
                 }}
               >
-                <CheckIcon class={cn(value !== ser.id && "text-transparent")} />
+                <CheckIcon
+                  class={cn(value?.id !== ser.id && "text-transparent")}
+                />
                 {ser.title}
               </Command.Item>
             {/each}

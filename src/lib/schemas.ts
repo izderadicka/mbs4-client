@@ -1,5 +1,19 @@
 import { z } from "zod/v4";
 
+const SeriesInner = z.object({
+    id: z.number().positive(),
+    title: z.string().min(1),
+});
+
+const Series = z.any().transform((val, ctx) => {
+    const r = SeriesInner.safeParse(val);
+    if (!r.success) {
+        ctx.addIssue({ code: "custom", message: "Series is invalid.", path: [] });
+        return z.NEVER; // stops here; no field-level issues from inner schema
+    }
+    return r.data;
+});
+
 
 export const ebookSchema = z.object({
     // id: z.nullable(z.bigint().positive()),
@@ -12,11 +26,7 @@ export const ebookSchema = z.object({
     // })),
     // genres: z.array(z.string()),
     // language: z.nullable(z.string()),
-    series: z.nullable(z.object({
-        id: z.bigint().positive(),
-        title: z.string(),
-
-    })),
+    series: z.nullable(Series),
     seriesIndex: z.nullable(z.number().min(0)),
     // cover_file: z.nullable(z.string()),
     // version: z.nullable(z.bigint().positive()),
