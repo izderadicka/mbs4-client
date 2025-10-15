@@ -1,12 +1,12 @@
 import { z } from "zod/v4";
 
-const SeriesInner = z.object({
+const SeriesInnerSchema = z.object({
     id: z.number().positive(),
     title: z.string().min(1),
 });
 
-const Series = z.any().transform((val, ctx) => {
-    const r = SeriesInner.safeParse(val);
+const SeriesSchema = z.any().transform((val, ctx) => {
+    const r = SeriesInnerSchema.safeParse(val);
     if (!r.success) {
         ctx.addIssue({ code: "custom", message: "Series is invalid.", path: [] });
         return z.NEVER; // stops here; no field-level issues from inner schema
@@ -15,7 +15,7 @@ const Series = z.any().transform((val, ctx) => {
 });
 
 
-export const ebookSchema = z.object({
+export const EbookSchema = z.object({
     // id: z.nullable(z.bigint().positive()),
     title: z.string().min(1).max(255),
     description: z.nullable(z.string().max(1000)),
@@ -26,12 +26,12 @@ export const ebookSchema = z.object({
     // })),
     // genres: z.array(z.string()),
     // language: z.nullable(z.string()),
-    series: z.nullable(Series),
+    series: z.nullable(SeriesSchema),
     seriesIndex: z.nullable(z.number().min(0)),
     // cover_file: z.nullable(z.string()),
     // version: z.nullable(z.bigint().positive()),
 
 });
 
-export type EbookSchema = typeof ebookSchema;
+export type EbookSchema = typeof EbookSchema;
 // export type Ebook = z.infer<EbookSchema>;

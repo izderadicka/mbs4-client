@@ -4,18 +4,18 @@
   import * as Form from "$lib/components/ui/form";
   import { Input } from "$lib/components/ui/input";
 
-  import { ebookSchema } from "$lib/schemas.js";
+  import { EbookSchema } from "$lib/schemas.js";
   import { Textarea } from "./ui/textarea";
   import SeriesField from "./fields/series-field.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
-    ebookData = defaults(zod4(ebookSchema));
+    ebookData = defaults(zod4(EbookSchema));
   }
   const form = superForm(ebookData, {
     SPA: true,
     dataType: "json",
-    validators: zod4Client(ebookSchema),
+    validators: zod4Client(EbookSchema),
     onUpdate: ({ form }) => {
       console.log(form);
     },

@@ -3,6 +3,7 @@ import type { components } from "./types";
 export type OperationTicket = components["schemas"]["OperationTicket"];
 export type UploadInfo = components["schemas"]["UploadInfo"];
 export type SearchEbookMeta = components["schemas"]["BookResult"];
+export type SeriesShort = components["schemas"]["SeriesShort"];
 export type SearchEbookItem = { score: number, doc: SearchEbookMeta }
 
 export interface TokenPayload {

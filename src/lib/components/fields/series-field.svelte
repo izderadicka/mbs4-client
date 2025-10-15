@@ -1,5 +1,6 @@
 <script lang="ts" module>
-  const series = [
+  import type { SeriesShort } from "$lib/api";
+  const SERIES: SeriesShort[] = [
     { id: 1, title: "Lord of the Rings" },
     { id: 2, title: "Hobbit" },
     { id: 3, title: "Silmarillion" },
@@ -19,6 +20,8 @@
   import * as Form from "$lib/components/ui/form";
   import CheckIcon from "@lucide/svelte/icons/check";
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
+  import ClearIcon from "@lucide/svelte/icons/x";
+  import NewSeriesIcon from "@lucide/svelte/icons/package-plus";
   import { tick } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
@@ -35,6 +38,8 @@
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement | null>(null);
 
+  let series: SeriesShort[] = $state([]);
+
   const selectedValue = $derived(series.find((f) => f.id === value?.id)?.title);
   let filter = $state("");
 
@@ -46,6 +51,28 @@
     tick().then(() => {
       triggerRef?.focus();
     });
+  }
+
+  const DEBOUNCE_MS = 600;
+  const MIN_FILTER_LENGTH = 1;
+  let debounceId: number | null = null;
+  function onFilterInput(event: Event) {
+    if (debounceId) {
+      clearTimeout(debounceId);
+      debounceId = null;
+    }
+
+    if (filter.length < MIN_FILTER_LENGTH) {
+      return;
+    }
+
+    debounceId = window.setTimeout(() => runSearch(), DEBOUNCE_MS);
+  }
+
+  async function runSearch() {
+    series = SERIES.filter((f) =>
+      f.title.toLowerCase().includes(filter.toLowerCase())
+    );
   }
 </script>
 
@@ -65,20 +92,46 @@
           role="combobox"
           aria-expanded={open}
         >
-          {selectedValue || "Select a series..."}
+          <span class="truncate">{value?.title || "Select a series..."}</span>
           <ChevronsUpDownIcon class="opacity-50" />
         </Popover.Trigger>
       {/snippet}
     </Form.Control>
 
-    <Popover.Content class="w-full p-0" align="start">
-      <Command.Root>
-        <Command.Input placeholder="Search series..." bind:value={filter} />
+    <Popover.Content class=" p-0" align="start">
+      <Command.Root shouldFilter={false}>
+        <Command.Input
+          placeholder="Search series..."
+          bind:value={filter}
+          oninput={onFilterInput}
+        />
         <Command.List>
           <Command.Empty>No series found.</Command.Empty>
+          <Command.Group value="commands">
+            {#if value}
+              <Command.Item
+                onSelect={() => {
+                  value = null;
+                  closeAndFocusTrigger();
+                }}
+                value="__create_cmd__"
+              >
+                <ClearIcon />
+                No series</Command.Item
+              >
+            {/if}
+            {#if filter}
+              <Command.Item onSelect={() => {}}>
+                <NewSeriesIcon />
+                Create new series</Command.Item
+              >
+            {/if}
+          </Command.Group>
+          <Command.Separator forceMount={true} />
           <Command.Group value="series">
             {#each series as ser (ser.id)}
               <Command.Item
+                value={`${ser.id}-${ser.title}`}
                 onSelect={() => {
                   value = ser;
                   closeAndFocusTrigger();
