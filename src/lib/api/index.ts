@@ -4,6 +4,9 @@ export type OperationTicket = components["schemas"]["OperationTicket"];
 export type UploadInfo = components["schemas"]["UploadInfo"];
 export type SearchEbookMeta = components["schemas"]["BookResult"];
 export type SeriesShort = components["schemas"]["SeriesShort"];
+export type CreateSeries = components["schemas"]["CreateSeries"];
+export type UpdateSeries = components["schemas"]["UpdateSeries"];
+export type Series = components["schemas"]["Series"];
 export type SearchEbookItem = { score: number, doc: SearchEbookMeta }
 
 export interface TokenPayload {

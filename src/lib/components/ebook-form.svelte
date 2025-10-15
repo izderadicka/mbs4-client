@@ -17,7 +17,7 @@
     dataType: "json",
     validators: zod4Client(EbookSchema),
     onUpdate: ({ form }) => {
-      console.log(form);
+      console.log("Created ebook", form);
     },
   });
   const { form: formData, enhance } = form;

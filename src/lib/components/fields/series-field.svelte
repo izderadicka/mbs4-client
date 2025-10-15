@@ -25,9 +25,11 @@
   import { tick } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import { buttonVariants } from "$lib/components/ui/button";
   import { cn } from "$lib/utils.js";
   import type { SuperForm } from "sveltekit-superforms";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import SeriesForm from "../series-form.svelte";
 
   let {
     form,
@@ -74,6 +76,22 @@
       f.title.toLowerCase().includes(filter.toLowerCase())
     );
   }
+
+  let dialogOpen = $state(false);
+
+  function openDialog() {
+    dialogOpen = true;
+  }
+
+  function closeDialog() {
+    dialogOpen = false;
+  }
+
+  function onCreate(series: SeriesShort) {
+    closeDialog();
+    value = { id: series.id, title: series.title };
+    closeAndFocusTrigger();
+  }
 </script>
 
 <Form.Field {form} name="series">
@@ -114,14 +132,19 @@
                   value = null;
                   closeAndFocusTrigger();
                 }}
-                value="__create_cmd__"
+                value="__reset_cmd__"
               >
                 <ClearIcon />
                 No series</Command.Item
               >
             {/if}
             {#if filter}
-              <Command.Item onSelect={() => {}}>
+              <Command.Item
+                value="__new_cmd__"
+                onSelect={() => {
+                  openDialog();
+                }}
+              >
                 <NewSeriesIcon />
                 Create new series</Command.Item
               >
@@ -151,3 +174,15 @@
   <Form.FieldErrors />
   <Form.Description>Series title</Form.Description>
 </Form.Field>
+
+<Dialog.Root bind:open={dialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Create new series</Dialog.Title>
+      <Dialog.Description
+        >Before creating a new series check that it doesn't already exist</Dialog.Description
+      >
+    </Dialog.Header>
+    <SeriesForm seriesData={{ title: filter }} {onCreate} />
+  </Dialog.Content>
+</Dialog.Root>
