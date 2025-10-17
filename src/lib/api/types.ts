@@ -641,16 +641,6 @@ export interface components {
             id: number;
             name: string;
         };
-        BookResult: {
-            title: string;
-            series: string;
-            series_index: string;
-            /** Format: int64 */
-            series_id?: number | null;
-            authors: components["schemas"]["AuthorSummary"][];
-            /** Format: int64 */
-            id: number;
-        };
         CreateAuthor: {
             last_name: string;
             first_name?: string | null;
@@ -762,6 +752,31 @@ export interface components {
             name: string;
             mime_type: string;
             extension: string;
+        };
+        FoundDoc: {
+            Ebook: {
+                title: string;
+                series: string;
+                series_index: string;
+                /** Format: int64 */
+                series_id?: number | null;
+                authors: components["schemas"]["AuthorSummary"][];
+                /** Format: int64 */
+                id: number;
+            };
+        } | {
+            Series: {
+                title: string;
+                /** Format: int64 */
+                id: number;
+            };
+        } | {
+            Author: {
+                /** Format: int64 */
+                id: number;
+                first_name?: string | null;
+                last_name: string;
+            };
         };
         Genre: {
             /** Format: int64 */
@@ -911,7 +926,7 @@ export interface components {
         SearchItem: {
             /** Format: float */
             score: number;
-            doc: components["schemas"]["BookResult"];
+            doc: components["schemas"]["FoundDoc"];
         };
         Series: {
             /** Format: int64 */
@@ -2351,6 +2366,7 @@ export interface operations {
         parameters: {
             query: {
                 query: string;
+                what?: string;
                 num_results?: number;
             };
             header?: never;

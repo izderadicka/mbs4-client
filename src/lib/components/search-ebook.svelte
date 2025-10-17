@@ -103,7 +103,7 @@
     if (!book || !onSelect) return;
     open = false;
     highlight = -1;
-    onSelect(book.doc.id);
+    onSelect(book.doc.Ebook.id);
   }
   function submitSearch() {
     if (!query || !onSearch) return;
@@ -245,14 +245,14 @@
                 {:else}
                   <div class="flex min-w-0 flex-col">
                     <span class="truncate min-w-0 font-medium"
-                      >{book.doc.title}</span
+                      >{book.doc.Ebook.title}</span
                     >
                     <span
                       class="truncate min-w-0 text-xs text-muted-foreground"
                     >
-                      {fmtAuthors(book.doc.authors)}
-                      {#if book.doc.series}
-                        · {fmtSeries(book.doc)}
+                      {fmtAuthors(book.doc.Ebook.authors)}
+                      {#if book.doc.Ebook.series}
+                        · {fmtSeries(book.doc.Ebook)}
                       {/if}
                     </span>
                   </div>
