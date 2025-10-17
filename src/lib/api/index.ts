@@ -2,12 +2,21 @@ import type { components } from "./types";
 
 export type OperationTicket = components["schemas"]["OperationTicket"];
 export type UploadInfo = components["schemas"]["UploadInfo"];
-// export type SearchEbookMeta = components["schemas"]["BookResult"];
 export type SeriesShort = components["schemas"]["SeriesShort"];
 export type CreateSeries = components["schemas"]["CreateSeries"];
 export type UpdateSeries = components["schemas"]["UpdateSeries"];
 export type Series = components["schemas"]["Series"];
-export type SearchEbookItem = { score: number, doc: { Ebook: any } };
+
+type EbookDoc = components["schemas"]["EbookDoc"];
+
+
+
+export interface EbookSearchItem {
+    score: number;
+    doc: {
+        Ebook: EbookDoc;
+    };
+};
 
 export interface TokenPayload {
     sub: string;

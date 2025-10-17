@@ -5,9 +5,9 @@
   import { ScrollArea, Scrollbar } from "$lib/components/ui/scroll-area";
   import Loader2 from "@lucide/svelte/icons/loader-circle";
   import { on } from "svelte/events";
-  import type { SearchEbookItem, SearchEbookMeta } from "$lib/api";
+  import type { EbookSearchItem } from "$lib/api";
 
-  type Loader = (q: string, signal: AbortSignal) => Promise<SearchEbookItem[]>;
+  type Loader = (q: string, signal: AbortSignal) => Promise<EbookSearchItem[]>;
   type SelectHandler = (i: number) => void;
   type SearchHandler = (q: string) => void;
 
@@ -31,7 +31,7 @@
     minChars?: number;
     emptyText?: string;
     autoSelectFirst?: boolean;
-    renderItem?: Snippet<[{ book: SearchEbookItem }]>;
+    renderItem?: Snippet<[{ book: EbookSearchItem }]>;
     onSelect?: SelectHandler | null;
     onSearch?: SearchHandler | null;
   } = $props();
@@ -39,7 +39,7 @@
   // ---- State ----
   let open = $state(false);
   let query = $state("");
-  let results = $state<SearchEbookItem[]>([]);
+  let results = $state<EbookSearchItem[]>([]);
   let loading = $state(false);
   let highlight = $state(-1);
 
@@ -170,7 +170,11 @@
       .map((a) => a.name)
       .join(", ");
   }
-  function fmtSeries(ebook: SearchEbookMeta) {
+  function fmtSeries(ebook: {
+    series: string | null;
+    series_id?: number | null;
+    series_index: string | null;
+  }): string {
     if (!ebook.series) return "";
     return ebook.series_id != null
       ? `${ebook.series} #${ebook.series_index}`

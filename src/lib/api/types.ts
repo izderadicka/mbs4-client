@@ -718,6 +718,16 @@ export interface components {
             /** Format: int64 */
             ebook_version: number;
         };
+        EbookDoc: {
+            title: string;
+            series: string;
+            series_index: string;
+            /** Format: int64 */
+            series_id?: number | null;
+            authors: components["schemas"]["AuthorSummary"][];
+            /** Format: int64 */
+            id: number;
+        };
         EbookFileInfo: {
             uploaded_file: string;
             /** Format: int64 */
@@ -754,29 +764,11 @@ export interface components {
             extension: string;
         };
         FoundDoc: {
-            Ebook: {
-                title: string;
-                series: string;
-                series_index: string;
-                /** Format: int64 */
-                series_id?: number | null;
-                authors: components["schemas"]["AuthorSummary"][];
-                /** Format: int64 */
-                id: number;
-            };
+            Ebook: components["schemas"]["EbookDoc"];
         } | {
-            Series: {
-                title: string;
-                /** Format: int64 */
-                id: number;
-            };
+            Series: components["schemas"]["SeriesShort"];
         } | {
-            Author: {
-                /** Format: int64 */
-                id: number;
-                first_name?: string | null;
-                last_name: string;
-            };
+            Author: components["schemas"]["AuthorShort"];
         };
         Genre: {
             /** Format: int64 */
