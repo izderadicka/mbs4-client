@@ -18,6 +18,13 @@ export interface EbookSearchItem {
     };
 };
 
+export interface SeriesSearchItem {
+    score: number;
+    doc: {
+        Series: SeriesShort;
+    };
+};
+
 export interface TokenPayload {
     sub: string;
     exp: number;

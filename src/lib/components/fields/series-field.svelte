@@ -30,6 +30,7 @@
   import type { SuperForm } from "sveltekit-superforms";
   import * as Dialog from "$lib/components/ui/dialog";
   import SeriesForm from "../series-form.svelte";
+  import { apiClient } from "$lib/api/client";
 
   let {
     form,
@@ -56,7 +57,7 @@
   }
 
   const DEBOUNCE_MS = 600;
-  const MIN_FILTER_LENGTH = 1;
+  const MIN_FILTER_LENGTH = 3;
   let debounceId: number | null = null;
   function onFilterInput(event: Event) {
     if (debounceId) {
@@ -72,9 +73,12 @@
   }
 
   async function runSearch() {
-    series = SERIES.filter((f) =>
-      f.title.toLowerCase().includes(filter.toLowerCase())
-    );
+    try {
+      const res = await apiClient.searchSeries(filter, 10);
+      series = res.map((s) => s.doc.Series);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   let dialogOpen = $state(false);
