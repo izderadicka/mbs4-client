@@ -7,7 +7,7 @@
   import AlertCircleIcon from "@lucide/svelte/icons/alert-circle";
 
   const id = $props.id();
-  const { failed, ssoAction } = $props();
+  const { failed, ssoAction, title = "Login", message = "" } = $props();
 </script>
 
 {#if failed}
@@ -24,10 +24,10 @@
 
 <Card.Root class="mx-auto w-full max-w-sm">
   <Card.Header>
-    <Card.Title class="text-2xl">Login</Card.Title>
-    <Card.Description
-      >Enter your email below to login to your account</Card.Description
-    >
+    <Card.Title class="text-2xl">{title}</Card.Title>
+    <Card.Description>
+      {@html message}
+    </Card.Description>
   </Card.Header>
   <Card.Content>
     <div class="grid gap-4">

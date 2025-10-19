@@ -100,10 +100,11 @@ export class ApiClient {
         try {
             const response = await this.fetch(this.fullUrl("/auth/logout"), {
                 method: "GET",
-                credentials: "include"
+                credentials: "include",
+                redirect: "manual"
 
             });
-            if (!response.ok) {
+            if (response.status >= 400) {
                 throw new Error("Logout error " + response.status);
             }
         } catch (error) {

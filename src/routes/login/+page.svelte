@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { apiClient } from "$lib/api/client";
   import LoginForm from "$lib/components/login-form.svelte";
+  import { LOGIN_MESSAGE } from "$lib/config";
   import { appUser } from "$lib/globals.svelte";
   import { breadcrumb } from "$lib/globals.svelte";
 
@@ -39,6 +40,10 @@
 
 <div class="flex h-screen w-full items-center justify-center px-4">
   <form action="#" onsubmit={login} class="w-full max-w-sm">
-    <LoginForm failed={appUser.failedLogin} ssoAction={redirectToSSO} />
+    <LoginForm
+      failed={appUser.failedLogin}
+      ssoAction={redirectToSSO}
+      message={LOGIN_MESSAGE}
+    />
   </form>
 </div>

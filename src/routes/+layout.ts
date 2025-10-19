@@ -31,7 +31,7 @@ export async function load({ url, fetch }) {
             console.log("Auto login for dev");
             return {
                 user: {
-                    roles: ["admin", "power"],
+                    roles: ["Admin", "Trusted"],
                     email: "auto-login@example.com",
                     tokenValidity: Date.now() + TOKEN_VALIDITY_MINUTES_MINIMUM * 60000 * 1000
                 }

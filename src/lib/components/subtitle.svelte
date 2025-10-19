@@ -4,12 +4,13 @@
     $props();
   const ariaLevel = level + 1;
   const elementName = `h${ariaLevel}`;
-  const fontSize = 4 - level;
+  const fontSize = level === 1 ? "lg" : "base";
+  const marginBottom = level === 1 ? "2" : "1";
 </script>
 
 <svelte:element
   this={elementName}
-  class="text-{fontSize}xl font-bold mb-6"
+  class="text-{fontSize} font-bold mb-{marginBottom}"
   aria-level={ariaLevel}
   >{@render children()}
 </svelte:element>

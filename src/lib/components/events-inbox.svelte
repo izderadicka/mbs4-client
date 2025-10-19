@@ -171,7 +171,3 @@
     </ScrollArea>
   </SheetContent>
 </Sheet>
-
-<style>
-  /* keep styling minimal; rely on shadcn/tailwind defaults */
-</style>
