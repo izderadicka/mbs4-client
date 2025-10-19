@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { appUser } from "$lib/globals.svelte";
+  import { appUser } from "$lib/globals";
 
   onMount(() => {
     if (!appUser.user) {

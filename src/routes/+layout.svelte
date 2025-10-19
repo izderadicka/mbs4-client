@@ -7,7 +7,7 @@
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import BreadcrumbNav from "$lib/components/breadcrumb-nav.svelte";
   import type { User } from "$lib/types/app";
-  import { appUser } from "$lib/globals.svelte";
+  import { appUser } from "$lib/globals";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import EventsInbox from "$lib/components/events-inbox.svelte";

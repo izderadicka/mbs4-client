@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appUser, breadcrumb } from "$lib/globals.svelte";
+  import { appUser, breadcrumb } from "$lib/globals";
   import Title from "$lib/components/title.svelte";
 
   breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];

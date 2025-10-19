@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { breadcrumb } from "$lib/globals.svelte";
+  import { breadcrumb } from "$lib/globals";
   breadcrumb.path = [];
   import BookAutocomplete from "$lib/components/search-ebook.svelte";
   import { goto } from "$app/navigation";

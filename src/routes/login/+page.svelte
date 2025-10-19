@@ -2,8 +2,8 @@
   import { goto } from "$app/navigation";
   import { apiClient } from "$lib/api/client";
   import LoginForm from "$lib/components/login-form.svelte";
-  import { appUser } from "$lib/globals.svelte";
-  import { breadcrumb } from "$lib/globals.svelte";
+  import { appUser } from "$lib/globals";
+  import { breadcrumb } from "$lib/globals";
 
   breadcrumb.path = [{ name: "Login", path: "/login" }];
   console.log("login");

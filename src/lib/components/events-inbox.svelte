@@ -16,7 +16,7 @@
   // Icon (lucide-svelte)
   import BellRing from "@lucide/svelte/icons/bell-ring";
   import { onMount, untrack } from "svelte";
-  import { appUser, events } from "$lib/globals.svelte";
+  import { appUser, events } from "$lib/globals";
   import type { EventItem } from "$lib/types/app";
   import { apiClient } from "$lib/api/client";
   import { AUTOLOGIN } from "$lib/dev";

@@ -1,7 +1,7 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
 import type { EbookSearchItem, ListParams, SeriesSearchItem, TokenPayload } from ".";
-import { appUser } from "$lib/globals.svelte";
+import { appUser } from "$lib/globals";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";

@@ -65,7 +65,7 @@
 </script>
 
 <script lang="ts">
-  import { appUser } from "$lib/globals.svelte";
+  import { appUser } from "$lib/globals";
   import NavMain from "./nav-main.svelte";
   import NavUser from "./nav-user.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";

@@ -3,7 +3,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import { apiClient } from "$lib/api/client";
-  import { breadcrumb, lastEvent } from "$lib/globals.svelte";
+  import { breadcrumb, lastEvent } from "$lib/globals";
   import type {
     EbookMetadata,
     MetaResult,

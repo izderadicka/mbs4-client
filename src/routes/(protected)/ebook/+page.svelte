@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Table from "$lib/components/ui/table/index.js";
-  import { breadcrumb } from "$lib/globals.svelte.js";
+  import { breadcrumb } from "$lib/globals.js";
   const { data } = $props();
   const { ebooks } = data;
 

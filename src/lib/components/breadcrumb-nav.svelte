@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Breadcrumb from "$lib/components/ui/breadcrumb/index.js";
-  import { breadcrumb } from "$lib/globals.svelte";
+  import { breadcrumb } from "$lib/globals";
 </script>
 
 <Breadcrumb.Root>
