@@ -6,7 +6,7 @@ export interface User {
 
 export interface BreadcrumbItem {
     name: string;
-    path: string | null;
+    path?: string;
 };
 
 export interface EventItem {

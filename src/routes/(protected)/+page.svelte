@@ -18,7 +18,7 @@
   };
 
   function onSelect(ebookId: number) {
-    goto(`/book/${ebookId}`);
+    goto(`/ebook/${ebookId}`);
   }
 
   function onSearch(query: string) {

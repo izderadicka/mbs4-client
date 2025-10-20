@@ -1,67 +1,75 @@
 <script lang="ts" module>
   import Settings2Icon from "@lucide/svelte/icons/settings-2";
   import LibraryIcon from "@lucide/svelte/icons/library-big";
-  import LoginIcon from "@lucide/svelte/icons/log-in";
+  import CogIcon from "@lucide/svelte/icons/settings";
+
+  interface InnerMenuItem {
+    title: string;
+    url: string;
+    icon?: any;
+    requiredRole?: string;
+  }
+
+  export interface MenuItem {
+    title: string;
+    url?: string;
+    icon?: any;
+    isOpen?: boolean;
+    items?: InnerMenuItem[];
+    requiredRole?: string;
+  }
 
   // This is sample data.
-  const data = {
-    user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/avatars/shadcn.jpg",
+  const mainMenu: MenuItem[] = [
+    {
+      title: "Library",
+      icon: LibraryIcon,
+      isOpen: true,
+      items: [
+        {
+          title: "Upload new Ebook",
+          url: "/upload",
+          requiredRole: "Trusted",
+        },
+        {
+          title: "Ebooks",
+          url: "/ebook",
+        },
+        {
+          title: "Authors",
+          url: "#",
+        },
+        {
+          title: "Series",
+          url: "#",
+        },
+      ],
     },
-    navPublic: [{ title: "Login", url: "/login", icon: LoginIcon }],
-    navMain: [
-      {
-        title: "Library",
-        url: "#",
-        icon: LibraryIcon,
-        isActive: true,
-        items: [
-          {
-            title: "Upload new Ebook",
-            url: "/upload",
-          },
-          {
-            title: "Ebooks",
-            url: "/ebook",
-          },
-          {
-            title: "Authors",
-            url: "#",
-          },
-          {
-            title: "Series",
-            url: "#",
-          },
-        ],
-      },
 
-      {
-        title: "Settings",
-        url: "#",
-        icon: Settings2Icon,
-        items: [
-          {
-            title: "General",
-            url: "#",
-          },
-          {
-            title: "Team",
-            url: "#",
-          },
-          {
-            title: "Billing",
-            url: "#",
-          },
-          {
-            title: "Limits",
-            url: "#",
-          },
-        ],
-      },
-    ],
-  };
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2Icon,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+      ],
+    },
+
+    {
+      title: "Admin",
+      url: "#",
+      icon: CogIcon,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+      ],
+    },
+  ];
 </script>
 
 <script lang="ts">
@@ -76,8 +84,23 @@
   import { toggleMode as toggleDarkMode } from "mode-watcher";
   import { Button } from "$lib/components/ui/button/index.js";
   import { useSidebar } from "$lib/components/ui/sidebar/index.js";
+  import type { User } from "$lib/types/app";
+  import { afterNavigate } from "$app/navigation";
+
+  afterNavigate(() => {
+    sidebar.setOpenMobile(false);
+    console.log(
+      `afterNavigate, sidebar state is ${sidebar.state}, open is ${sidebar.open}, isMobile is ${sidebar.isMobile} openMobile is ${sidebar.openMobile}`
+    );
+  });
 
   const sidebar = useSidebar();
+
+  function filterMenuForUser(menu: Record<string, any>[], user: User | null) {
+    if (user) {
+      return menu;
+    }
+  }
 
   let {
     ref = $bindable(null),
@@ -95,7 +118,7 @@
     </h1></Sidebar.Header
   >
   <Sidebar.Content>
-    <NavMain items={appUser.user ? data.navMain : data.navPublic} />
+    <NavMain items={mainMenu} />
   </Sidebar.Content>
   <Sidebar.Footer>
     <Button onclick={toggleDarkMode} variant="outline" size="icon">

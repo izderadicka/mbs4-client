@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { EbookSearchItem, ListParams, SeriesSearchItem, TokenPayload } from ".";
+import type { Ebook, EbookSearchItem, ListParams, SeriesSearchItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -202,6 +202,11 @@ export class ApiClient {
     async searchSeries(query: string, limit?: number, signal?: AbortSignal): Promise<SeriesSearchItem[]> {
         const { data, response } = await this.client.GET("/search", { signal, params: { query: { query, num_results: limit, what: "series" } } });
         return this.checkResponse(response, data as SeriesSearchItem[]);
+    }
+
+    async getEbook(id: number): Promise<Ebook> {
+        const { data, response } = await this.client.GET(`/api/ebook/{id}`, { params: { path: { id } } });
+        return this.checkResponse(response, data);
     }
 
     createEventSource(lastEventId: string | null): EventSource {
