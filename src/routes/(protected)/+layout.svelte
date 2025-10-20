@@ -2,10 +2,10 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { appUser } from "$lib/globals.svelte";
-  import AppSidebar from "$lib/components/app-sidebar.svelte";
+  import AppSidebar from "$lib/components/navigation/app-sidebar.svelte";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import BreadcrumbNav from "$lib/components/breadcrumb-nav.svelte";
+  import BreadcrumbNav from "$lib/components/navigation/breadcrumb-nav.svelte";
   import EventsInbox from "$lib/components/events-inbox.svelte";
 
   onMount(() => {

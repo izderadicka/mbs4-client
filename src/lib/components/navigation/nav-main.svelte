@@ -2,7 +2,7 @@
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-  import type { MenuItem } from "$lib/components/app-sidebar.svelte";
+  import type { MenuItem } from "$lib/components/navigation/app-sidebar.svelte";
   import { appUser } from "$lib/globals.svelte";
 
   function hasRole(item: MenuItem) {

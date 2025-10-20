@@ -74,8 +74,8 @@
 
 <script lang="ts">
   import { appUser } from "$lib/globals.svelte";
-  import NavMain from "./nav-main.svelte";
-  import NavUser from "./nav-user.svelte";
+  import NavMain from "$lib/components/navigation/nav-main.svelte";
+  import NavUser from "$lib/components/navigation/nav-user.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import type { ComponentProps } from "svelte";
   import SunIcon from "@lucide/svelte/icons/sun";
