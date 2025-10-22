@@ -66,6 +66,13 @@ export const EbookSchema = z.object({
     // cover_file: z.nullable(z.string()),
     // version: z.nullable(z.bigint().positive()),
 
+}).superRefine((data, ctx) => {
+    if (data.series && data.series_index == null) {
+        ctx.addIssue({ code: "custom", message: "Series index is required, if series is selected.", path: ["series_index"] });
+    }
+    if (data.series_index != null && data.series == null) {
+        ctx.addIssue({ code: "custom", message: "Series is required, if series index is selected.", path: ["series"] });
+    }
 });
 
 export const SeriesSchema = z.object({

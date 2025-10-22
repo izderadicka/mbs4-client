@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { Ebook, EbookSearchItem, GenreShort, LanguageShort, ListParams, SeriesSearchItem, TokenPayload } from ".";
+import type { CreateSeries, Ebook, EbookSearchItem, GenreShort, LanguageShort, ListParams, Series, SeriesSearchItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -230,6 +230,12 @@ export class ApiClient {
         const genres = this.checkResponse(response, data);
         this.genreCache = { date: new Date(), data: genres };
         return genres;
+    }
+
+    async createSeries(series: CreateSeries): Promise<Series> {
+        const { data, response } = await this.client.POST("/api/series", { body: series });
+        return this.checkResponse(response, data);
+
     }
 
     createEventSource(lastEventId: string | null): EventSource {

@@ -2,6 +2,7 @@
   import "../app.css";
 
   import { ModeWatcher } from "mode-watcher";
+  import { Toaster } from "$lib/components/ui/sonner/index.js";
 
   import type { User } from "$lib/types/app";
   import { appUser } from "$lib/globals.svelte";
@@ -26,4 +27,5 @@
 </script>
 
 <ModeWatcher />
+<Toaster position="top-center" />
 {@render children()}

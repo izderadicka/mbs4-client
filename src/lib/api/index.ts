@@ -2,10 +2,12 @@ import type { components } from "./types";
 
 export type OperationTicket = components["schemas"]["OperationTicket"];
 export type UploadInfo = components["schemas"]["UploadInfo"];
+// Series
 export type SeriesShort = components["schemas"]["SeriesShort"];
 export type CreateSeries = components["schemas"]["CreateSeries"];
 export type UpdateSeries = components["schemas"]["UpdateSeries"];
 export type Series = components["schemas"]["Series"];
+
 export type Ebook = components["schemas"]["Ebook"];
 export type AuthorShort = components["schemas"]["AuthorShort"];
 export type LanguageShort = components["schemas"]["LanguageShort"];

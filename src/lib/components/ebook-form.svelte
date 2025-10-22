@@ -43,11 +43,11 @@
     </div>
 
     <div class="md:col-span-1">
-      <Form.Field {form} name="series-index">
+      <Form.Field {form} name="series_index">
         <Form.Control>
           {#snippet children({ props })}
             <Form.Label>Series Index</Form.Label>
-            <Input {...props} bind:value={$formData.seriesIndex} />
+            <Input {...props} bind:value={$formData.series_index} />
           {/snippet}
         </Form.Control>
         <Form.FieldErrors />

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { SeriesShort } from "$lib/api";
+  import type { CreateSeries, SeriesShort } from "$lib/api";
   const SERIES: SeriesShort[] = [
     { id: 1, title: "Lord of the Rings" },
     { id: 2, title: "Hobbit" },
@@ -31,6 +31,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import SeriesForm from "../series-form.svelte";
   import { apiClient } from "$lib/api/client";
+  import { toast } from "svelte-sonner";
 
   let {
     form,
@@ -91,9 +92,16 @@
     dialogOpen = false;
   }
 
-  function onCreate(series: SeriesShort) {
+  async function onCreate(series: CreateSeries) {
     closeDialog();
-    value = { id: series.id, title: series.title };
+    try {
+      const newSeries = await apiClient.createSeries(series);
+      value = { id: newSeries.id, title: newSeries.title };
+    } catch (error) {
+      console.error("Faild to create series", error);
+      toast.error("Failed to create series");
+    }
+
     closeAndFocusTrigger();
   }
 </script>
