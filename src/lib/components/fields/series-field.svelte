@@ -79,6 +79,7 @@
       series = res.map((s) => s.doc.Series);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to search series");
     }
   }
 

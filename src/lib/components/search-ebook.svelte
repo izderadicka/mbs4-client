@@ -6,6 +6,7 @@
   import Loader2 from "@lucide/svelte/icons/loader-circle";
   import { on } from "svelte/events";
   import type { EbookSearchItem } from "$lib/api";
+  import { toast } from "svelte-sonner";
 
   type Loader = (q: string, signal: AbortSignal) => Promise<EbookSearchItem[]>;
   type SelectHandler = (i: number) => void;
@@ -88,6 +89,7 @@
         console.log("Search aborted");
       } else {
         console.error("Search error", e);
+        toast.error("Failed to search ebooks");
         results = [];
         open = false;
         highlight = -1;
