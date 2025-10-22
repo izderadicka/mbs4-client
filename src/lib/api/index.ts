@@ -8,6 +8,8 @@ export type UpdateSeries = components["schemas"]["UpdateSeries"];
 export type Series = components["schemas"]["Series"];
 export type Ebook = components["schemas"]["Ebook"];
 export type AuthorShort = components["schemas"]["AuthorShort"];
+export type LanguageShort = components["schemas"]["LanguageShort"];
+
 
 type EbookDoc = components["schemas"]["EbookDoc"];
 

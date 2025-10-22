@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { Ebook, EbookSearchItem, ListParams, SeriesSearchItem, TokenPayload } from ".";
+import type { Ebook, EbookSearchItem, LanguageShort, ListParams, SeriesSearchItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -207,6 +207,17 @@ export class ApiClient {
     async getEbook(id: number): Promise<Ebook> {
         const { data, response } = await this.client.GET(`/api/ebook/{id}`, { params: { path: { id } } });
         return this.checkResponse(response, data);
+    }
+    private langCache: { date: Date, data: LanguageShort[] } | null = null;
+    async listLanguages(): Promise<LanguageShort[]> {
+        if (this.langCache && this.langCache.date > new Date(Date.now() - 1000 * 60 * 60)) {
+            console.log("Using cached languages");
+            return this.langCache.data;
+        }
+        const { data, response } = await this.client.GET("/api/language/all");
+        const languages = this.checkResponse(response, data);
+        this.langCache = { date: new Date(), data: languages };
+        return languages;
     }
 
     createEventSource(lastEventId: string | null): EventSource {

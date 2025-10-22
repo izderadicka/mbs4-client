@@ -10,13 +10,14 @@
   import { goto } from "$app/navigation";
   import Label from "./ui/label/label.svelte";
   import * as Select from "$lib/components/ui/select/index.js";
+  import { DEFAULT_PAGE_SIZE } from "$lib/config";
 
   type Props = {
     count: number;
     pageSize: number;
     page: number;
   };
-  let { count, pageSize, page }: Props = $props();
+  let { count, pageSize = DEFAULT_PAGE_SIZE, page }: Props = $props();
 
   const isDesktop = new MediaQuery("(min-width: 768px)");
 

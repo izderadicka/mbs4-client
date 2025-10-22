@@ -7,6 +7,7 @@
   import { EbookSchema } from "$lib/schemas.js";
   import { Textarea } from "./ui/textarea";
   import SeriesField from "./fields/series-field.svelte";
+  import LanguageField from "./fields/language-field.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
@@ -51,6 +52,12 @@
         <Form.FieldErrors />
         <Form.Description>Index in series</Form.Description>
       </Form.Field>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-1">
+      <LanguageField {form} bind:value={$formData.language} />
     </div>
   </div>
 
