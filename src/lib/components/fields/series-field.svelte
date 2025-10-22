@@ -104,9 +104,9 @@
       {#snippet children({ props })}
         <Form.Label>Series</Form.Label>
         <Popover.Trigger
+          {...props}
           bind:ref={triggerRef}
           type="button"
-          {...props}
           class={cn(
             buttonVariants({ variant: "outline" }),
             "w-full justify-between"

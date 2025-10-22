@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { Ebook, EbookSearchItem, LanguageShort, ListParams, SeriesSearchItem, TokenPayload } from ".";
+import type { Ebook, EbookSearchItem, GenreShort, LanguageShort, ListParams, SeriesSearchItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -218,6 +218,18 @@ export class ApiClient {
         const languages = this.checkResponse(response, data);
         this.langCache = { date: new Date(), data: languages };
         return languages;
+    }
+
+    private genreCache: { date: Date, data: GenreShort[] } | null = null;
+    async listGenres(): Promise<GenreShort[]> {
+        if (this.genreCache && this.genreCache.date > new Date(Date.now() - 1000 * 60 * 60)) {
+            console.log("Using cached genres");
+            return this.genreCache.data;
+        }
+        const { data, response } = await this.client.GET("/api/genre/all");
+        const genres = this.checkResponse(response, data);
+        this.genreCache = { date: new Date(), data: genres };
+        return genres;
     }
 
     createEventSource(lastEventId: string | null): EventSource {

@@ -8,6 +8,7 @@
   import { Textarea } from "./ui/textarea";
   import SeriesField from "./fields/series-field.svelte";
   import LanguageField from "./fields/language-field.svelte";
+  import GenreField from "./fields/genre-field.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
@@ -58,6 +59,10 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="md:col-span-1">
       <LanguageField {form} bind:value={$formData.language} />
+    </div>
+
+    <div class="md:col-span-1">
+      <GenreField {form} bind:value={$formData.genres} />
     </div>
   </div>
 

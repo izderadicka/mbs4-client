@@ -24,10 +24,16 @@
   onMount(async () => {
     languages = await apiClient.listLanguages();
   });
-
+  // sync the selected code with the value
   $effect(() => {
     if (selectedCode) {
       value = languagesMap[selectedCode];
+    }
+  });
+
+  $effect(() => {
+    if (!value) {
+      selectedCode = "";
     }
   });
 </script>
@@ -43,7 +49,12 @@
         </Select.Trigger>
         <Select.Content>
           {#each languages as language}
-            <Select.Item value={language.code}>{language.name}</Select.Item>
+            <Select.Item
+              value={language.code}
+              onselect={() => {
+                console.debug("selected", language);
+              }}>{language.name}</Select.Item
+            >
           {/each}
         </Select.Content>
       </Select.Root>

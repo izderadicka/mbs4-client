@@ -8,11 +8,29 @@ const SeriesInnerSchema = z.object({
 
 const LanguageInnerSchema = z.object({
     code: z.string().min(1).max(3),
-    name: z.string().min(1).max(255),
+    name: z.string().min(1).max(63),
     id: z.number().positive(),
 });
 
-const LanguageShortSchema = z.any().transform((val, ctx) => {
+const GenresInnerSchema = z.array(z.object({
+    id: z.number().positive(),
+    name: z.string().min(1).max(63),
+})).max(2);
+
+const GenresSchema = z.any().transform((val, ctx) => {
+    const r = GenresInnerSchema.safeParse(val);
+    if (!r.success) {
+        if (r.error?.issues && r.error.issues.findIndex((i) => i.code === "too_big") !== -1) {
+            ctx.addIssue({ code: "custom", message: "Too many genres.", path: [] });
+        } else {
+            ctx.addIssue({ code: "custom", message: "Genres are invalid.", path: [] });
+        }
+        return z.NEVER; // stops here; no field-level issues from inner schema
+    }
+    return r.data;
+});
+
+const LanguageSchema = z.any().transform((val, ctx) => {
     const r = LanguageInnerSchema.safeParse(val);
     if (!r.success) {
         // console.log("Language result", r);
@@ -41,10 +59,10 @@ export const EbookSchema = z.object({
     //     first_name: z.nullable(z.string()),
     //     last_name: z.string(),
     // })),
-    // genres: z.array(z.string()),
-    language: LanguageShortSchema,
+    genres: z.nullable(GenresSchema),
+    language: LanguageSchema,
     series: z.nullable(SeriesShortSchema),
-    seriesIndex: z.nullable(z.number().min(0)),
+    series_index: z.nullable(z.coerce.number().min(0)),
     // cover_file: z.nullable(z.string()),
     // version: z.nullable(z.bigint().positive()),
 
