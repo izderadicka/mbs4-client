@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { CreateSeries, SeriesShort } from "$lib/api";
+  import type { CreateSeries, SeriesSearchItem, SeriesShort } from "$lib/api";
   const SERIES: SeriesShort[] = [
     { id: 1, title: "Lord of the Rings" },
     { id: 2, title: "Hobbit" },
@@ -32,6 +32,7 @@
   import SeriesForm from "../series-form.svelte";
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
+  import SearchSupport from "./search-support.svelte";
 
   let {
     form,
@@ -57,51 +58,6 @@
     });
   }
 
-  const DEBOUNCE_MS = 600;
-  const MIN_FILTER_LENGTH = 3;
-  let debounceId: number | null = null;
-  let inFlightController: AbortController | null = null;
-  let requestSequence = 0;
-
-  onDestroy(() => {
-    inFlightController?.abort();
-    inFlightController = null;
-    if (debounceId) clearTimeout(debounceId);
-    debounceId = null;
-  });
-
-  function onFilterInput(event: Event) {
-    if (debounceId) {
-      clearTimeout(debounceId);
-      debounceId = null;
-    }
-
-    if (filter.length < MIN_FILTER_LENGTH) {
-      return;
-    }
-
-    debounceId = window.setTimeout(() => runSearch(), DEBOUNCE_MS);
-  }
-
-  async function runSearch() {
-    try {
-      const seq = ++requestSequence;
-      inFlightController?.abort();
-      const controller = new AbortController();
-      inFlightController = controller;
-      const res = await apiClient.searchSeries(filter, 10, controller.signal);
-      if (seq !== requestSequence) return; // stale response
-      series = res.map((s) => s.doc.Series);
-    } catch (error: any) {
-      if (error?.name === "AbortError") {
-        console.log("Search aborted");
-        return;
-      }
-      console.error(error);
-      toast.error("Failed to search series");
-    }
-  }
-
   let dialogOpen = $state(false);
 
   function openDialog() {
@@ -124,7 +80,17 @@
 
     closeAndFocusTrigger();
   }
+
+  async function search(query: string, limit: number, signal: AbortSignal) {
+    return await apiClient.searchSeries(query, limit, signal);
+  }
+
+  async function onResult(res: SeriesSearchItem[] | null) {
+    series = res ? res.map((item) => item.doc.Series) : [];
+  }
 </script>
+
+<SearchSupport {filter} {search} {onResult} />
 
 <Form.Field {form} name="series">
   <Popover.Root bind:open>
@@ -150,11 +116,7 @@
 
     <Popover.Content class=" p-0" align="start">
       <Command.Root shouldFilter={false}>
-        <Command.Input
-          placeholder="Search series..."
-          bind:value={filter}
-          oninput={onFilterInput}
-        />
+        <Command.Input placeholder="Search series..." bind:value={filter} />
         <Command.List>
           <Command.Empty>No series found.</Command.Empty>
           <Command.Group value="commands">
