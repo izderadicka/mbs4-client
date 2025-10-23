@@ -22,7 +22,7 @@
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
   import ClearIcon from "@lucide/svelte/icons/x";
   import NewSeriesIcon from "@lucide/svelte/icons/package-plus";
-  import { tick } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import { buttonVariants } from "$lib/components/ui/button";
@@ -60,6 +60,16 @@
   const DEBOUNCE_MS = 600;
   const MIN_FILTER_LENGTH = 3;
   let debounceId: number | null = null;
+  let inFlightController: AbortController | null = null;
+  let requestSequence = 0;
+
+  onDestroy(() => {
+    inFlightController?.abort();
+    inFlightController = null;
+    if (debounceId) clearTimeout(debounceId);
+    debounceId = null;
+  });
+
   function onFilterInput(event: Event) {
     if (debounceId) {
       clearTimeout(debounceId);
@@ -75,9 +85,18 @@
 
   async function runSearch() {
     try {
-      const res = await apiClient.searchSeries(filter, 10);
+      const seq = ++requestSequence;
+      inFlightController?.abort();
+      const controller = new AbortController();
+      inFlightController = controller;
+      const res = await apiClient.searchSeries(filter, 10, controller.signal);
+      if (seq !== requestSequence) return; // stale response
       series = res.map((s) => s.doc.Series);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        console.log("Search aborted");
+        return;
+      }
       console.error(error);
       toast.error("Failed to search series");
     }
@@ -99,7 +118,7 @@
       const newSeries = await apiClient.createSeries(series);
       value = { id: newSeries.id, title: newSeries.title };
     } catch (error) {
-      console.error("Faild to create series", error);
+      console.error("Failed to create series", error);
       toast.error("Failed to create series");
     }
 

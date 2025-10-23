@@ -32,6 +32,13 @@ export interface SeriesSearchItem {
     };
 };
 
+export interface AuthorSearchItem {
+    score: number;
+    doc: {
+        Author: AuthorShort;
+    };
+}
+
 export interface TokenPayload {
     sub: string;
     exp: number;

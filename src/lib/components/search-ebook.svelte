@@ -7,6 +7,8 @@
   import { on } from "svelte/events";
   import type { EbookSearchItem } from "$lib/api";
   import { toast } from "svelte-sonner";
+  import { apiClient } from "$lib/api/client";
+  import { MAX_SEARCH_RESULTS } from "$lib/config";
 
   type Loader = (q: string, signal: AbortSignal) => Promise<EbookSearchItem[]>;
   type SelectHandler = (i: number) => void;
@@ -14,7 +16,7 @@
 
   // ---- Props (Svelte 5 runes) ----
   const {
-    load, // required (q) => Promise<BookItem[]>
+    load = doSearch, // required (q) => Promise<BookItem[]>
     maxResults = 1000, // as safety limit
     placeholder = "Search books…",
     debounceMs = 600,
@@ -25,7 +27,7 @@
     onSearch = null,
     renderItem,
   }: {
-    load: Loader;
+    load?: Loader;
     maxResults?: number;
     placeholder?: string;
     debounceMs?: number;
@@ -97,6 +99,16 @@
     } finally {
       if (seq === requestSequence) loading = false;
     }
+  }
+
+  async function doSearch(
+    q: string,
+    signal: AbortSignal
+  ): Promise<EbookSearchItem[]> {
+    if (!q.trim()) return [];
+
+    const ebooks = await apiClient.searchEbook(q, MAX_SEARCH_RESULTS, signal);
+    return ebooks;
   }
 
   // ---- Select / Submit ----
