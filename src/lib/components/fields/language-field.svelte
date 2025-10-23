@@ -5,6 +5,7 @@
   import { onMount } from "svelte";
   import { Field } from "formsnap";
   import type { SuperForm } from "sveltekit-superforms";
+  import { toast } from "svelte-sonner";
   interface Language {
     id: number;
     name: string;
@@ -22,7 +23,12 @@
   );
   let selectedCode = $state("");
   onMount(async () => {
-    languages = await apiClient.listLanguages();
+    try {
+      languages = await apiClient.listLanguages();
+    } catch (error) {
+      console.error("Failed to fetch languages", error);
+      toast.error("Failed to fetch languages");
+    }
   });
   // sync the selected code with the value
   $effect(() => {

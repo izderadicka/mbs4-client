@@ -2,16 +2,16 @@
   import { type GenreShort } from "$lib/api";
 
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
-  import ClearIcon from "@lucide/svelte/icons/x";
+  import ClearButton from "$lib/components/fragments/clear-button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import * as Command from "$lib/components/ui/command/index.js";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import type { SuperForm } from "sveltekit-superforms";
   import { onMount } from "svelte";
-  import Button from "../ui/button/button.svelte";
   import { tick } from "svelte";
   import { apiClient } from "$lib/api/client";
   import Badge from "../ui/badge/badge.svelte";
+  import { toast } from "svelte-sonner";
 
   let {
     value = $bindable(),
@@ -24,7 +24,12 @@
   let freeGenres = $derived(genres.filter((g) => !isSelected(g.id)));
 
   onMount(async () => {
-    genres = await apiClient.listGenres();
+    try {
+      genres = await apiClient.listGenres();
+    } catch (error) {
+      console.error("Failed to list genres", error);
+      toast.error("Failed to list genres");
+    }
   });
 
   function isSelected(gid: number): boolean {
@@ -47,7 +52,7 @@
 <Form.Field {form} name="genres">
   <Popover.Root bind:open>
     <Form.Control>
-      <Form.Label>Genre</Form.Label>
+      <Form.Label>Genres</Form.Label>
       <Popover.Trigger bind:ref={triggerRef}>
         {#snippet child({ props })}
           <div
@@ -66,21 +71,15 @@
       "
             role="combobox"
             aria-expanded={open}
+            tabindex="0"
           >
             <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
               {#each value || [] as genre (genre.id)}
                 <Badge variant="outline" class="ml-1"
                   ><span>{genre.name}</span>
-                  <Button
-                    variant="ghost"
-                    class="size-4"
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      removeGenre(genre.id);
-                    }}
-                    onpointerdown={(e) => e.stopPropagation()}
-                    ><ClearIcon /></Button
-                  ></Badge
+                  <ClearButton
+                    onActivation={() => removeGenre(genre.id)}
+                  /></Badge
                 >
               {/each}
             </div>

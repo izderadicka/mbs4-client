@@ -9,6 +9,7 @@
   import SeriesField from "./fields/series-field.svelte";
   import LanguageField from "./fields/language-field.svelte";
   import GenreField from "./fields/genre-field.svelte";
+  import AuthorField from "./fields/author-field.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
@@ -36,6 +37,8 @@
     <Form.FieldErrors />
     <Form.Description>Title of the ebook (without series)</Form.Description>
   </Form.Field>
+
+  <AuthorField {form} bind:value={$formData.authors} />
 
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <div class="md:col-span-3">
