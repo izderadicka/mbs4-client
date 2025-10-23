@@ -12,7 +12,7 @@
 <Button
   {...restProps}
   variant="ghost"
-  class="size-{size} cursor-pointer"
+  class="size-{size} cursor-pointer align-middle"
   onclick={(e) => {
     e.stopPropagation();
     onActivation();
