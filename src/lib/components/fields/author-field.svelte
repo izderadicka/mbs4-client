@@ -57,18 +57,21 @@
 
   let dialog: CreateDialog;
 
+  function selectAuthor(author: AuthorShort) {
+    value = [...(value || []), author];
+    filter = "";
+    authors = [];
+  }
+
   async function onCreate(author: CreateAuthor) {
     dialog.close();
     try {
       const newAuthor = await apiClient.createAuthor(author);
-      value = [
-        ...(value || []),
-        {
-          id: newAuthor.id,
-          last_name: newAuthor.last_name,
-          first_name: newAuthor.first_name,
-        },
-      ];
+      selectAuthor({
+        id: newAuthor.id,
+        last_name: newAuthor.last_name,
+        first_name: newAuthor.first_name,
+      });
     } catch (error) {
       console.error("Failed to create author", error);
       toast.error("Failed to create author");
@@ -127,19 +130,28 @@
     <Popover.Content class="w-[200px] p-0" align="start">
       <Command.Root shouldFilter={false}>
         <Command.Input placeholder="Search author ..." bind:value={filter} />
+
+        <Command.Group value="authors">
+          <Command.List>
+            <Command.Empty>No author found.</Command.Empty>
+            <Command.Group value="frameworks">
+              {#each freeAuthors as author, i (author.id)}
+                <Command.Item
+                  value={String(author.id)}
+                  onSelect={() => {
+                    selectAuthor(author);
+                    closeAndFocusTrigger();
+                  }}
+                >
+                  {author.first_name}
+                  {author.last_name}
+                </Command.Item>
+              {/each}
+            </Command.Group>
+          </Command.List>
+        </Command.Group>
+        <Command.Separator forceMount={true} />
         <Command.Group value="commands">
-          {#if value}
-            <Command.Item
-              onSelect={() => {
-                value = null;
-                closeAndFocusTrigger();
-              }}
-              value="__reset_cmd__"
-            >
-              <ClearIcon />
-              No authors</Command.Item
-            >
-          {/if}
           {#if filter && filter.length >= 3}
             <Command.Item
               value="__new_cmd__"
@@ -151,28 +163,18 @@
               Create new author</Command.Item
             >
           {/if}
-        </Command.Group>
-        <Command.Separator forceMount={true} />
-        <Command.Group value="authors">
-          <Command.List>
-            <Command.Empty>No author found.</Command.Empty>
-            <Command.Group value="frameworks">
-              {#each freeAuthors as author (author.id)}
-                <Command.Item
-                  value={String(author.id)}
-                  onSelect={() => {
-                    value = [...(value || []), author];
-                    filter = "";
-                    authors = [];
-                    closeAndFocusTrigger();
-                  }}
-                >
-                  {author.first_name}
-                  {author.last_name}
-                </Command.Item>
-              {/each}
-            </Command.Group>
-          </Command.List>
+          {#if value && value.length > 0}
+            <Command.Item
+              onSelect={() => {
+                value = null;
+                closeAndFocusTrigger();
+              }}
+              value="__reset_cmd__"
+            >
+              <ClearIcon />
+              No authors</Command.Item
+            >
+          {/if}
         </Command.Group>
       </Command.Root>
     </Popover.Content>

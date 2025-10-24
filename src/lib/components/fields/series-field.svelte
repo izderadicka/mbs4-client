@@ -109,35 +109,10 @@
     <Popover.Content class=" p-0" align="start">
       <Command.Root shouldFilter={false}>
         <Command.Input placeholder="Search series..." bind:value={filter} />
-        <Command.List>
-          <Command.Empty>No series found.</Command.Empty>
-          <Command.Group value="commands">
-            {#if value}
-              <Command.Item
-                onSelect={() => {
-                  value = null;
-                  closeAndFocusTrigger();
-                }}
-                value="__reset_cmd__"
-              >
-                <ClearIcon />
-                No series</Command.Item
-              >
-            {/if}
-            {#if filter && filter.length >= 3}
-              <Command.Item
-                value="__new_cmd__"
-                onSelect={() => {
-                  dialog.open();
-                }}
-              >
-                <NewSeriesIcon />
-                Create new series</Command.Item
-              >
-            {/if}
-          </Command.Group>
-          <Command.Separator forceMount={true} />
-          <Command.Group value="series">
+
+        <Command.Group value="series">
+          <Command.List>
+            <Command.Empty>No series found.</Command.Empty>
             {#each series as ser (ser.id)}
               <Command.Item
                 value={`${ser.id}-${ser.title}`}
@@ -152,8 +127,34 @@
                 {ser.title}
               </Command.Item>
             {/each}
-          </Command.Group>
-        </Command.List>
+          </Command.List>
+        </Command.Group>
+        <Command.Separator forceMount={true} />
+        <Command.Group value="commands">
+          {#if filter && filter.length >= 3}
+            <Command.Item
+              value="__new_cmd__"
+              onSelect={() => {
+                dialog.open();
+              }}
+            >
+              <NewSeriesIcon />
+              Create new series</Command.Item
+            >
+          {/if}
+          {#if value}
+            <Command.Item
+              onSelect={() => {
+                value = null;
+                closeAndFocusTrigger();
+              }}
+              value="__reset_cmd__"
+            >
+              <ClearIcon />
+              No series</Command.Item
+            >
+          {/if}
+        </Command.Group>
       </Command.Root>
     </Popover.Content>
   </Popover.Root>

@@ -10,6 +10,7 @@
   import LanguageField from "./fields/language-field.svelte";
   import GenreField from "./fields/genre-field.svelte";
   import AuthorField from "./fields/author-field.svelte";
+  import Button from "./ui/button/button.svelte";
 
   let { ebookData } = $props();
   if (!ebookData) {
@@ -79,5 +80,11 @@
     <Form.FieldErrors />
     <Form.Description>Detailed description of ebook</Form.Description>
   </Form.Field>
-  <Form.Button>Submit</Form.Button>
+  <div class="flex justify-end gap-20">
+    <Button variant="destructive">Delete</Button>
+    <div class="flex gap-2">
+      <Button variant="outline">Cancel</Button>
+      <Form.Button>Submit</Form.Button>
+    </div>
+  </div>
 </form>

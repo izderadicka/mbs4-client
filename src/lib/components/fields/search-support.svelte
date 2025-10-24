@@ -16,9 +16,15 @@
       signal: AbortSignal
     ) => Promise<T[] | null>;
     onResult: (result: T[] | null) => void;
+    minQueryLength?: number;
   };
 
-  let { filter, search, onResult }: Props<any> = $props();
+  let {
+    filter,
+    search,
+    onResult,
+    minQueryLength = MIN_FILTER_LENGTH,
+  }: Props<any> = $props();
 
   onDestroy(() => {
     inFlightController?.abort();
@@ -33,7 +39,7 @@
       debounceId = null;
     }
 
-    if (filter.length < MIN_FILTER_LENGTH) {
+    if (filter.length < minQueryLength) {
       return;
     }
 
