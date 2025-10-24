@@ -8,8 +8,17 @@ export type CreateSeries = components["schemas"]["CreateSeries"];
 export type UpdateSeries = components["schemas"]["UpdateSeries"];
 export type Series = components["schemas"]["Series"];
 
+// Ebook
 export type Ebook = components["schemas"]["Ebook"];
+export type EbookShort = components["schemas"]["EbookShort"];
+export type CreateEbook = components["schemas"]["CreateEbook"];
+export type UpdateEbook = components["schemas"]["UpdateEbook"];
+// Author
 export type AuthorShort = components["schemas"]["AuthorShort"];
+export type CreateAuthor = components["schemas"]["CreateAuthor"];
+export type UpdateAuthor = components["schemas"]["UpdateAuthor"];
+export type Author = components["schemas"]["Author"];
+
 export type LanguageShort = components["schemas"]["LanguageShort"];
 export type GenreShort = components["schemas"]["GenreShort"];
 

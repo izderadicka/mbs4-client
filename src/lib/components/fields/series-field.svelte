@@ -22,17 +22,17 @@
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
   import ClearIcon from "@lucide/svelte/icons/x";
   import NewSeriesIcon from "@lucide/svelte/icons/package-plus";
-  import { onDestroy, tick } from "svelte";
+  import { tick } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import { buttonVariants } from "$lib/components/ui/button";
   import { cn } from "$lib/utils.js";
   import type { SuperForm } from "sveltekit-superforms";
-  import * as Dialog from "$lib/components/ui/dialog";
   import SeriesForm from "../series-form.svelte";
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
   import SearchSupport from "./search-support.svelte";
+  import CreateDialog from "$lib/components/fragments/create-dialog.svelte";
 
   let {
     form,
@@ -58,18 +58,10 @@
     });
   }
 
-  let dialogOpen = $state(false);
-
-  function openDialog() {
-    dialogOpen = true;
-  }
-
-  function closeDialog() {
-    dialogOpen = false;
-  }
+  let dialog: CreateDialog;
 
   async function onCreate(series: CreateSeries) {
-    closeDialog();
+    dialog.close();
     try {
       const newSeries = await apiClient.createSeries(series);
       value = { id: newSeries.id, title: newSeries.title };
@@ -132,11 +124,11 @@
                 No series</Command.Item
               >
             {/if}
-            {#if filter}
+            {#if filter && filter.length >= 3}
               <Command.Item
                 value="__new_cmd__"
                 onSelect={() => {
-                  openDialog();
+                  dialog.open();
                 }}
               >
                 <NewSeriesIcon />
@@ -169,14 +161,6 @@
   <Form.Description>Series title</Form.Description>
 </Form.Field>
 
-<Dialog.Root bind:open={dialogOpen}>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Create new series</Dialog.Title>
-      <Dialog.Description
-        >Before creating a new series check that it doesn't already exist</Dialog.Description
-      >
-    </Dialog.Header>
-    <SeriesForm seriesData={{ title: filter }} {onCreate} />
-  </Dialog.Content>
-</Dialog.Root>
+<CreateDialog bind:this={dialog} entityName="series">
+  <SeriesForm seriesData={{ title: filter }} {onCreate} />
+</CreateDialog>

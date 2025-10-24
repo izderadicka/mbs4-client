@@ -1,16 +1,24 @@
 <script lang="ts">
-  import { type AuthorSearchItem, type AuthorShort } from "$lib/api";
+  import {
+    type AuthorSearchItem,
+    type AuthorShort,
+    type CreateAuthor,
+  } from "$lib/api";
 
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
+  import ClearIcon from "@lucide/svelte/icons/x";
+  import NewAuthorIcon from "@lucide/svelte/icons/user-plus";
   import ClearButton from "$lib/components/fragments/clear-button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import * as Command from "$lib/components/ui/command/index.js";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import type { SuperForm } from "sveltekit-superforms";
-  import Button from "../ui/button/button.svelte";
   import { tick } from "svelte";
   import { apiClient } from "$lib/api/client";
   import SearchSupport from "./search-support.svelte";
+  import { toast } from "svelte-sonner";
+  import CreateDialog from "$lib/components/fragments/create-dialog.svelte";
+  import AuthorForm from "../author-form.svelte";
 
   let {
     value = $bindable(),
@@ -45,6 +53,28 @@
   function removeAuthor(aid: number) {
     if (!value) return;
     value = value.filter((a) => a.id !== aid);
+  }
+
+  let dialog: CreateDialog;
+
+  async function onCreate(author: CreateAuthor) {
+    dialog.close();
+    try {
+      const newAuthor = await apiClient.createAuthor(author);
+      value = [
+        ...(value || []),
+        {
+          id: newAuthor.id,
+          last_name: newAuthor.last_name,
+          first_name: newAuthor.first_name,
+        },
+      ];
+    } catch (error) {
+      console.error("Failed to create author", error);
+      toast.error("Failed to create author");
+    }
+
+    closeAndFocusTrigger();
   }
 </script>
 
@@ -97,6 +127,32 @@
     <Popover.Content class="w-[200px] p-0" align="start">
       <Command.Root shouldFilter={false}>
         <Command.Input placeholder="Search author ..." bind:value={filter} />
+        <Command.Group value="commands">
+          {#if value}
+            <Command.Item
+              onSelect={() => {
+                value = null;
+                closeAndFocusTrigger();
+              }}
+              value="__reset_cmd__"
+            >
+              <ClearIcon />
+              No authors</Command.Item
+            >
+          {/if}
+          {#if filter && filter.length >= 3}
+            <Command.Item
+              value="__new_cmd__"
+              onSelect={() => {
+                dialog.open();
+              }}
+            >
+              <NewAuthorIcon />
+              Create new author</Command.Item
+            >
+          {/if}
+        </Command.Group>
+        <Command.Separator forceMount={true} />
         <Command.Group value="authors">
           <Command.List>
             <Command.Empty>No author found.</Command.Empty>
@@ -124,3 +180,7 @@
   <Form.FieldErrors />
   <Form.Description>Ebook authors</Form.Description>
 </Form.Field>
+
+<CreateDialog bind:this={dialog} entityName="author">
+  <AuthorForm {onCreate} authorData={{ last_name: filter }} />
+</CreateDialog>

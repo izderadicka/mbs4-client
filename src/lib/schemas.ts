@@ -3,24 +3,24 @@ import { id } from "zod/v4/locales";
 
 const SeriesInnerSchema = z.object({
     id: z.number().positive(),
-    title: z.string().min(1),
+    title: z.string().min(1).max(255),
 });
 
 const LanguageInnerSchema = z.object({
-    code: z.string().min(1).max(3),
-    name: z.string().min(1).max(63),
+    code: z.string().min(2).max(4),
+    name: z.string().min(1).max(255),
     id: z.number().positive(),
 });
 
 const GenresInnerSchema = z.array(z.object({
     id: z.number().positive(),
-    name: z.string().min(1).max(63),
+    name: z.string().min(1).max(255),
 })).max(10);
 
 const AuthorsInnerSchema = z.array(z.object({
     id: z.number().positive(),
-    first_name: z.nullable(z.string().min(1).max(63)),
-    last_name: z.string().min(1).max(63),
+    first_name: z.nullable(z.string().min(1).max(255)),
+    last_name: z.string().min(1).max(255),
 })).max(20);
 
 const AuthorsSchema = customValidate(AuthorsInnerSchema, {
@@ -67,7 +67,16 @@ export const SeriesSchema = z.object({
     id: z.optional(z.number().positive()),
     version: z.optional(z.number().positive()),
     title: z.string().min(1).max(255),
-    description: z.nullish(z.string().max(1000)),
+    description: z.nullish(z.string().max(5000)),
+    created_by: z.nullish(z.string()),
+})
+
+export const AuthorSchema = z.object({
+    id: z.optional(z.number().positive()),
+    version: z.optional(z.number().positive()),
+    first_name: z.nullable(z.string().min(1).max(255)),
+    last_name: z.string().min(1).max(255),
+    description: z.nullish(z.string().max(5000)),
     created_by: z.nullish(z.string()),
 })
 

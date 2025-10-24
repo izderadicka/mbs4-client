@@ -5,14 +5,14 @@
   import { SeriesSchema } from "$lib/schemas";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import type { Series, CreateSeries, UpdateSeries } from "$lib/api";
+  import type { CreateSeries, UpdateSeries } from "$lib/api";
 
   let {
     seriesData = null,
     onCreate = null,
   }: {
     seriesData?: CreateSeries | UpdateSeries | null;
-    onCreate?: null | ((series: Series) => void);
+    onCreate?: null | ((series: CreateSeries) => void);
   } = $props();
   if (!seriesData) {
     seriesData = {
@@ -27,11 +27,7 @@
       console.log("Created series", form);
       if (onCreate) {
         onCreate({
-          id: Number.MAX_SAFE_INTEGER,
-          version: 1,
           title: form.data.title,
-          created: new Date().toISOString(),
-          modified: new Date().toISOString(),
         });
       }
     },
@@ -59,7 +55,7 @@
       {/snippet}
     </Form.Control>
     <Form.FieldErrors />
-    <Form.Description>Detailed description of ebook</Form.Description>
+    <Form.Description>Detailed description of series</Form.Description>
   </Form.Field>
   <Form.Button>Submit</Form.Button>
 </form>

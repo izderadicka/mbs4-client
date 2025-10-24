@@ -3,7 +3,7 @@
   import { toast } from "svelte-sonner";
 
   const DEBOUNCE_MS = 600;
-  const MIN_FILTER_LENGTH = 3;
+  const MIN_FILTER_LENGTH = 3; // we have trigram indexes so 3 is minimum for search to work
   let debounceId: number | null = null;
   let inFlightController: AbortController | null = null;
   let requestSequence = 0;
