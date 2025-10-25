@@ -1,6 +1,9 @@
 <script lang="ts">
-  import type { AuthorShort } from "$lib/api";
-
+  type AuthorShort = {
+    id?: number;
+    first_name?: string | null;
+    last_name: string;
+  };
   let { authors, short = false }: { authors: AuthorShort[]; short?: boolean } =
     $props();
   if (short) {
@@ -8,12 +11,18 @@
   }
 </script>
 
+{#snippet authorSnippet(author: AuthorShort)}
+  {#if author.first_name}<span>{author.first_name} </span>{/if}
+  <span>{author.last_name}</span>
+{/snippet}
+
 <span>
   {#each authors as author, i}
-    <a href={`/author/${author.id}`}
-      >{#if author.first_name}<span>{author.first_name} </span>{/if}
-      <span>{author.last_name}</span></a
-    >
+    {#if author.id != null}
+      <a href={`/author/${author.id}`}>{@render authorSnippet(author)}</a>
+    {:else}
+      {@render authorSnippet(author)}
+    {/if}
     {i < authors.length - 1 ? ", " : ""}
   {/each}
 </span>

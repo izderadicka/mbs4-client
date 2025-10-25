@@ -3,23 +3,16 @@
   import * as Card from "$lib/components/ui/card/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
-  import * as Alert from "$lib/components/ui/alert/index.js";
-  import AlertCircleIcon from "@lucide/svelte/icons/alert-circle";
+  import FailureAlert from "$lib/components/fragments/failure-alert.svelte";
 
   const id = $props.id();
   const { failed, ssoAction, title = "Login", message = "" } = $props();
 </script>
 
 {#if failed}
-  <div class="mb-4">
-    <Alert.Root variant="destructive">
-      <AlertCircleIcon />
-      <Alert.Title>Login Failed!</Alert.Title>
-      <Alert.Description>
-        <p>Please verify your credentials and try again.</p>
-      </Alert.Description>
-    </Alert.Root>
-  </div>
+  <FailureAlert title="Login Failed!">
+    <p>Please verify your credentials and try again.</p>
+  </FailureAlert>
 {/if}
 
 <Card.Root class="mx-auto w-full max-w-sm">

@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button/index.js";
-  import { Input } from "$lib/components/ui/input/index.js";
-  import { Label } from "$lib/components/ui/label/index.js";
-  import { apiClient } from "$lib/api/client";
+  import UploadForm from "./upload-form.svelte";
   import { breadcrumb, lastEvent } from "$lib/globals.svelte";
   import type {
     EbookMetadata,
@@ -12,37 +9,31 @@
   } from "$lib/api";
   import Title from "$lib/components/title.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
-
+  import FailureAlert from "$lib/components/fragments/failure-alert.svelte";
+  import WaitingMeta from "./waiting-meta.svelte";
+  import MetaTable from "./meta-table.svelte";
   breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
 
   type UploadStage = "upload" | "metadata" | "select" | "done";
 
   let stage: UploadStage = $state("upload");
 
-  let fileSelected = $state(false);
-  const id = $props.id();
-  // svelte-ignore non_reactive_update
-  let form: HTMLFormElement | null = null;
   let metaTicket: OperationTicket | null = null;
   let uploadInfo: UploadInfo | null = null;
   // svelte-ignore non_reactive_update
   let metadata: EbookMetadata | null = null;
   let error: string | null = $state(null);
 
-  async function handleFileUpload(event: Event) {
-    if (!form) throw new Error("No form found");
-    event.preventDefault();
-    const formData = new FormData(form);
-    uploadInfo = await apiClient.uploadFile(formData);
-    console.log(uploadInfo);
-    metaTicket = await apiClient.retrieveMetadata(uploadInfo);
-    console.log(metaTicket);
-    stage = "metadata";
-  }
+  // svelte-ignore non_reactive_update
+  let uploadForm: UploadForm;
 
-  function handleFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    fileSelected = !!input.files && input.files?.length > 0; // Check if a file is selected
+  function handleFileUpload(result: {
+    uploadInfo: UploadInfo;
+    metaTicket: OperationTicket;
+  }) {
+    uploadInfo = result.uploadInfo;
+    metaTicket = result.metaTicket;
+    stage = "metadata";
   }
 
   $effect(() => {
@@ -64,38 +55,53 @@
       }
     }
   });
+
+  function initRestart(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    restart();
+  }
+
+  function restart() {
+    stage = "upload";
+    uploadForm?.reset();
+    metaTicket = null;
+    uploadInfo = null;
+    metadata = null;
+    error = null;
+  }
 </script>
 
 <Title>Upload file to new or existing ebook</Title>
 
+{#if error}
+  <FailureAlert title="Error during upload processing">
+    <p>{error}</p>
+    <p>
+      Please try again from <a
+        class="underline"
+        href="#restart"
+        onclick={initRestart}>beginning</a
+      >
+    </p>
+  </FailureAlert>
+{/if}
+
 {#if stage === "upload"}
   <Subtitle>1. Upload</Subtitle>
-  <form
-    bind:this={form}
-    action="/upload"
-    method="POST"
-    enctype="multipart/form-data"
-  >
-    <div class="mb-4 space-y-4">
-      <Label for="file-input-{id}">Upload a file</Label>
-      <Input
-        type="file"
-        name="file"
-        id="file-input-{id}"
-        onchange={handleFileChange}
-        class="w-auto"
-      />
-      <Button onclick={handleFileUpload} disabled={!fileSelected}>Upload</Button
-      >
-    </div>
-  </form>
+  <UploadForm
+    bind:this={uploadForm}
+    onUpload={handleFileUpload}
+    onError={(err) => (error = err)}
+  />
 {/if}
 
 {#if stage === "metadata"}
-  <p>Waiting for metadata ...</p>
+  <Subtitle>2. Waiting for metadata</Subtitle>
+  <WaitingMeta onRestart={restart} />
 {/if}
 
 {#if stage === "select"}
-  <Subtitle>2. Select or create ebook</Subtitle>
-  <pre>{JSON.stringify(metadata, null, 2)}</pre>
+  <Subtitle>3. Search existing ebook</Subtitle>
+  <MetaTable {metadata} />
 {/if}
