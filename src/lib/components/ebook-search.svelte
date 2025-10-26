@@ -48,6 +48,7 @@
       } catch (error) {
         console.error("Failed to search ebooks", error);
         toast.error("Failed to search ebooks");
+        ebooks = [];
       }
     }
   }

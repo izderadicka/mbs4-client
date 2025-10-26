@@ -12,6 +12,7 @@
   import FailureAlert from "$lib/components/fragments/failure-alert.svelte";
   import WaitingMeta from "./waiting-meta.svelte";
   import MetaCard from "./meta-card.svelte";
+  import SearchCard from "./search-card.svelte";
   breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
 
   type UploadStage = "upload" | "metadata" | "select" | "done";
@@ -104,4 +105,5 @@
 {#if stage === "select"}
   <Subtitle>3. Search existing ebooks</Subtitle>
   <MetaCard {metadata} />
+  <SearchCard {metadata} />
 {/if}

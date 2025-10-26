@@ -26,12 +26,12 @@
   </Item.Media>
   <Item.Content>
     <Item.Title class="line-clamp-1"
-      >Waiting {waitingLong ? "too long" : ""}for metadata ...</Item.Title
+      >Waiting {waitingLong ? "too long " : ""}for metadata ...</Item.Title
     >
   </Item.Content>
   {#if waitingLong}
     <Item.Content class="flex-none justify-end">
-      <Button variant="secondary" onclick={onRestart}>Restart</Button>
+      <Button variant="outline" onclick={onRestart}>Restart</Button>
     </Item.Content>
   {/if}
 </Item.Root>

@@ -9,7 +9,7 @@
 <Card.Root>
   <Card.Header>
     <Card.Title>Ebook Metadata</Card.Title>
-    <Card.Description>metadata extracted from uploaded file</Card.Description>
+    <Card.Description>Metadata extracted from uploaded file</Card.Description>
   </Card.Header>
   <Card.Content>
     <MetaTable {metadata} />
