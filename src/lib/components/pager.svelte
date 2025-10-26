@@ -10,7 +10,7 @@
   import { goto } from "$app/navigation";
   import Label from "./ui/label/label.svelte";
   import * as Select from "$lib/components/ui/select/index.js";
-  import { DEFAULT_PAGE_SIZE } from "$lib/config";
+  import { DEFAULT_PAGE_SIZE, SCREEN_WIDTH_LG } from "$lib/config";
 
   type Props = {
     count: number;
@@ -19,7 +19,7 @@
   };
   let { count, pageSize = DEFAULT_PAGE_SIZE, page }: Props = $props();
 
-  const isDesktop = new MediaQuery("(min-width: 768px)");
+  const isDesktop = new MediaQuery(`(min-width: ${SCREEN_WIDTH_LG}px)`); // bit arbitrary - based on observations
 
   const siblingCount = $derived(isDesktop.current ? 3 : 0);
   let perPage: string = $state(String(pageSize));

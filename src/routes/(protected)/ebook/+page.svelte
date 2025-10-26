@@ -19,23 +19,25 @@
   <Table.Header>
     <Table.Row>
       <Table.Head class="w-[4rem]">Id</Table.Head>
-      <Table.Head>Authors</Table.Head>
+      <Table.Head class="w-[20%]">Authors</Table.Head>
       <Table.Head>Title</Table.Head>
-      <Table.Head>Series</Table.Head>
+      <Table.Head class="hidden lg:table-cell">Series</Table.Head>
     </Table.Row>
   </Table.Header>
   <Table.Body>
     {#each ebooks.rows as ebook (ebook.id)}
       <Table.Row>
         <Table.Cell class="font-medium">{ebook.id}</Table.Cell>
-        <Table.Cell
+        <Table.Cell class="truncate"
           ><AuthorsList
             authors={ebook.authors || []}
             short={true}
           /></Table.Cell
         >
-        <Table.Cell><a href="/ebook/{ebook.id}">{ebook.title}</a></Table.Cell>
-        <Table.Cell>
+        <Table.Cell class="truncate"
+          ><a href="/ebook/{ebook.id}">{ebook.title}</a></Table.Cell
+        >
+        <Table.Cell class="truncate hidden lg:table-cell">
           {#if ebook.series}
             <a href="/series/{ebook.series.id}">{ebook.series.title}</a>
           {/if}

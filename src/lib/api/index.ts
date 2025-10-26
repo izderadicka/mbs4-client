@@ -23,7 +23,7 @@ export type LanguageShort = components["schemas"]["LanguageShort"];
 export type GenreShort = components["schemas"]["GenreShort"];
 
 
-type EbookDoc = components["schemas"]["EbookDoc"];
+export type EbookDoc = components["schemas"]["EbookDoc"];
 
 
 

@@ -2,6 +2,8 @@
   import Settings2Icon from "@lucide/svelte/icons/settings-2";
   import LibraryIcon from "@lucide/svelte/icons/library-big";
   import CogIcon from "@lucide/svelte/icons/settings";
+  import UploadIcon from "@lucide/svelte/icons/upload";
+  import SearchIcon from "@lucide/svelte/icons/search";
 
   interface InnerMenuItem {
     title: string;
@@ -22,15 +24,21 @@
   // This is sample data.
   const mainMenu: MenuItem[] = [
     {
+      title: "Upload new Ebook",
+      icon: UploadIcon,
+      url: "/upload",
+      requiredRole: "Trusted",
+    },
+    {
+      title: "Search",
+      icon: SearchIcon,
+      url: "/search",
+    },
+    {
       title: "Library",
       icon: LibraryIcon,
       isOpen: true,
       items: [
-        {
-          title: "Upload new Ebook",
-          url: "/upload",
-          requiredRole: "Trusted",
-        },
         {
           title: "Ebooks",
           url: "/ebook",
@@ -111,11 +119,15 @@
 
 <Sidebar.Root {collapsible} {...restProps}>
   <Sidebar.Header
-    ><h1
-      class="{sidebar.state === 'expanded' ? 'text-2xl' : 'text-sm'} font-bold"
-    >
-      mbs4
-    </h1></Sidebar.Header
+    ><a href="/"
+      ><h1
+        class="{sidebar.state === 'expanded'
+          ? 'text-2xl'
+          : 'text-sm'} font-bold"
+      >
+        mbs4
+      </h1></a
+    ></Sidebar.Header
   >
   <Sidebar.Content>
     <NavMain items={mainMenu} />
