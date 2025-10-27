@@ -1,4 +1,4 @@
 {
   "plugins": ["prettier-plugin-svelte"],
-  "svelteBracketNewLine": false
+  "bracketSameLine": true
 }
