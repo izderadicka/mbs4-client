@@ -228,7 +228,7 @@
     class="p-0 overflow-hidden
          w-[min(100vw-1rem,var(--radix-popover-trigger-width))]
          sm:w-[--radix-popover-trigger-width]
-         max-w-[calc(100vw-1rem)]"
+         max-w-[var(--bits-floating-anchor-width)]"
     onOpenAutoFocus={(e) => e.preventDefault()}
     onCloseAutoFocus={(e) => e.preventDefault()}
     sideOffset={4}

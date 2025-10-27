@@ -85,7 +85,7 @@ function customValidate(schema: z.ZodTypeAny, messages: { custom?: string, too_b
     return z.any().transform((val, ctx) => {
         const r = schema.safeParse(val);
         if (!r.success) {
-            console.debug("Custom validation error", r.error);
+            console.debug("Custom validation error", r.error, r.data, schema);
             const { custom = "Invalid value", too_big = "Too many items" } = messages;
             if (r.error?.issues && r.error.issues.findIndex((i) => i.code === "too_big") !== -1) {
                 ctx.addIssue({ code: "custom", message: too_big, path: [] });

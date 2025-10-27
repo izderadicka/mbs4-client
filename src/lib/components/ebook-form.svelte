@@ -11,8 +11,16 @@
   import GenreField from "./fields/genre-field.svelte";
   import AuthorField from "./fields/author-field.svelte";
   import Button from "./ui/button/button.svelte";
+  import type { CreateEbook, Ebook } from "$lib/api";
+  import { apiClient } from "$lib/api/client";
+  import { toast } from "svelte-sonner";
 
-  let { ebookData } = $props();
+  type Props = {
+    ebookData?: any;
+    afterCreate?: (ebook: Ebook) => Promise<void>;
+  };
+
+  let { ebookData, afterCreate }: Props = $props();
   if (!ebookData) {
     ebookData = defaults(zod4(EbookSchema));
   }
@@ -20,8 +28,31 @@
     SPA: true,
     dataType: "json",
     validators: zod4Client(EbookSchema),
-    onUpdate: ({ form }) => {
-      console.log("Created ebook", form);
+    onUpdate: async ({ form, cancel }) => {
+      console.debug("Updated form", form);
+      if (!form.valid) return;
+
+      if (!form.data.id) {
+        const ebookData: CreateEbook = {
+          title: form.data.title,
+          authors: form.data.authors?.map((a: { id: number }) => a.id),
+          series_id: form.data.series?.id,
+          series_index: form.data.series_index,
+          description: form.data.description,
+          language_id: form.data.language?.id,
+          genres: form.data.genres?.map((g: { id: number }) => g.id),
+        };
+        try {
+          const ebook = await apiClient.createEbook(ebookData);
+          if (afterCreate) {
+            await afterCreate(ebook);
+          }
+        } catch (error) {
+          cancel();
+          console.error("Failed to create ebook", error);
+          toast.error("Failed to create ebook");
+        }
+      }
     },
   });
   const { form: formData, enhance } = form;

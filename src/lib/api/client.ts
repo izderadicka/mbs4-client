@@ -1,6 +1,6 @@
 import type { User } from "$lib/types/app";
 import { decodeJwt } from ".";
-import type { Author, AuthorSearchItem, CreateAuthor, CreateSeries, Ebook, EbookSearchItem, GenreShort, LanguageShort, ListParams, Series, SeriesSearchItem, TokenPayload } from ".";
+import type { Author, AuthorSearchItem, CreateAuthor, CreateEbook, CreateSeries, Ebook, EbookSearchItem, GenreShort, LanguageShort, ListParams, Series, SeriesSearchItem, TokenPayload } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
 import createClient, { type Client } from "openapi-fetch";
@@ -245,6 +245,11 @@ export class ApiClient {
 
     async createAuthor(author: CreateAuthor): Promise<Author> {
         const { data, response } = await this.client.POST("/api/author", { body: author });
+        return this.checkResponse(response, data);
+    }
+
+    async createEbook(ebook: CreateEbook): Promise<Ebook> {
+        const { data, response } = await this.client.POST("/api/ebook", { body: ebook });
         return this.checkResponse(response, data);
     }
 

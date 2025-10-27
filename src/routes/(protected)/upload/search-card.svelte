@@ -3,6 +3,7 @@
   import * as Card from "$lib/components/ui/card";
   import EbookSearch from "$lib/components/ebook-search.svelte";
   import { onMount } from "svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
 
   let { metadata }: { metadata: EbookMetadata | null } = $props();
 
@@ -35,7 +36,8 @@
       bind:this={searchComponent}
       {onSelect}
       maxItems={5}
-      actionName="Add to this"
-    />
+      actionName="Add to this" />
+    <Button variant="outline" class="w-full mt-4"
+      >Or create completely new</Button>
   </Card.Content>
 </Card.Root>
