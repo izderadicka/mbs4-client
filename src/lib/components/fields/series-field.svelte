@@ -95,7 +95,7 @@
           type="button"
           class={cn(
             buttonVariants({ variant: "outline" }),
-            "w-full justify-between"
+            "w-full justify-between",
           )}
           role="combobox"
           aria-expanded={open}

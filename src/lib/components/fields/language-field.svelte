@@ -19,7 +19,7 @@
 
   let languages: Language[] = $state([]);
   const languagesMap: Record<string, Language> = $derived(
-    languages.reduce((acc, l) => ({ ...acc, [l.code]: l }), {})
+    languages.reduce((acc, l) => ({ ...acc, [l.code]: l }), {}),
   );
   let selectedCode = $state("");
   onMount(async () => {

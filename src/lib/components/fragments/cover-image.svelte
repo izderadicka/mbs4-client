@@ -9,8 +9,8 @@
   }: { file?: string | null; uploaded: boolean } & HTMLImgAttributes = $props();
   const src = $derived(
     apiClient.fullUrl(
-      uploaded ? `/files/download/uploaded/${file}` : `/files/download/${file}`
-    )
+      uploaded ? `/files/download/uploaded/${file}` : `/files/download/${file}`,
+    ),
   );
 </script>
 

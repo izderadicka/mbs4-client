@@ -20,7 +20,7 @@
     try {
       const user = await apiClient.login(email, password);
       console.log(
-        `User logged in with email ${email} and got claim ${JSON.stringify(user)}`
+        `User logged in with email ${email} and got claim ${JSON.stringify(user)}`,
       );
 
       appUser.user = user;

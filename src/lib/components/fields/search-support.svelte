@@ -13,7 +13,7 @@
     search: (
       q: string,
       numResults: number,
-      signal: AbortSignal
+      signal: AbortSignal,
     ) => Promise<T[] | null>;
     onResult: (result: T[] | null) => void;
     minQueryLength?: number;

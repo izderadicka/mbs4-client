@@ -103,7 +103,7 @@
 
   async function doSearch(
     q: string,
-    signal: AbortSignal
+    signal: AbortSignal,
   ): Promise<EbookSearchItem[]> {
     if (!q.trim()) return [];
 

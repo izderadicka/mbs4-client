@@ -36,8 +36,10 @@
       bind:this={searchComponent}
       {onSelect}
       maxItems={5}
-      actionName="Add to this" />
+      actionName="Add to this"
+    />
     <Button variant="outline" class="w-full mt-4"
-      >Or create completely new</Button>
+      >Or create completely new</Button
+    >
   </Card.Content>
 </Card.Root>
