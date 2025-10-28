@@ -7,12 +7,15 @@ import type {
   CreateEbook,
   CreateSeries,
   Ebook,
+  EbookCoverInfo,
+  EbookFileInfo,
   EbookSearchItem,
   GenreShort,
   LanguageShort,
   ListParams,
   Series,
   SeriesSearchItem,
+  Source,
   TokenPayload,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
@@ -158,8 +161,8 @@ export class ApiClient {
     const headers: Record<string, string> = raw
       ? {}
       : {
-          "Content-Type": "application/json",
-        };
+        "Content-Type": "application/json",
+      };
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
@@ -176,10 +179,8 @@ export class ApiClient {
   }
 
   async uploadFile(form: FormData) {
-    // return this.makeRequest("/files/upload/form", "POST", form);
-    // @ts-ignore
     const { data, response } = await this.client.POST("/files/upload/form", {
-      body: form,
+      body: form as any,
     });
     return this.checkResponse(response, data);
   }
@@ -241,7 +242,7 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
   private langCache: { date: Date; data: LanguageShort[] } | null = null;
-  async listLanguages(): Promise<LanguageShort[]> {
+  async listLanguages(): Promise<readonly LanguageShort[]> {
     if (
       this.langCache &&
       this.langCache.date > new Date(Date.now() - 1000 * 60 * 60)
@@ -256,7 +257,7 @@ export class ApiClient {
   }
 
   private genreCache: { date: Date; data: GenreShort[] } | null = null;
-  async listGenres(): Promise<GenreShort[]> {
+  async listGenres(): Promise<readonly GenreShort[]> {
     if (
       this.genreCache &&
       this.genreCache.date > new Date(Date.now() - 1000 * 60 * 60)
@@ -287,6 +288,22 @@ export class ApiClient {
   async createEbook(ebook: CreateEbook): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook", {
       body: ebook,
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async addSourceToEbook(ebookId: number, fileInfo: EbookFileInfo): Promise<Source> {
+    const { data, response } = await this.client.POST("/api/ebook/{id}/source", {
+      body: fileInfo,
+      params: { path: { id: ebookId } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async changeEbookCover(ebookId: number, coverInfo: EbookCoverInfo): Promise<Ebook> {
+    const { data, response } = await this.client.PUT("/api/ebook/{id}/cover", {
+      body: coverInfo,
+      params: { path: { id: ebookId } },
     });
     return this.checkResponse(response, data);
   }

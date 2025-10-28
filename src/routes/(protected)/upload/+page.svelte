@@ -2,6 +2,8 @@
   import UploadForm from "./upload-form.svelte";
   import { breadcrumb, lastEvent } from "$lib/globals.svelte";
   import type {
+    Ebook,
+    EbookDoc,
     EbookMetadata,
     MetaResult,
     OperationTicket,
@@ -13,13 +15,19 @@
   import WaitingMeta from "./waiting-meta.svelte";
   import MetaCard from "./meta-card.svelte";
   import SearchCard from "./search-card.svelte";
+  import CreateCard from "./create-card.svelte";
+  import { addFileToEbook, metaToEbook } from "./logic";
+  import type { EbookFormData } from "$lib/schemas";
+  import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
   breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
 
-  type UploadStage = "upload" | "metadata" | "select" | "done";
+  type UploadStage = "upload" | "metadata" | "select" | "create";
 
   let stage: UploadStage = $state("upload");
 
   let metaTicket: OperationTicket | null = null;
+  // svelte-ignore non_reactive_update
   let uploadInfo: UploadInfo | null = null;
   // svelte-ignore non_reactive_update
   let metadata: EbookMetadata | null = null;
@@ -71,6 +79,40 @@
     metadata = null;
     error = null;
   }
+
+  // svelte-ignore non_reactive_update
+  let newEbookData: EbookFormData | null = null;
+  async function onNew() {
+    newEbookData = await metaToEbook(metadata);
+    stage = "create";
+  }
+
+  function onCreateCancel() {
+    stage = "select";
+    newEbookData = null;
+  }
+
+  async function assignFile(ebook: Ebook | EbookDoc) {
+    try {
+      const source = await addFileToEbook(ebook.id, uploadInfo!, metadata);
+      console.debug("Added file to ebook", source);
+      await goto(`/ebook/${ebook.id}`);
+    } catch (ee: any) {
+      console.error(
+        `Error adding file to  ebook ${ebook.title} (${ebook.id})`,
+        ee,
+      );
+      error = ee.toString();
+    }
+  }
+
+  async function onChosen(ebook: EbookDoc) {
+    await assignFile(ebook);
+  }
+
+  async function afterCreate(ebook: Ebook) {
+    await assignFile(ebook);
+  }
 </script>
 
 <Title>Upload file to new or existing ebook</Title>
@@ -82,8 +124,7 @@
       Please try again from <a
         class="underline"
         href="#restart"
-        onclick={initRestart}>beginning</a
-      >
+        onclick={initRestart}>beginning</a>
     </p>
   </FailureAlert>
 {/if}
@@ -93,8 +134,7 @@
   <UploadForm
     bind:this={uploadForm}
     onUpload={handleFileUpload}
-    onError={(err) => (error = err)}
-  />
+    onError={(err) => (error = err)} />
 {/if}
 
 {#if stage === "metadata"}
@@ -102,8 +142,17 @@
   <WaitingMeta onRestart={restart} />
 {/if}
 
-{#if stage === "select"}
+{#if stage === "select" && metadata && uploadInfo}
   <Subtitle>3. Search existing ebooks</Subtitle>
-  <MetaCard {metadata} />
-  <SearchCard {metadata} />
+  <MetaCard {metadata} {uploadInfo} />
+  <SearchCard {metadata} {onChosen} {onNew} />
+{/if}
+
+{#if stage === "create" && metadata && uploadInfo}
+  <Subtitle>4. Create new ebook</Subtitle>
+  <MetaCard {metadata} {uploadInfo} />
+  <CreateCard
+    ebookData={newEbookData}
+    onCancel={onCreateCancel}
+    {afterCreate} />
 {/if}

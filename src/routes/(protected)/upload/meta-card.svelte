@@ -1,9 +1,12 @@
 <script lang="ts">
-  import type { EbookMetadata } from "$lib/api";
+  import type { EbookMetadata, UploadInfo } from "$lib/api";
   import * as Card from "$lib/components/ui/card";
   import MetaTable from "./meta-table.svelte";
 
-  let { metadata }: { metadata: EbookMetadata | null } = $props();
+  let {
+    metadata,
+    uploadInfo,
+  }: { metadata: EbookMetadata; uploadInfo: UploadInfo } = $props();
 </script>
 
 <Card.Root>
@@ -12,6 +15,6 @@
     <Card.Description>Metadata extracted from uploaded file</Card.Description>
   </Card.Header>
   <Card.Content>
-    <MetaTable {metadata} />
+    <MetaTable {metadata} {uploadInfo} />
   </Card.Content>
 </Card.Root>

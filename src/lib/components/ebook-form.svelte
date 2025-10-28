@@ -14,13 +14,15 @@
   import type { CreateEbook, Ebook } from "$lib/api";
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
+  import FormButtons from "./fragments/form-buttons.svelte";
 
   type Props = {
     ebookData?: any;
     afterCreate?: (ebook: Ebook) => Promise<void>;
+    onCancel: () => void | Promise<void>;
   };
 
-  let { ebookData, afterCreate }: Props = $props();
+  let { ebookData, afterCreate, onCancel }: Props = $props();
   if (!ebookData) {
     ebookData = defaults(zod4(EbookSchema));
   }
@@ -111,11 +113,5 @@
     <Form.FieldErrors />
     <Form.Description>Detailed description of ebook</Form.Description>
   </Form.Field>
-  <div class="flex justify-end gap-20">
-    <Button variant="destructive">Delete</Button>
-    <div class="flex gap-2">
-      <Button variant="outline">Cancel</Button>
-      <Form.Button>Submit</Form.Button>
-    </div>
-  </div>
+  <FormButtons id={$formData.id} {onCancel} />
 </form>

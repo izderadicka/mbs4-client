@@ -22,6 +22,11 @@ export type Author = components["schemas"]["Author"];
 export type LanguageShort = components["schemas"]["LanguageShort"];
 export type GenreShort = components["schemas"]["GenreShort"];
 
+export type EbookFileInfo = components["schemas"]["EbookFileInfo"];
+export type EbookCoverInfo = components["schemas"]["EbookCoverInfo"];
+export type Source = components["schemas"]["Source"];
+export type SourceShort = components["schemas"]["SourceShort"];
+
 export type EbookDoc = components["schemas"]["EbookDoc"];
 
 export interface EbookSearchItem {
@@ -102,7 +107,7 @@ export function decodeJwt<T = unknown>(token: string): T {
     const json =
       typeof window === "undefined"
         ? // @ts-ignore
-          Buffer.from(padded, "base64").toString("utf-8")
+        Buffer.from(padded, "base64").toString("utf-8")
         : atob(padded); // Browser
 
     return JSON.parse(json) as T;
