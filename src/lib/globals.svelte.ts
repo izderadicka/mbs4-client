@@ -1,3 +1,4 @@
+import type { Role } from "./api";
 import type { User, BreadcrumbItem, EventItem } from "./types/app";
 
 export const appUser: { user: User | null; failedLogin: boolean } = $state({
@@ -11,4 +12,8 @@ const _lastEvent = $derived.by(() =>
 );
 export function lastEvent() {
   return _lastEvent;
+}
+
+export function hasRole(role: Role): boolean {
+  return !!appUser.user?.roles.includes(role);
 }

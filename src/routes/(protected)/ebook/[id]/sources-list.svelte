@@ -1,0 +1,28 @@
+<script lang="ts">
+  import type { Source } from "$lib/api";
+  import * as Table from "$lib/components/ui/table";
+  import prettyBytes from "pretty-bytes";
+
+  let { sources }: { sources: Source[] } = $props();
+</script>
+
+<Table.Root>
+  <Table.Header>
+    <Table.Row>
+      <Table.Head class="w-[4rem]">Id</Table.Head>
+      <Table.Head class="w-[4rem]">Format</Table.Head>
+      <Table.Head>Size</Table.Head>
+      <Table.Head>Location</Table.Head>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    {#each sources as source (source.id)}
+      <Table.Row>
+        <Table.Cell class="font-medium">{source.id}</Table.Cell>
+        <Table.Cell class="font-medium">{source.format_id}</Table.Cell>
+        <Table.Cell>{prettyBytes(source.size)}</Table.Cell>
+        <Table.Cell class="truncate">{source.location}</Table.Cell>
+      </Table.Row>
+    {/each}
+  </Table.Body>
+</Table.Root>

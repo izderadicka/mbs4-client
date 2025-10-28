@@ -1,5 +1,5 @@
 import type { User } from "$lib/types/app";
-import { decodeJwt } from ".";
+import { decodeJwt } from "./utils";
 import type {
   Author,
   AuthorSearchItem,
@@ -16,6 +16,7 @@ import type {
   Series,
   SeriesSearchItem,
   Source,
+  SourceShort,
   TokenPayload,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
@@ -269,6 +270,14 @@ export class ApiClient {
     const genres = this.checkResponse(response, data);
     this.genreCache = { date: new Date(), data: genres };
     return genres;
+  }
+
+  async listEbookSources(ebookId: number): Promise<Source[]> {
+    const { data, response } = await this.client.GET("/api/ebook/{id}/source", {
+      params: { path: { id: ebookId } },
+    });
+    return this.checkResponse(response, data);
+
   }
 
   async createSeries(series: CreateSeries): Promise<Series> {

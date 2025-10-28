@@ -1,6 +1,8 @@
+import type { Role } from "$lib/api";
+
 export interface User {
   email: string;
-  roles: string[];
+  roles: Role[];
   tokenValidity: number;
 }
 
