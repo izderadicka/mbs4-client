@@ -548,6 +548,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/download/uploaded/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download recently uploaded file (for advanced uploads processing) */
+        get: operations["downloadUploaded"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/files/download/{path}": {
         parameters: {
             query?: never;
@@ -558,6 +575,22 @@ export interface paths {
         get: operations["download"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/move/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["moveUpload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -747,6 +780,20 @@ export interface components {
             language: components["schemas"]["LanguageShort"];
             authors?: components["schemas"]["AuthorShort"][] | null;
         };
+        EbookSource: {
+            /** Format: int64 */
+            id: number;
+            location: string;
+            format_name: string;
+            format_extension: string;
+            /** Format: int64 */
+            size: number;
+            /** Format: float */
+            quality?: number | null;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
+        };
         Format: {
             /** Format: int64 */
             id: number;
@@ -914,6 +961,13 @@ export interface components {
                 /** Format: float */
                 quality?: number | null;
             }[];
+        };
+        RenameBody: {
+            from_path: string;
+            to_path: string;
+        };
+        RenameResult: {
+            final_path: string;
         };
         SearchItem: {
             /** Format: float */
@@ -1457,7 +1511,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Source"][];
+                    "application/json": components["schemas"]["EbookSource"][];
                 };
             };
         };
@@ -2290,6 +2344,19 @@ export interface operations {
             };
         };
     };
+    downloadUploaded: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Path to file */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
+    };
     download: {
         parameters: {
             query?: never;
@@ -2302,6 +2369,30 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    moveUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenameResult"];
+                };
+            };
+        };
     };
     uploadDirect: {
         parameters: {

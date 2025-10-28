@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Source } from "$lib/api";
+  import type { Ebook, EbookSource } from "$lib/api";
   import * as Table from "$lib/components/ui/table";
   import prettyBytes from "pretty-bytes";
 
-  let { sources }: { sources: Source[] } = $props();
+  let { sources }: { sources: EbookSource[] } = $props();
 </script>
 
 <Table.Root>
@@ -19,7 +19,7 @@
     {#each sources as source (source.id)}
       <Table.Row>
         <Table.Cell class="font-medium">{source.id}</Table.Cell>
-        <Table.Cell class="font-medium">{source.format_id}</Table.Cell>
+        <Table.Cell class="font-medium">{source.format_extension}</Table.Cell>
         <Table.Cell>{prettyBytes(source.size)}</Table.Cell>
         <Table.Cell class="truncate">{source.location}</Table.Cell>
       </Table.Row>

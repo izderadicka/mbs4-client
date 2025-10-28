@@ -25,7 +25,7 @@ export type GenreShort = components["schemas"]["GenreShort"];
 export type EbookFileInfo = components["schemas"]["EbookFileInfo"];
 export type EbookCoverInfo = components["schemas"]["EbookCoverInfo"];
 export type Source = components["schemas"]["Source"];
-export type SourceShort = components["schemas"]["SourceShort"];
+export type EbookSource = components["schemas"]["EbookSource"];
 
 export type EbookDoc = components["schemas"]["EbookDoc"];
 

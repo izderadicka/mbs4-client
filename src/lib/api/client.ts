@@ -10,13 +10,13 @@ import type {
   EbookCoverInfo,
   EbookFileInfo,
   EbookSearchItem,
+  EbookSource,
   GenreShort,
   LanguageShort,
   ListParams,
   Series,
   SeriesSearchItem,
   Source,
-  SourceShort,
   TokenPayload,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
@@ -272,7 +272,7 @@ export class ApiClient {
     return genres;
   }
 
-  async listEbookSources(ebookId: number): Promise<Source[]> {
+  async listEbookSources(ebookId: number): Promise<EbookSource[]> {
     const { data, response } = await this.client.GET("/api/ebook/{id}/source", {
       params: { path: { id: ebookId } },
     });
