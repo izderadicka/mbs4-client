@@ -6,10 +6,10 @@
   let { ebook }: { ebook: Ebook } = $props();
 </script>
 
-<div class="flex flex-col md:flex-row gap-2">
+<div class="flex flex-col lg:flex-row gap-2">
   <CoverImage class="w-xs md:w-md mr-2" file={ebook.cover} />
   <Table.Root
-    class="table-fixed w-full [&_tbody_th]:w-40
+    class="table-fixed w-full [&_tbody_th]:w-36
          [&_tbody_th]:pr-4
          [&_tbody_th]:font-semibold
          [&_tbody_th]:text-left

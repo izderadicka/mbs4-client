@@ -91,12 +91,11 @@
       {@render item(ebook)}
     {:else}
       <Item.Root variant="outline" class="mb-4">
-        <Item.Header class="truncate font-bold"
-          >{ebook.doc.Ebook.title}</Item.Header>
         <Item.Media>
           <CoverIcon ebookId={ebook.doc.Ebook.id} />
         </Item.Media>
         <Item.Content>
+          <Item.Title class="text-lg">{ebook.doc.Ebook.title}</Item.Title>
           <Item.Title
             >{ebook.doc.Ebook.authors
               .map((a) => a.name)

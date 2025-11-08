@@ -66,6 +66,10 @@ export class ApiClient {
     return this.baseUrl + path;
   }
 
+  downloadUrl(path: string) {
+    return this.fullUrl(`/files/download/${path}`);
+  }
+
   private extractPayload(token: string): User {
     const payload = decodeJwt<TokenPayload>(token);
 
