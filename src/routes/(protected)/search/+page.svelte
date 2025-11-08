@@ -17,12 +17,11 @@
 <EbookSearch
   bind:this={searchComponent}
   actionName="Select"
-  onSelect={(ebook: EbookDoc) => console.log(ebook)}
+  onSelect={async (ebook: EbookDoc) => await goto(`/ebook/${ebook.id}`)}
   externalControl={{
     initialQuery: data.initialQuery,
     ebooks: data.ebooks,
     handleSubmit: (q: string) => {
       goto(`/search?q=${encodeURIComponent(q)}`);
     },
-  }}
-/>
+  }} />

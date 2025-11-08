@@ -581,6 +581,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/icon/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download ebook cover icon */
+        get: operations["downloadIcon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/files/move/upload": {
         parameters: {
             query?: never;
@@ -2369,6 +2386,29 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    downloadIcon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ebook id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description icon image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": unknown;
+                };
+            };
+        };
     };
     moveUpload: {
         parameters: {

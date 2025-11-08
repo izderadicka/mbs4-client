@@ -7,7 +7,7 @@
 </script>
 
 <div class="flex flex-col md:flex-row gap-2">
-  <CoverImage class="w-40 mr-2" file={ebook.cover} />
+  <CoverImage class="w-xs md:w-md mr-2" file={ebook.cover} />
   <Table.Root
     class="table-fixed w-full [&_tbody_th]:w-40
          [&_tbody_th]:pr-4

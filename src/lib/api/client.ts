@@ -317,6 +317,36 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async loadIcon(ebookId: number, signal?: AbortSignal): Promise<Blob | null> {
+    const { data } = await this.client.GET("/files/icon/{id}", {
+      params: { path: { id: ebookId } },
+      parseAs: "blob",
+      signal
+    });
+    return data || null;
+  }
+
+  async loadCover(path: string, signal?: AbortSignal): Promise<Blob | null> {
+
+    const { data } = await this.client.GET("/files/download/{path}", {
+      params: { path: { path } },
+      parseAs: "blob",
+      signal
+    });
+    return data || null;
+
+  }
+
+  async loadExtractedCover(path: string, signal?: AbortSignal): Promise<Blob | null> {
+
+    const { data } = await this.client.GET("/files/download/uploaded/{path}", {
+      params: { path: { path } },
+      parseAs: "blob",
+      signal
+    });
+    return data || null;
+  }
+
   createEventSource(lastEventId: string | null): EventSource {
     let url = this.fullUrl("/events");
     if (lastEventId) {

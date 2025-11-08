@@ -71,8 +71,7 @@
         e.preventDefault();
         submitSearch();
       }
-    }}
-  /><Button
+    }} /><Button
     type="button"
     variant="ghost"
     aria-label="Submit Search"
@@ -83,8 +82,7 @@
         e.preventDefault();
         submitSearch();
       }
-    }}><SearchIcon /></Button
-  >
+    }}><SearchIcon /></Button>
 </div>
 
 <div class="mt-2">
@@ -94,26 +92,24 @@
     {:else}
       <Item.Root variant="outline" class="mb-4">
         <Item.Header class="truncate font-bold"
-          >{ebook.doc.Ebook.title}</Item.Header
-        >
+          >{ebook.doc.Ebook.title}</Item.Header>
         <Item.Media>
-          <CoverIcon />
+          <CoverIcon ebookId={ebook.doc.Ebook.id} />
         </Item.Media>
         <Item.Content>
           <Item.Title
-            >{ebook.doc.Ebook.authors.map((a) => a.name).join(", ")}</Item.Title
-          >
+            >{ebook.doc.Ebook.authors
+              .map((a) => a.name)
+              .join(", ")}</Item.Title>
           <Item.Description
             >{#if ebook.doc.Ebook.series}
               {`${ebook.doc.Ebook.series} #${ebook.doc.Ebook.series_index}`}
-            {/if}</Item.Description
-          >
+            {/if}</Item.Description>
         </Item.Content>
         {#if actionName}
           <Item.Actions>
             <Button variant="outline" onclick={() => onSelect(ebook.doc.Ebook)}
-              >{actionName}</Button
-            >
+              >{actionName}</Button>
           </Item.Actions>
         {/if}
       </Item.Root>
