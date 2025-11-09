@@ -27,15 +27,14 @@
 
   type Props = {
     ebooks: PagedEbookShort;
+    sort?: EbookSorting;
   };
 
   type Layout = "table" | "grid";
 
-  let { ebooks }: Props = $props();
+  let { ebooks, sort = $bindable() }: Props = $props();
 
   let layout = $state<Layout>("grid");
-
-  let sort: EbookSorting = $state(EBOOK_SORTING_DEFAULT);
 
   const buildHref = (sort: string) => {
     const u = new URL(window.location.href);

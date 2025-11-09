@@ -6,7 +6,6 @@
   import EbookList from "$lib/components/ebook-list.svelte";
 
   const { data } = $props();
-  const ebooks = $derived(data.ebooks);
 
   breadcrumb.path = [{ name: "Ebooks", path: "/ebook" }];
 </script>
@@ -18,4 +17,4 @@
     ><AddIcon /><span class="ml-2 hidden md:inline">Add</span></Button>
 </div>
 
-<EbookList {ebooks} />
+<EbookList ebooks={data.ebooks} sort={data.sort} />
