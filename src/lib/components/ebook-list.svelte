@@ -1,9 +1,11 @@
 <script lang="ts" module>
-  const SORTING = [
-    { label: "Newest", value: "" },
-    { label: "Oldest", value: "e.created" },
-    { label: "Title", value: "e.title" },
-    { label: "Reverse Title", value: "-e.title" },
+  import { EBOOK_SORTING_DEFAULT, type EbookSorting } from "$lib/api/sorting";
+
+  const SORTING: { label: string; value: EbookSorting }[] = [
+    { label: "Newest", value: "latest" },
+    { label: "Oldest", value: "oldest" },
+    { label: "Title", value: "title" },
+    { label: "Reverse Title", value: "reverse-title" },
   ];
 </script>
 
@@ -33,7 +35,7 @@
 
   let layout = $state<Layout>("grid");
 
-  let sort = $state("");
+  let sort: EbookSorting = $state(EBOOK_SORTING_DEFAULT);
 
   const buildHref = (sort: string) => {
     const u = new URL(window.location.href);

@@ -25,6 +25,8 @@ import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";
 import { DEV_API_URL } from "$lib/config";
 import { IS_DEV } from "$lib/dev";
+import { EBOOK_SORTING, EBOOK_SORTING_DEFAULT, type EbookSorting } from "./sorting";
+import { query } from "$app/server";
 
 function getApiBaseUrl(): string {
   const { protocol, hostname, origin } = window.location;
@@ -190,6 +192,12 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
   async listEbooks(queryParams?: ListParams) {
+    queryParams ??= {};
+    if (queryParams.sort) {
+      queryParams.sort = EBOOK_SORTING[queryParams.sort as EbookSorting] || EBOOK_SORTING[EBOOK_SORTING_DEFAULT];
+    } else {
+      queryParams.sort = EBOOK_SORTING[EBOOK_SORTING_DEFAULT];
+    }
     const { data, response } = await this.client.GET("/api/ebook", {
       params: { query: queryParams },
     });
