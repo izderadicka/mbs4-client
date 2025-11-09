@@ -30,8 +30,8 @@
   breadcrumb.path = [{ name: "Ebooks", path: "/ebook" }, { name: ebook.title }];
 </script>
 
-<div class="flex flex-1 pr-5">
-  <div class="">
+<div class="flex pr-5">
+  <div>
     <Title>{ebook.title}</Title>
     {#if ebook.series}
       <Subtitle
