@@ -6,10 +6,12 @@ export async function load({ url }) {
   const pageSize = parseInt(
     url.searchParams.get("page_size") || String(DEFAULT_PAGE_SIZE),
   );
+  const sort = url.searchParams.get("sort") || undefined;
 
-  const ebooks = await apiClient.listEbooks({ page_size: pageSize, page });
+  const ebooks = await apiClient.listEbooks({ page_size: pageSize, page, sort });
 
   return {
     ebooks,
+    sort: sort || "",
   };
 }

@@ -875,6 +875,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -889,6 +891,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -908,6 +912,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -923,6 +929,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -936,6 +944,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -950,6 +960,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */
@@ -963,6 +975,8 @@ export interface components {
             /** Format: int32 */
             page_size: number;
             /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
             total: number;
             rows: {
                 /** Format: int64 */

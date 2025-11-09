@@ -1,0 +1,144 @@
+<script lang="ts" module>
+  const SORTING = [
+    { label: "Newest", value: "" },
+    { label: "Oldest", value: "e.created" },
+    { label: "Title", value: "e.title" },
+    { label: "Reverse Title", value: "-e.title" },
+  ];
+</script>
+
+<script lang="ts">
+  import type { PagedEbookShort } from "$lib/api";
+  import * as Table from "$lib/components/ui/table/index.js";
+  import AuthorsList from "$lib/components/fragments/authors-list.svelte";
+  import Pager from "$lib/components/pager.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import * as Card from "$lib/components/ui/card/index.js";
+  import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
+  import TableIcon from "@lucide/svelte/icons/rows-3";
+  import GridIcon from "@lucide/svelte/icons/layout-grid";
+  import CoverIcon from "$lib/components/fragments/cover-icon.svelte";
+  import * as Select from "$lib/components/ui/select";
+  import SortIcon from "@lucide/svelte/icons/arrow-down-narrow-wide";
+  import SelectTrigger from "./fragments/select-trigger-modified.svelte";
+  import { goto } from "$app/navigation";
+
+  type Props = {
+    ebooks: PagedEbookShort;
+  };
+
+  type Layout = "table" | "grid";
+
+  let { ebooks }: Props = $props();
+
+  let layout = $state<Layout>("grid");
+
+  let sort = $state("");
+
+  const buildHref = (sort: string) => {
+    const u = new URL(window.location.href);
+    u.searchParams.set("sort", sort);
+    return `${u.pathname}?${u.searchParams.toString()}`;
+  };
+
+  function onSortChange(s: string) {
+    goto(buildHref(s));
+  }
+</script>
+
+<div class="flex gap-2">
+  <ButtonGroup.Root>
+    <Button
+      onclick={() => (layout = "grid")}
+      disabled={layout === "grid"}
+      class="cursor-pointer"><GridIcon /></Button>
+    <Button
+      onclick={() => (layout = "table")}
+      disabled={layout === "table"}
+      class="cursor-pointer"><TableIcon /></Button>
+  </ButtonGroup.Root>
+  <Select.Root
+    type="single"
+    name="sort"
+    bind:value={sort}
+    onValueChange={onSortChange}>
+    <SelectTrigger class="w-[140px]">
+      {#snippet children()}
+        {SORTING.find((o) => o.value === sort)?.label}
+      {/snippet}
+      {#snippet icon()}
+        <SortIcon class="size-4 opacity-50" />
+      {/snippet}
+    </SelectTrigger>
+    <Select.Content>
+      {#each SORTING as option}
+        <Select.Item value={option.value}>{option.label}</Select.Item>
+      {/each}
+    </Select.Content>
+  </Select.Root>
+</div>
+
+{#if layout === "grid"}
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {#each ebooks.rows as ebook (ebook.id)}
+      <Card.Root class="p-3">
+        <Card.Content class="flex gap-4 flex-row">
+          <div class="w-[128px] h-[128px] mr-4">
+            <a href="/ebook/{ebook.id}">
+              <CoverIcon ebookId={ebook.id} size={128} />
+            </a>
+          </div>
+          <div class="flex-1">
+            <div class="text-lg font-bold">
+              <a href="/ebook/{ebook.id}">{ebook.title}</a>
+            </div>
+            <AuthorsList
+              authors={ebook.authors || []}
+              short={true}
+              class="italic" />
+            {#if ebook.series}
+              <div>
+                <a href="/series/{ebook.series.id}"
+                  >{ebook.series?.title} #{ebook.series_index}</a>
+              </div>
+            {/if}
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/each}
+  </div>
+{/if}
+
+{#if layout === "table"}
+  <Table.Root class="table-fixed w-full">
+    <Table.Header>
+      <Table.Row>
+        <Table.Head class="w-[4rem]">Id</Table.Head>
+        <Table.Head class="w-[20%]">Authors</Table.Head>
+        <Table.Head>Title</Table.Head>
+        <Table.Head class="hidden lg:table-cell">Series</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      {#each ebooks.rows as ebook (ebook.id)}
+        <Table.Row>
+          <Table.Cell class="font-medium">{ebook.id}</Table.Cell>
+          <Table.Cell class="truncate"
+            ><AuthorsList
+              authors={ebook.authors || []}
+              short={true} /></Table.Cell>
+          <Table.Cell class="truncate"
+            ><a href="/ebook/{ebook.id}">{ebook.title}</a></Table.Cell>
+          <Table.Cell class="truncate hidden lg:table-cell">
+            {#if ebook.series}
+              <a href="/series/{ebook.series.id}"
+                >{ebook.series.title} #{ebook.series_index}</a>
+            {/if}
+          </Table.Cell>
+        </Table.Row>
+      {/each}
+    </Table.Body>
+  </Table.Root>
+{/if}
+
+<Pager count={ebooks.total} pageSize={ebooks.page_size} page={ebooks.page} />

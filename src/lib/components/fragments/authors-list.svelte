@@ -1,11 +1,18 @@
 <script lang="ts">
+  import { type HTMLAttributes } from "svelte/elements";
+
   type AuthorShort = {
     id?: number;
     first_name?: string | null;
     last_name: string;
   };
-  let { authors, short = false }: { authors: AuthorShort[]; short?: boolean } =
-    $props();
+  type SpanAttributes = HTMLAttributes<HTMLSpanElement>;
+
+  let {
+    authors,
+    short = false,
+    ...restProps
+  }: { authors: AuthorShort[]; short?: boolean } & SpanAttributes = $props();
   if (short) {
     authors = authors.slice(0, 2);
   }
@@ -16,7 +23,7 @@
   <span>{author.last_name}</span>
 {/snippet}
 
-<span>
+<span {...restProps}>
   {#each authors as author, i}
     {#if author.id != null}
       <a href={`/author/${author.id}`}>{@render authorSnippet(author)}</a>
