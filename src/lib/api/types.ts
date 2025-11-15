@@ -1159,6 +1159,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -1307,6 +1308,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path: {
@@ -1357,6 +1359,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -1579,6 +1582,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -1727,6 +1731,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -1875,6 +1880,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -2023,6 +2029,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -2171,6 +2178,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path: {
@@ -2197,6 +2205,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 sort?: string;
+                filter?: string;
             };
             header?: never;
             path?: never;
