@@ -61,36 +61,38 @@
   let { form: formData, enhance } = form;
 </script>
 
-<div class="flex gap-2 items-center">
-  <ButtonGroup.Root>
-    <Button
-      onclick={() => (layout = "grid")}
-      disabled={layout === "grid"}
-      class="cursor-pointer"><GridIcon /></Button>
-    <Button
-      onclick={() => (layout = "table")}
-      disabled={layout === "table"}
-      class="cursor-pointer"><TableIcon /></Button>
-  </ButtonGroup.Root>
-  <Select.Root
-    type="single"
-    name="sort"
-    bind:value={sort}
-    onValueChange={onSortChange}>
-    <SelectTrigger class="w-[140px]">
-      {#snippet children()}
-        {SORTING.find((o) => o.value === sort)?.label}
-      {/snippet}
-      {#snippet icon()}
-        <SortIcon class="size-4 opacity-50" />
-      {/snippet}
-    </SelectTrigger>
-    <Select.Content>
-      {#each SORTING as option}
-        <Select.Item value={option.value}>{option.label}</Select.Item>
-      {/each}
-    </Select.Content>
-  </Select.Root>
+<div class="flex gap-2 items-center flex-col md:flex-row">
+  <div class="flex gap-2">
+    <ButtonGroup.Root>
+      <Button
+        onclick={() => (layout = "grid")}
+        disabled={layout === "grid"}
+        class="cursor-pointer"><GridIcon /></Button>
+      <Button
+        onclick={() => (layout = "table")}
+        disabled={layout === "table"}
+        class="cursor-pointer"><TableIcon /></Button>
+    </ButtonGroup.Root>
+    <Select.Root
+      type="single"
+      name="sort"
+      bind:value={sort}
+      onValueChange={onSortChange}>
+      <SelectTrigger class="w-[140px]">
+        {#snippet children()}
+          {SORTING.find((o) => o.value === sort)?.label}
+        {/snippet}
+        {#snippet icon()}
+          <SortIcon class="size-4 opacity-50" />
+        {/snippet}
+      </SelectTrigger>
+      <Select.Content>
+        {#each SORTING as option}
+          <Select.Item value={option.value}>{option.label}</Select.Item>
+        {/each}
+      </Select.Content>
+    </Select.Root>
+  </div>
   <div class="flex-1">
     <GenreField
       {form}
