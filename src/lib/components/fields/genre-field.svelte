@@ -20,7 +20,7 @@
 
   let open = $state(false);
   let triggerRef = $state<HTMLElement | null>(null);
-  let genres: GenreShort[] = $state([]);
+  let genres: readonly GenreShort[] = $state([]);
   let freeGenres = $derived(genres.filter((g) => !isSelected(g.id)));
 
   onMount(async () => {
@@ -71,16 +71,13 @@
       "
             role="combobox"
             aria-expanded={open}
-            tabindex="0"
-          >
+            tabindex="0">
             <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
               {#each value || [] as genre (genre.id)}
                 <Badge variant="outline" class="ml-1"
                   ><span>{genre.name}</span>
                   <ClearButton
-                    onActivation={() => removeGenre(genre.id)}
-                  /></Badge
-                >
+                    onActivation={() => removeGenre(genre.id)} /></Badge>
               {/each}
             </div>
             <ChevronsUpDownIcon class="opacity-50 shrink-0 self-center" />
@@ -100,8 +97,7 @@
                 onSelect={() => {
                   value = [...(value || []), genre];
                   closeAndFocusTrigger();
-                }}
-              >
+                }}>
                 {genre.name}
               </Command.Item>
             {/each}

@@ -17,7 +17,7 @@
     form,
   }: { value: Language | null; form: SuperForm<any> } = $props();
 
-  let languages: Language[] = $state([]);
+  let languages: readonly Language[] = $state([]);
   const languagesMap: Record<string, Language> = $derived(
     languages.reduce((acc, l) => ({ ...acc, [l.code]: l }), {}),
   );
@@ -59,8 +59,7 @@
               value={language.code}
               onselect={() => {
                 console.debug("selected", language);
-              }}>{language.name}</Select.Item
-            >
+              }}>{language.name}</Select.Item>
           {/each}
         </Select.Content>
       </Select.Root>

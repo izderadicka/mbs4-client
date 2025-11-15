@@ -9,7 +9,7 @@
     title: string;
     url: string;
     icon?: any;
-    requiredRole?: string;
+    requiredRole?: Role;
   }
 
   export interface MenuItem {
@@ -18,7 +18,7 @@
     icon?: any;
     isOpen?: boolean;
     items?: InnerMenuItem[];
-    requiredRole?: string;
+    requiredRole?: Role;
   }
 
   // This is sample data.
@@ -94,6 +94,7 @@
   import { useSidebar } from "$lib/components/ui/sidebar/index.js";
   import type { User } from "$lib/types/app";
   import { afterNavigate } from "$app/navigation";
+  import type { Role } from "$lib/api";
 
   afterNavigate(() => {
     sidebar.setOpenMobile(false);
@@ -123,23 +124,19 @@
       ><h1
         class="{sidebar.state === 'expanded'
           ? 'text-2xl'
-          : 'text-sm'} font-bold"
-      >
+          : 'text-sm'} font-bold">
         mbs4
       </h1></a
-    ></Sidebar.Header
-  >
+    ></Sidebar.Header>
   <Sidebar.Content>
     <NavMain items={mainMenu} />
   </Sidebar.Content>
   <Sidebar.Footer>
     <Button onclick={toggleDarkMode} variant="outline" size="icon">
       <SunIcon
-        class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-      />
+        class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <MoonIcon
-        class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-      />
+        class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span class="sr-only">Toggle theme</span>
     </Button>
 
