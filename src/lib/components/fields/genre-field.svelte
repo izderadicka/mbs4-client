@@ -16,7 +16,14 @@
   let {
     value = $bindable(),
     form,
-  }: { value: GenreShort[] | null; form: SuperForm<any> } = $props();
+    minimal = false,
+    placeholder = null,
+  }: {
+    value: GenreShort[] | null;
+    form: SuperForm<any>;
+    minimal?: boolean;
+    placeholder?: string | null;
+  } = $props();
 
   let open = $state(false);
   let triggerRef = $state<HTMLElement | null>(null);
@@ -52,7 +59,9 @@
 <Form.Field {form} name="genres">
   <Popover.Root bind:open>
     <Form.Control>
-      <Form.Label>Genres</Form.Label>
+      {#if !minimal}
+        <Form.Label>Genres</Form.Label>
+      {/if}
       <Popover.Trigger bind:ref={triggerRef}>
         {#snippet child({ props })}
           <div
@@ -73,12 +82,16 @@
             aria-expanded={open}
             tabindex="0">
             <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
-              {#each value || [] as genre (genre.id)}
-                <Badge variant="outline" class="ml-1"
-                  ><span>{genre.name}</span>
-                  <ClearButton
-                    onActivation={() => removeGenre(genre.id)} /></Badge>
-              {/each}
+              {#if (!value || value.length === 0) && placeholder}
+                <span class="text-muted-foreground">{placeholder}</span>
+              {:else}
+                {#each value || [] as genre (genre.id)}
+                  <Badge variant="outline" class="ml-1"
+                    ><span>{genre.name}</span>
+                    <ClearButton
+                      onActivation={() => removeGenre(genre.id)} /></Badge>
+                {/each}
+              {/if}
             </div>
             <ChevronsUpDownIcon class="opacity-50 shrink-0 self-center" />
           </div>
@@ -106,7 +119,8 @@
       </Command.Root>
     </Popover.Content>
   </Popover.Root>
-
-  <Form.FieldErrors />
-  <Form.Description>Genres of the ebook</Form.Description>
+  {#if !minimal}
+    <Form.FieldErrors />
+    <Form.Description>Genres of the ebook</Form.Description>
+  {/if}
 </Form.Field>

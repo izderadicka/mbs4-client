@@ -24,6 +24,8 @@
   import SortIcon from "@lucide/svelte/icons/arrow-down-narrow-wide";
   import SelectTrigger from "./fragments/select-trigger-modified.svelte";
   import { goto } from "$app/navigation";
+  import GenreField from "./fields/genre-field.svelte";
+  import { superForm } from "sveltekit-superforms";
 
   type Props = {
     ebooks: PagedEbookShort;
@@ -45,9 +47,21 @@
   function onSortChange(s: string) {
     goto(buildHref(s));
   }
+
+  let genres = { genres: [] };
+  const form = superForm(genres, {
+    SPA: true,
+    dataType: "json",
+    validators: false,
+    onChange: () => {
+      console.log("Changed genres", $formData.genres);
+    },
+  });
+
+  let { form: formData, enhance } = form;
 </script>
 
-<div class="flex gap-2">
+<div class="flex gap-2 items-center">
   <ButtonGroup.Root>
     <Button
       onclick={() => (layout = "grid")}
@@ -77,6 +91,13 @@
       {/each}
     </Select.Content>
   </Select.Root>
+  <div class="flex-1">
+    <GenreField
+      {form}
+      bind:value={$formData.genres}
+      minimal={true}
+      placeholder="Select genres to filter ..." />
+  </div>
 </div>
 
 {#if layout === "grid"}

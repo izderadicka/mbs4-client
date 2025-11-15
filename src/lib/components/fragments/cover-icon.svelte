@@ -41,7 +41,6 @@
 
   $effect(() => {
     if (iconElement) {
-      console.log(`ICON EFFECT on ${ebookId}`);
       if (!observer) {
         observer = new IntersectionObserver(
           async (entries) => {
