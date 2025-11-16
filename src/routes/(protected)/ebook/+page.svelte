@@ -17,4 +17,4 @@
     ><AddIcon /><span class="ml-2 hidden md:inline">Add</span></Button>
 </div>
 
-<EbookList ebooks={data.ebooks} sort={data.sort} />
+<EbookList ebooks={data.ebooks} sort={data.sort} genres={data.genres} />

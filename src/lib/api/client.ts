@@ -256,7 +256,6 @@ export class ApiClient {
       this.langCache &&
       this.langCache.date > new Date(Date.now() - 1000 * 60 * 60)
     ) {
-      console.log("Using cached languages");
       return this.langCache.data;
     }
     const { data, response } = await this.client.GET("/api/language/all");
@@ -271,7 +270,6 @@ export class ApiClient {
       this.genreCache &&
       this.genreCache.date > new Date(Date.now() - 1000 * 60 * 60)
     ) {
-      console.log("Using cached genres");
       return this.genreCache.data;
     }
     const { data, response } = await this.client.GET("/api/genre/all");

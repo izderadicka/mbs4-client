@@ -98,9 +98,6 @@
 
   afterNavigate(() => {
     sidebar.setOpenMobile(false);
-    console.log(
-      `afterNavigate, sidebar state is ${sidebar.state}, open is ${sidebar.open}, isMobile is ${sidebar.isMobile} openMobile is ${sidebar.openMobile}`,
-    );
   });
 
   const sidebar = useSidebar();

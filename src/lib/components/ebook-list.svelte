@@ -39,15 +39,26 @@
 
   let layout = $state<Layout>("grid");
 
-  const buildHref = ({ sort, genres }: { sort?: string; genres?: string }) => {
+  const buildHref = () => {
     const u = new URL(window.location.href);
-    if (genres) u.searchParams.set("genres", genres);
-    if (sort) u.searchParams.set("sort", sort);
+    if ($formData.genres) {
+      u.searchParams.set(
+        "genres",
+        $formData.genres?.map((g) => g.id).join(","),
+      );
+    } else {
+      u.searchParams.delete("genres");
+    }
+    if (sort) {
+      u.searchParams.set("sort", sort);
+    } else {
+      u.searchParams.delete("sort");
+    }
     return `${u.pathname}?${u.searchParams.toString()}`;
   };
 
   function onSortChange(s: string) {
-    goto(buildHref({ sort: s }));
+    goto(buildHref());
   }
 
   const form = superForm(
@@ -58,9 +69,7 @@
       validators: false,
       onChange: async () => {
         console.log("Changed genres", $formData.genres);
-        await goto(
-          buildHref({ genres: $formData.genres?.map((g) => g.id).join(",") }),
-        );
+        await goto(buildHref());
       },
     },
   );
@@ -109,67 +118,71 @@
   </div>
 </div>
 
-{#if layout === "grid"}
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-    {#each ebooks.rows as ebook (ebook.id)}
-      <Card.Root class="p-3">
-        <Card.Content class="flex gap-4 flex-row">
-          <div class="w-[128px] h-[128px] mr-4">
-            <a href="/ebook/{ebook.id}">
-              <CoverIcon ebookId={ebook.id} size={128} />
-            </a>
-          </div>
-          <div class="flex-1">
-            <div class="text-lg font-bold">
-              <a href="/ebook/{ebook.id}">{ebook.title}</a>
-            </div>
-            <AuthorsList
-              authors={ebook.authors || []}
-              short={true}
-              class="italic" />
-            {#if ebook.series}
-              <div>
-                <a href="/series/{ebook.series.id}"
-                  >{ebook.series?.title} #{ebook.series_index}</a>
-              </div>
-            {/if}
-          </div>
-        </Card.Content>
-      </Card.Root>
-    {/each}
-  </div>
-{/if}
-
-{#if layout === "table"}
-  <Table.Root class="table-fixed w-full">
-    <Table.Header>
-      <Table.Row>
-        <Table.Head class="w-[4rem]">Id</Table.Head>
-        <Table.Head class="w-[20%]">Authors</Table.Head>
-        <Table.Head>Title</Table.Head>
-        <Table.Head class="hidden lg:table-cell">Series</Table.Head>
-      </Table.Row>
-    </Table.Header>
-    <Table.Body>
+{#if !ebooks || !ebooks.rows || ebooks.rows.length === 0}
+  <div class="mt-4 text-xl text-accent text-center">No ebooks found</div>
+{:else}
+  {#if layout === "grid"}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {#each ebooks.rows as ebook (ebook.id)}
-        <Table.Row>
-          <Table.Cell class="font-medium">{ebook.id}</Table.Cell>
-          <Table.Cell class="truncate"
-            ><AuthorsList
-              authors={ebook.authors || []}
-              short={true} /></Table.Cell>
-          <Table.Cell class="truncate"
-            ><a href="/ebook/{ebook.id}">{ebook.title}</a></Table.Cell>
-          <Table.Cell class="truncate hidden lg:table-cell">
-            {#if ebook.series}
-              <a href="/series/{ebook.series.id}"
-                >{ebook.series.title} #{ebook.series_index}</a>
-            {/if}
-          </Table.Cell>
-        </Table.Row>
+        <Card.Root class="p-3">
+          <Card.Content class="flex gap-4 flex-row">
+            <div class="w-[128px] h-[128px] mr-4">
+              <a href="/ebook/{ebook.id}">
+                <CoverIcon ebookId={ebook.id} size={128} />
+              </a>
+            </div>
+            <div class="flex-1">
+              <div class="text-lg font-bold">
+                <a href="/ebook/{ebook.id}">{ebook.title}</a>
+              </div>
+              <AuthorsList
+                authors={ebook.authors || []}
+                short={true}
+                class="italic" />
+              {#if ebook.series}
+                <div>
+                  <a href="/series/{ebook.series.id}"
+                    >{ebook.series?.title} #{ebook.series_index}</a>
+                </div>
+              {/if}
+            </div>
+          </Card.Content>
+        </Card.Root>
       {/each}
-    </Table.Body>
-  </Table.Root>
-{/if}
+    </div>
+  {/if}
 
-<Pager count={ebooks.total} pageSize={ebooks.page_size} page={ebooks.page} />
+  {#if layout === "table"}
+    <Table.Root class="table-fixed w-full">
+      <Table.Header>
+        <Table.Row>
+          <Table.Head class="w-[4rem]">Id</Table.Head>
+          <Table.Head class="w-[20%]">Authors</Table.Head>
+          <Table.Head>Title</Table.Head>
+          <Table.Head class="hidden lg:table-cell">Series</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each ebooks.rows as ebook (ebook.id)}
+          <Table.Row>
+            <Table.Cell class="font-medium">{ebook.id}</Table.Cell>
+            <Table.Cell class="truncate"
+              ><AuthorsList
+                authors={ebook.authors || []}
+                short={true} /></Table.Cell>
+            <Table.Cell class="truncate"
+              ><a href="/ebook/{ebook.id}">{ebook.title}</a></Table.Cell>
+            <Table.Cell class="truncate hidden lg:table-cell">
+              {#if ebook.series}
+                <a href="/series/{ebook.series.id}"
+                  >{ebook.series.title} #{ebook.series_index}</a>
+              {/if}
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
+  {/if}
+
+  <Pager count={ebooks.total} pageSize={ebooks.page_size} page={ebooks.page} />
+{/if}

@@ -13,7 +13,6 @@ export async function load({ url }) {
   const genres = genresParam ? await genresFilter(genresParam) : undefined;
   const genresIds = IdsList(genres);
 
-
   const ebooks = await apiClient.listEbooks({ page_size: pageSize, page, sort, filter: genresIds ? `genres=${genresIds}` : undefined });
 
   return {
