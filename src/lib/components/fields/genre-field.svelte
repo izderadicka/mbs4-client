@@ -19,7 +19,7 @@
     minimal = false,
     placeholder = null,
   }: {
-    value: GenreShort[] | null;
+    value: GenreShort[] | null | undefined;
     form: SuperForm<any>;
     minimal?: boolean;
     placeholder?: string | null;

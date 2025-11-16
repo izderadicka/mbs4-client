@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-  import type { PagedEbookShort } from "$lib/api";
+  import type { GenreShort, PagedEbookShort } from "$lib/api";
   import * as Table from "$lib/components/ui/table/index.js";
   import AuthorsList from "$lib/components/fragments/authors-list.svelte";
   import Pager from "$lib/components/pager.svelte";
@@ -30,35 +30,42 @@
   type Props = {
     ebooks: PagedEbookShort;
     sort?: EbookSorting;
+    genres?: GenreShort[];
   };
 
   type Layout = "table" | "grid";
 
-  let { ebooks, sort = $bindable() }: Props = $props();
+  let { ebooks, sort = $bindable(), genres = $bindable() }: Props = $props();
 
   let layout = $state<Layout>("grid");
 
-  const buildHref = (sort: string) => {
+  const buildHref = ({ sort, genres }: { sort?: string; genres?: string }) => {
     const u = new URL(window.location.href);
-    u.searchParams.set("sort", sort);
+    if (genres) u.searchParams.set("genres", genres);
+    if (sort) u.searchParams.set("sort", sort);
     return `${u.pathname}?${u.searchParams.toString()}`;
   };
 
   function onSortChange(s: string) {
-    goto(buildHref(s));
+    goto(buildHref({ sort: s }));
   }
 
-  let genres = { genres: [] };
-  const form = superForm(genres, {
-    SPA: true,
-    dataType: "json",
-    validators: false,
-    onChange: () => {
-      console.log("Changed genres", $formData.genres);
+  const form = superForm(
+    { genres },
+    {
+      SPA: true,
+      dataType: "json",
+      validators: false,
+      onChange: async () => {
+        console.log("Changed genres", $formData.genres);
+        await goto(
+          buildHref({ genres: $formData.genres?.map((g) => g.id).join(",") }),
+        );
+      },
     },
-  });
+  );
 
-  let { form: formData, enhance } = form;
+  let { form: formData } = form;
 </script>
 
 <div class="flex gap-2 items-center flex-col md:flex-row">

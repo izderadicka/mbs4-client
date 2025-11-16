@@ -62,6 +62,7 @@ export interface ListParams {
   page?: number;
   page_size?: number;
   sort?: string;
+  filter?: string;
 }
 
 interface ConversionResult {
