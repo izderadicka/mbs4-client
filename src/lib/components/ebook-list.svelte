@@ -122,7 +122,8 @@
   <div class="mt-4 text-xl text-accent text-center">No ebooks found</div>
 {:else}
   {#if layout === "grid"}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div
+      class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
       {#each ebooks.rows as ebook (ebook.id)}
         <Card.Root class="p-3">
           <Card.Content class="flex gap-4 flex-row">
