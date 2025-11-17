@@ -1,6 +1,6 @@
 import { apiClient } from "$lib/api/client";
 import { genresFilter, IdsList } from "$lib/api/filter.js";
-import { EBOOK_SORTING_DEFAULT, ebookSort } from "$lib/api/sorting.js";
+import { prepareEbookQuery } from "$lib/api/utils.js";
 import { DEFAULT_PAGE_SIZE } from "$lib/config.js";
 
 export async function load({ url }) {
@@ -13,11 +13,12 @@ export async function load({ url }) {
   const genres = genresParam ? await genresFilter(genresParam) : undefined;
   const genresIds = IdsList(genres);
 
-  const ebooks = await apiClient.listEbooks({ page_size: pageSize, page, sort, filter: genresIds ? `genres=${genresIds}` : undefined });
+  const { query, values } = await prepareEbookQuery(url);
+
+  const ebooks = await apiClient.listEbooks(query);
 
   return {
     ebooks,
-    sort: ebookSort(sort),
-    genres,
+    ...values
   };
 }

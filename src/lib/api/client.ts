@@ -192,8 +192,6 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
   async listEbooks(queryParams?: ListParams) {
-    queryParams ??= {};
-    queryParams.sort = ebookSortQuery(queryParams.sort);
     const { data, response } = await this.client.GET("/api/ebook", {
       params: { query: queryParams },
     });
