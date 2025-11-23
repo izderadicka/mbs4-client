@@ -20,3 +20,4 @@
 </Title>
 
 <Subtitle>Ebooks</Subtitle>
+<EbookList ebooks={data.ebooks} sort={data.sort} genres={data.genres} />

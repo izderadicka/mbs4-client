@@ -197,6 +197,13 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async listAuthorEbooks(authorId: number, queryParams?: ListParams) {
+    const { data, response } = await this.client.GET("/api/author/{id}/ebooks", {
+      params: { path: { id: authorId }, query: queryParams },
+    });
+    return this.checkResponse(response, data);
+  }
+
   async retrieveMetadata(uploadInfo: components["schemas"]["UploadInfo"]) {
     const { data, response } = await this.client.POST(
       "/api/convert/extract_meta",
