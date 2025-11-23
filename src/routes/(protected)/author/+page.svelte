@@ -1,15 +1,32 @@
+<script lang="ts" module>
+  const SORTING: { label: string; value: AuthorSorting }[] = [
+    { label: "Newest", value: "latest" },
+    { label: "Oldest", value: "oldest" },
+    { label: "Name", value: "name" },
+    { label: "Reverse Name", value: "reverse-name" },
+  ];
+</script>
+
 <script lang="ts">
   import { breadcrumb } from "$lib/globals.svelte";
   import Title from "$lib/components/title.svelte";
   import * as Table from "$lib/components/ui/table/index.js";
+  import type { AuthorSorting } from "$lib/api/sorting";
+  import Pager from "$lib/components/pager.svelte";
+  import SortSelect from "$lib/components/fragments/sort-select.svelte";
 
   breadcrumb.path = [{ name: "Authors", path: "/author" }];
 
   let { data } = $props();
   let authors = $derived(data.authors);
+  let sort = $derived(data.sort);
 </script>
 
 <Title>Authors</Title>
+
+<div class="flex gap-2">
+  <SortSelect bind:sort sorting={SORTING} />
+</div>
 
 <Table.Root class="table-fixed w-full">
   <Table.Header>
@@ -36,3 +53,5 @@
     {/each}
   </Table.Body>
 </Table.Root>
+
+<Pager count={authors.total} pageSize={authors.page_size} page={authors.page} />

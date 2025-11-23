@@ -26,8 +26,6 @@ import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";
 import { DEV_API_URL } from "$lib/config";
 import { IS_DEV } from "$lib/dev";
-import { type EbookSorting, ebookSortQuery } from "./sorting";
-import { query } from "$app/server";
 
 function getApiBaseUrl(): string {
   const { protocol, hostname, origin } = window.location;

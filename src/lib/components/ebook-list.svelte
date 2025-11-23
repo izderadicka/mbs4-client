@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import { EBOOK_SORTING_DEFAULT, type EbookSorting } from "$lib/api/sorting";
+  import { type EbookSorting } from "$lib/api/sorting";
 
   const SORTING: { label: string; value: EbookSorting }[] = [
     { label: "Newest", value: "latest" },
@@ -26,6 +26,7 @@
   import { goto } from "$app/navigation";
   import GenreField from "./fields/genre-field.svelte";
   import { superForm } from "sveltekit-superforms";
+  import SortSelect from "$lib/components/fragments/sort-select.svelte";
 
   type Props = {
     ebooks: PagedEbookShort;
@@ -89,25 +90,7 @@
         disabled={layout === "table"}
         class="cursor-pointer"><TableIcon /></Button>
     </ButtonGroup.Root>
-    <Select.Root
-      type="single"
-      name="sort"
-      bind:value={sort}
-      onValueChange={onSortChange}>
-      <SelectTrigger class="w-[140px]">
-        {#snippet children()}
-          {SORTING.find((o) => o.value === sort)?.label}
-        {/snippet}
-        {#snippet icon()}
-          <SortIcon class="size-4 opacity-50" />
-        {/snippet}
-      </SelectTrigger>
-      <Select.Content>
-        {#each SORTING as option}
-          <Select.Item value={option.value}>{option.label}</Select.Item>
-        {/each}
-      </Select.Content>
-    </Select.Root>
+    <SortSelect bind:sort {onSortChange} sorting={SORTING} />
   </div>
   <div class="flex-1">
     <GenreField

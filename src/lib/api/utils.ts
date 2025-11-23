@@ -28,12 +28,24 @@ export function decodeJwt<T = unknown>(token: string): T {
     }
 }
 
-export async function prepareEbookQuery(url: URL) {
+export function getListingParams(url: URL,) {
     const page = parseInt(url.searchParams.get("page") || "1");
     const pageSize = parseInt(
         url.searchParams.get("page_size") || String(DEFAULT_PAGE_SIZE),
     );
     const sort = url.searchParams.get("sort") || undefined;
+
+    return {
+        page,
+        page_size: pageSize,
+        sort,
+    };
+
+}
+
+export async function prepareEbookQuery(url: URL) {
+    const { page, page_size, sort } = getListingParams(url)
+
     const genresParam = url.searchParams.get("genres") || undefined;
     const genres = genresParam ? await genresFilter(genresParam) : undefined;
     const genresIds = IdsList(genres);
@@ -42,7 +54,7 @@ export async function prepareEbookQuery(url: URL) {
     return {
         query: {
             page,
-            page_size: pageSize,
+            page_size,
             sort: ebookSortQuery(sortValue),
             filter: genresIds ? `genres=${genresIds}` : undefined,
         },
