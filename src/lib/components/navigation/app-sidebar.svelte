@@ -45,7 +45,7 @@
         },
         {
           title: "Authors",
-          url: "#",
+          url: "/author",
         },
         {
           title: "Series",

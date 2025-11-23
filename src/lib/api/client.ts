@@ -3,6 +3,7 @@ import { decodeJwt } from "./utils";
 import type {
   Author,
   AuthorSearchItem,
+  AuthorShort,
   CreateAuthor,
   CreateEbook,
   CreateSeries,
@@ -240,6 +241,18 @@ export class ApiClient {
       params: { query: { query, num_results: limit, what: "author" } },
     });
     return this.checkResponse(response, data as AuthorSearchItem[]);
+  }
+
+  async getAuthor(id: number): Promise<Author> {
+    const { data, response } = await this.client.GET(`/api/author/{id}`, {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async listAuthors(queryParams?: ListParams) {
+    const { data, response } = await this.client.GET("/api/author", { params: { query: queryParams } });
+    return this.checkResponse(response, data);
   }
 
   async getEbook(id: number): Promise<Ebook> {
