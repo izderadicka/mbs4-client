@@ -14,6 +14,7 @@
   import type { AuthorSorting } from "$lib/api/sorting";
   import Pager from "$lib/components/pager.svelte";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
+  import AddButton from "$lib/components/fragments/add-button.svelte";
 
   breadcrumb.path = [{ name: "Authors", path: "/author" }];
 
@@ -26,6 +27,7 @@
 
 <div class="flex gap-2">
   <SortSelect bind:sort sorting={SORTING} />
+  <AddButton entity="author" />
 </div>
 
 <Table.Root class="table-fixed w-full">

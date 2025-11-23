@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { breadcrumb } from "$lib/globals.svelte.js";
+  import { breadcrumb, hasRole } from "$lib/globals.svelte.js";
   import Title from "$lib/components/title.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
-  import AddIcon from "@lucide/svelte/icons/plus";
   import EbookList from "$lib/components/ebook-list.svelte";
+  import AddButton from "$lib/components/fragments/add-button.svelte";
 
   const { data } = $props();
 
@@ -11,10 +11,8 @@
 </script>
 
 <Title>All Ebooks</Title>
-
 <div class="flex">
-  <Button class="ml-auto" href="/ebook/new"
-    ><AddIcon /><span class="ml-2 hidden md:inline">Add</span></Button>
+  <AddButton entity="ebook" />
 </div>
 
 <EbookList ebooks={data.ebooks} sort={data.sort} genres={data.genres} />
