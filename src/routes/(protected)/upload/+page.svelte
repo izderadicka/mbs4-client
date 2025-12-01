@@ -51,7 +51,7 @@
       if (event && event.data) {
         const result = (event.data as any).data as MetaResult;
         if (result.operation_id === metaTicket.id) {
-          if (result.success && result.metadata) {
+          if (!result.error && result.metadata) {
             metadata = result.metadata;
             stage = "select";
           } else {

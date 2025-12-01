@@ -68,8 +68,7 @@ export interface ListParams {
 interface ConversionResult {
   operation_id: string;
   created: string; // time::OffsetDateTime will be serialized as an ISO 8601 string
-  success: boolean;
-  error: string | null;
+  error?: string;
 }
 
 export interface EbookMetadata {
