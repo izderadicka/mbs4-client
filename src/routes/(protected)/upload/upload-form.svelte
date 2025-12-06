@@ -42,8 +42,11 @@
     fileSelected = !!input.files && input.files?.length > 0; // Check if a file is selected
   }
 
+  let inputValue = $state("");
+
   export function reset() {
     fileSelected = false;
+    inputValue = "";
   }
 </script>
 
@@ -51,20 +54,19 @@
   bind:this={form}
   action="/upload"
   method="POST"
-  enctype="multipart/form-data"
->
+  enctype="multipart/form-data">
   <div class="mb-4 space-y-4">
     <Label for="file-input-{id}">Upload a file</Label>
     <Input
+      bind:value={inputValue}
       type="file"
       name="file"
       id="file-input-{id}"
       onchange={handleFileChange}
-      class="w-full"
-    />
+      class="w-full" />
     <div class="flex justify-end gap-2">
-      <Button onclick={handleFileUpload} disabled={!fileSelected}>Upload</Button
-      >
+      <Button onclick={handleFileUpload} disabled={!fileSelected}
+        >Upload</Button>
     </div>
   </div>
 </form>

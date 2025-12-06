@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/convert/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["convert_source"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/convert/extract_meta": {
         parameters: {
             query?: never;
@@ -159,6 +175,22 @@ export interface paths {
         put: operations["updateEbook"];
         post?: never;
         delete: operations["deleteEbook"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ebook/{id}/conversion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listEbookConversions"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -691,6 +723,12 @@ export interface components {
             id: number;
             name: string;
         };
+        ConversionRequest: {
+            /** Format: int64 */
+            source_id: number;
+            /** Format: int64 */
+            to_format_id: number;
+        };
         CreateAuthor: {
             last_name: string;
             first_name?: string | null;
@@ -753,6 +791,10 @@ export interface components {
             language: components["schemas"]["LanguageShort"];
             authors?: components["schemas"]["AuthorShort"][] | null;
             genres?: components["schemas"]["GenreShort"][] | null;
+            /** Format: float */
+            rating?: number | null;
+            /** Format: int32 */
+            rating_count?: number | null;
             /** Format: int64 */
             version: number;
             created_by?: string | null;
@@ -760,6 +802,22 @@ export interface components {
             created: string;
             /** Format: date-time */
             modified: string;
+        };
+        EbookConversion: {
+            /** Format: int64 */
+            id: number;
+            location: string;
+            /** Format: int64 */
+            source_id: number;
+            /** Format: int64 */
+            batch_id?: number | null;
+            source_format_name: string;
+            source_format_extension: string;
+            format_name: string;
+            format_extension: string;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
         };
         EbookCoverInfo: {
             cover_file?: string | null;
@@ -796,6 +854,8 @@ export interface components {
             series_index?: number | null;
             language: components["schemas"]["LanguageShort"];
             authors?: components["schemas"]["AuthorShort"][] | null;
+            /** Format: float */
+            rating?: number | null;
         };
         EbookSource: {
             /** Format: int64 */
@@ -904,6 +964,8 @@ export interface components {
                 series_index?: number | null;
                 language: components["schemas"]["LanguageShort"];
                 authors?: components["schemas"]["AuthorShort"][] | null;
+                /** Format: float */
+                rating?: number | null;
             }[];
         };
         Page_FormatShort: {
@@ -1329,6 +1391,30 @@ export interface operations {
             };
         };
     };
+    convert_source: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationTicket"];
+                };
+            };
+        };
+    };
     extract_meta: {
         parameters: {
             query?: never;
@@ -1501,6 +1587,28 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    listEbookConversions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List Ebook Conversions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EbookConversion"][];
+                };
+            };
+        };
     };
     updateEbookCover: {
         parameters: {

@@ -53,5 +53,5 @@
 
 <DetailsTable {ebook} />
 <div class="mt-4">
-  <SourcesList sources={data.sources} />
+  <SourcesList sources={data.sources} conversions={data.conversions} />
 </div>

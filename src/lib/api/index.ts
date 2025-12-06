@@ -28,6 +28,8 @@ export type EbookCoverInfo = components["schemas"]["EbookCoverInfo"];
 export type Source = components["schemas"]["Source"];
 export type EbookSource = components["schemas"]["EbookSource"];
 
+export type EbookConversion = components["schemas"]["EbookConversion"];
+
 export type EbookDoc = components["schemas"]["EbookDoc"];
 
 export interface EbookSearchItem {

@@ -8,6 +8,7 @@ import type {
   CreateEbook,
   CreateSeries,
   Ebook,
+  EbookConversion,
   EbookCoverInfo,
   EbookFileInfo,
   EbookSearchItem,
@@ -152,7 +153,7 @@ export class ApiClient {
       throw new Error("Unauthorized");
     }
     if (!response.ok) {
-      throw new Error("Request failed");
+      throw new Error(`Request failed with status ${response.status}`, { cause: response });
     }
 
     if (!data) {
@@ -188,7 +189,14 @@ export class ApiClient {
     const { data, response } = await this.client.POST("/files/upload/form", {
       body: form as any,
     });
-    return this.checkResponse(response, data);
+    try {
+      return this.checkResponse(response, data);
+    } catch (e) {
+      if (e instanceof Error && e.cause instanceof Response && e.cause.status === 409) {
+        throw new Error("File with same hash already exists");
+      }
+      throw e;
+    }
   }
   async listEbooks(queryParams?: ListParams) {
     const { data, response } = await this.client.GET("/api/ebook", {
@@ -300,6 +308,13 @@ export class ApiClient {
     });
     return this.checkResponse(response, data);
 
+  }
+
+  async listEbookConversions(ebookId: number): Promise<EbookConversion[]> {
+    const { data, response } = await this.client.GET("/api/ebook/{id}/conversion", {
+      params: { path: { id: ebookId } },
+    });
+    return this.checkResponse(response, data);
   }
 
   async createSeries(series: CreateSeries): Promise<Series> {
