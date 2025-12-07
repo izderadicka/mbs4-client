@@ -84,6 +84,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conversion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listConversion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversion/all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAllConversion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversion/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["countConversion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversion/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getConversion"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteConversion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/convert/convert": {
         parameters: {
             query?: never;
@@ -580,6 +644,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/download/conversion/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download converted file */
+        get: operations["downloadConversion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/files/download/uploaded/{path}": {
         parameters: {
             query?: never;
@@ -694,6 +775,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listUsers"];
+        put?: never;
+        post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -723,11 +836,35 @@ export interface components {
             id: number;
             name: string;
         };
-        ConversionRequest: {
+        Conversion: {
+            /** Format: int64 */
+            id: number;
+            location: string;
             /** Format: int64 */
             source_id: number;
             /** Format: int64 */
-            to_format_id: number;
+            format_id: number;
+            /** Format: int64 */
+            batch_id?: number | null;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
+        };
+        ConversionRequest: {
+            /** Format: int64 */
+            source_id: number;
+            to_format_extension: string;
+        };
+        ConversionShort: {
+            /** Format: int64 */
+            id: number;
+            location: string;
+            /** Format: int64 */
+            source_id: number;
+            /** Format: int64 */
+            format_id: number;
+            /** Format: int64 */
+            batch_id?: number | null;
         };
         CreateAuthor: {
             last_name: string;
@@ -778,6 +915,12 @@ export interface components {
             quality?: number | null;
             created_by?: string | null;
         };
+        CreateUser: {
+            email: string;
+            name: string;
+            password?: string | null;
+            roles?: string[] | null;
+        };
         Ebook: {
             /** Format: int64 */
             id: number;
@@ -809,6 +952,8 @@ export interface components {
             location: string;
             /** Format: int64 */
             source_id: number;
+            /** Format: int64 */
+            ebook_id: number;
             /** Format: int64 */
             batch_id?: number | null;
             source_format_name: string;
@@ -943,6 +1088,27 @@ export interface components {
                 id: number;
                 last_name: string;
                 first_name?: string | null;
+            }[];
+        };
+        Page_ConversionShort: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
+            total: number;
+            rows: {
+                /** Format: int64 */
+                id: number;
+                location: string;
+                /** Format: int64 */
+                source_id: number;
+                /** Format: int64 */
+                format_id: number;
+                /** Format: int64 */
+                batch_id?: number | null;
             }[];
         };
         Page_EbookShort: {
@@ -1206,6 +1372,13 @@ export interface components {
             hash: string;
             original_name?: string | null;
         };
+        User: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            email: string;
+            roles?: string[] | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -1390,6 +1563,105 @@ export interface operations {
                 };
             };
         };
+    };
+    listConversion: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ConversionShort"];
+                };
+            };
+        };
+    };
+    listAllConversion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List all (unpaginated, sorted by id, max limit applies) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionShort"][];
+                };
+            };
+        };
+    };
+    countConversion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": number;
+                };
+            };
+        };
+    };
+    getConversion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Get one */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversion"];
+                };
+            };
+        };
+    };
+    deleteConversion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
     };
     convert_source: {
         parameters: {
@@ -2492,6 +2764,19 @@ export interface operations {
             };
         };
     };
+    downloadConversion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Path to file */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
+    };
     downloadUploaded: {
         parameters: {
             query?: never;
@@ -2637,6 +2922,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SearchItem"][];
                 };
+            };
+        };
+    };
+    listUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List Users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"][];
+                };
+            };
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUser"];
+            };
+        };
+        responses: {
+            /** @description Create new User */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

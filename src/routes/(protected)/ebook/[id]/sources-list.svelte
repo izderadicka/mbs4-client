@@ -1,23 +1,101 @@
 <script lang="ts">
-  import type { Ebook, EbookConversion, EbookSource } from "$lib/api";
+  import type {
+    ConversionResult,
+    Ebook,
+    EbookConversion,
+    EbookSource,
+  } from "$lib/api";
   import * as Table from "$lib/components/ui/table";
   import prettyBytes from "pretty-bytes";
   import DownloadIcon from "@lucide/svelte/icons/download";
   import { Button } from "$lib/components/ui/button";
   import { apiClient } from "$lib/api/client";
   import SourceMenu from "./source-menu.svelte";
+  import Spinner from "$lib/components/ui/spinner/spinner.svelte";
+  import { lastEvent } from "$lib/globals.svelte";
+  import { toast } from "svelte-sonner";
 
   let {
     sources,
     conversions,
-  }: { sources: EbookSource[]; conversions: EbookConversion[] } = $props();
+    ebookId,
+  }: {
+    sources: EbookSource[];
+    conversions: EbookConversion[];
+    ebookId: number;
+  } = $props();
 
-  function onSourceMenuSelected(source: EbookSource, action: string) {
-    console.log("onSourceMenuSelected", source, action);
+  let conversionTicketId: string | null = $state(null);
+
+  async function startConversion(source: EbookSource, format: string) {
+    const conversion_ticket = await apiClient.convertSource({
+      source_id: source.id,
+      to_format_extension: format,
+    });
+
+    conversionTicketId = conversion_ticket.id;
+    console.log("conversion started", conversion_ticket);
+  }
+
+  $effect(() => {
+    if (!conversionTicketId) return;
+    const event = lastEvent();
+    if (event && event.data) {
+      const result = (event.data as any).data as ConversionResult;
+      if (result.operation_id === conversionTicketId) {
+        conversionTicketId = null;
+        if (result.error) {
+          console.error("Conversion failed", result.error);
+          toast.error("Conversion failed: " + result.error);
+          return;
+        }
+        console.log("conversion done", result);
+        if (result.conversion) {
+          apiClient
+            .listEbookConversions(ebookId)
+            .then((res) => {
+              conversions = res;
+            })
+            .catch((error) => {
+              console.error("Failed to list conversions", error);
+            });
+          // TODO: update
+          // conversions = [result.conversion, ...conversions];
+        }
+      }
+    }
+  });
+
+  function onSourceMenuSelected(
+    source: EbookSource,
+    action: string,
+    data?: { format: string },
+  ) {
+    if (action === "convert") {
+      startConversion(source, data!!.format);
+    }
+    console.debug("onSourceMenuSelected", source, action);
   }
 
   function onConversionMenuSelected(source: EbookConversion, action: string) {
-    console.log("onConversionMenuSelected", source, action);
+    if (action === "delete") {
+      apiClient
+        .deleteConversion(source.id)
+        .then(() => {
+          apiClient
+            .listEbookConversions(ebookId)
+            .then((res) => {
+              conversions = res;
+            })
+            .catch((error) => {
+              console.error("Failed to list conversions", error);
+            });
+        })
+        .catch((error) => {
+          console.error("Failed to delete conversion", error);
+        });
+    }
+    console.debug("onConversionMenuSelected", source, action);
   }
 </script>
 
@@ -31,6 +109,12 @@
     </Table.Row>
   </Table.Header>
   <Table.Body>
+    {#if conversionTicketId}
+      <Table.Row>
+        <Table.Cell><Spinner /></Table.Cell>
+        <Table.Cell>Converting ...</Table.Cell>
+      </Table.Row>
+    {/if}
     {#each conversions as conversion (conversion.id)}
       <Table.Row>
         <Table.Cell class="font-medium"
@@ -38,7 +122,8 @@
         <Table.Cell>from {conversion.source_format_extension}</Table.Cell>
         <Table.Cell class="w-3"
           ><Button
-            href={apiClient.downloadUrl(conversion.location)}
+            href={apiClient.conversionUrl(conversion.location)}
+            target="_blank"
             variant="link"><DownloadIcon /></Button
           ></Table.Cell>
         <Table.Cell class="w-3">

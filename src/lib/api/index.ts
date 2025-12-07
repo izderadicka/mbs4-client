@@ -29,6 +29,7 @@ export type Source = components["schemas"]["Source"];
 export type EbookSource = components["schemas"]["EbookSource"];
 
 export type EbookConversion = components["schemas"]["EbookConversion"];
+export type ConversionRequest = components["schemas"]["ConversionRequest"];
 
 export type EbookDoc = components["schemas"]["EbookDoc"];
 
@@ -67,7 +68,7 @@ export interface ListParams {
   filter?: string;
 }
 
-interface ConversionResult {
+interface ConversionResultBase {
   operation_id: string;
   created: string; // time::OffsetDateTime will be serialized as an ISO 8601 string
   error?: string;
@@ -89,8 +90,12 @@ export interface EbookMetadata {
   comments: string | null;
 }
 
-export interface MetaResult extends ConversionResult {
-  metadata: EbookMetadata | null;
+export interface MetaResult extends ConversionResultBase {
+  metadata?: EbookMetadata | null;
+}
+
+export interface ConversionResult extends ConversionResultBase {
+  conversion?: EbookConversion | null;
 }
 
 export type Role = "Admin" | "Trusted";

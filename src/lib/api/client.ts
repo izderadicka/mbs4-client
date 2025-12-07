@@ -4,6 +4,7 @@ import type {
   Author,
   AuthorSearchItem,
   AuthorShort,
+  ConversionRequest,
   CreateAuthor,
   CreateEbook,
   CreateSeries,
@@ -70,6 +71,10 @@ export class ApiClient {
 
   downloadUrl(path: string) {
     return this.fullUrl(`/files/download/${path}`);
+  }
+
+  conversionUrl(path: string) {
+    return this.fullUrl(`/files/download/conversion/${path}`);
   }
 
   private extractPayload(token: string): User {
@@ -218,6 +223,22 @@ export class ApiClient {
       { body: uploadInfo },
     );
     return this.checkResponse(response, data);
+  }
+
+  async convertSource(conversionRequest: ConversionRequest) {
+    const { data, response } = await this.client.POST("/api/convert/convert", {
+      body: conversionRequest,
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async deleteConversion(id: number) {
+    const { response } = await this.client.DELETE("/api/conversion/{id}", {
+      params: { path: { id } },
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+    }
   }
 
   async searchEbook(
