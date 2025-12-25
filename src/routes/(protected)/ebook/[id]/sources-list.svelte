@@ -14,6 +14,7 @@
   import Spinner from "$lib/components/ui/spinner/spinner.svelte";
   import { lastEvent } from "$lib/globals.svelte";
   import { toast } from "svelte-sonner";
+  import DeleteDialog from "./delete-dialog.svelte";
 
   let {
     sources,
@@ -73,8 +74,33 @@
   ) {
     if (action === "convert") {
       startConversion(source, data!!.format);
+    } else if (action === "delete") {
+      deleteDialog.openDialog({
+        id: source.id,
+        name: "ebook source",
+        detail: `${source.format_extension} (${prettyBytes(source.size)})`,
+      });
     }
     console.debug("onSourceMenuSelected", source, action);
+  }
+
+  function deleteSource(id: number) {
+    apiClient
+      .deleteSource(id)
+      .then(() => {
+        apiClient
+          .listEbookSources(ebookId)
+          .then((res) => {
+            sources = res;
+          })
+          .catch((error) => {
+            console.error("Failed to list sources", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Failed to delete source", error);
+        toast.error("Failed to delete source");
+      });
   }
 
   function onConversionMenuSelected(source: EbookConversion, action: string) {
@@ -93,10 +119,13 @@
         })
         .catch((error) => {
           console.error("Failed to delete conversion", error);
+          toast.error("Failed to delete conversion");
         });
     }
     console.debug("onConversionMenuSelected", source, action);
   }
+
+  let deleteDialog: DeleteDialog;
 </script>
 
 <Table.Root>
@@ -146,3 +175,5 @@
     {/each}
   </Table.Body>
 </Table.Root>
+
+<DeleteDialog bind:this={deleteDialog} onConfirmedDelete={deleteSource} />

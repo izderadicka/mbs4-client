@@ -241,6 +241,15 @@ export class ApiClient {
     }
   }
 
+  async deleteSource(id: number) {
+    const { response } = await this.client.DELETE("/api/source/{id}", {
+      params: { path: { id } },
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+    }
+  }
+
   async searchEbook(
     query: string,
     limit?: number,
