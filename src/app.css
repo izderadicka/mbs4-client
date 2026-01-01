@@ -119,3 +119,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .text-content a {
+    @apply underline underline-offset-4 text-primary;
+  }
+
+  .text-content a:hover {
+    @apply text-primary/80;
+  }
+}

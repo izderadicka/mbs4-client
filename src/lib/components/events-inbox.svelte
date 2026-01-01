@@ -13,23 +13,18 @@
   import { ScrollArea } from "$lib/components/ui/scroll-area";
   import { Separator } from "$lib/components/ui/separator";
   import { Badge } from "$lib/components/ui/badge";
-  // Icon (lucide-svelte)
   import BellRing from "@lucide/svelte/icons/bell-ring";
   import { onMount, untrack } from "svelte";
   import { appUser, events } from "$lib/globals.svelte";
   import type { EventItem } from "$lib/types/app";
   import { apiClient } from "$lib/api/client";
   import { AUTOLOGIN } from "$lib/dev";
+  import EventBlock from "./fragments/event-item.svelte";
 
   const { maxItems = 20 }: { maxItems?: number } = $props();
-  /** SSE endpoint (Axum route), e.g. "/sse" */
-
-  const withCredentials: boolean = false;
-  /** Keep at most N events in memory/localStorage */
 
   let open = $state(false);
   let connected = $state(false);
-  //   let paused = $state(false);
 
   const unread = $derived(events.items.filter((e) => !e.read).length);
 
@@ -53,7 +48,6 @@
   //     if (lastEventId) localStorage.setItem("sse:lastEventId", lastEventId);
   //   });
 
-  // ---- SSE connection
   let es: EventSource | null = null;
 
   // if appUser changes restart events
@@ -131,37 +125,30 @@
   </SheetTrigger>
 
   <!-- Sidebar -->
-  <SheetContent side="right" class="w-[1    8rem] sm:w-[32rem]">
-    <SheetHeader>
+  <SheetContent side="right" class="flex flex-col w-[18rem] sm:w-[32rem]">
+    <SheetHeader class="space-y-1 pb-0">
       <SheetTitle>Notifications</SheetTitle>
-      <SheetDescription>
-        {connected ? "Live" : "Reconnecting…"} · {events.items.length} items
+      <SheetDescription class="flex items-center gap-2">
+        <span class="flex-1 text-xs">
+          {connected ? "Live" : "Reconnecting…"} · {events.items.length} items
+        </span>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          class="h-auto px-2 text-xs opacity-70 hover:opacity-100 cursor-pointer"
+          onclick={clearAll}>
+          Clear
+        </Button>
       </SheetDescription>
     </SheetHeader>
 
-    <div class="my-3 flex items-center gap-2">
-      <Button variant="secondary" onclick={clearAll}>Clear</Button>
-    </div>
+    <Separator class="my-1" />
 
-    <Separator class="my-2" />
-
-    <ScrollArea class="h-[70vh] pr-4">
+    <ScrollArea class="flex-1 overflow-y-auto pr-2 pl-2">
       <ul class="space-y-2">
-        {#each [...events.items].reverse() as e (e.receivedAt)}
-          <li class="p-2 rounded border">
-            <div class="flex items-center justify-between">
-              <div class="text-xs opacity-70">
-                {new Date(e.receivedAt).toLocaleString()}
-              </div>
-              <div class="flex items-center gap-2">
-                {#if !e.read}<Badge>new</Badge>{/if}
-              </div>
-            </div>
-
-            <pre class="mt-1 text-xs whitespace-pre-wrap break-words">
-{typeof e.data === "string" ? e.data : JSON.stringify(e.data, null, 2)}
-            </pre>
-          </li>
+        {#each [...events.items].reverse() as event (event.receivedAt)}
+          <EventBlock {event} />
         {/each}
 
         {#if events.items.length === 0}

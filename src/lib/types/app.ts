@@ -13,7 +13,12 @@ export interface BreadcrumbItem {
 
 export interface EventItem {
   id?: string | null;
-  data: unknown; // parsed JSON or string
+  data: EventData; // parsed JSON or string
   receivedAt: string; // ISO time
   read: boolean;
+}
+
+export interface EventData {
+  type: string,
+  data: any,
 }
