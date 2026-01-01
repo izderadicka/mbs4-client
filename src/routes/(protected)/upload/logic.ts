@@ -4,23 +4,6 @@ import type { EbookMetadata, Source, UploadInfo } from "$lib/api";
 import { apiClient } from "$lib/api/client";
 import type { EbookFormData } from "$lib/schemas";
 
-// For historical reason we are using 2 letter codes, but metadata often uses 3 letters codes
-// This is WA -  mapping from 3 letter to 2 letter
-const LANG_CODES: Record<string, string> = {
-    "eng": "en",
-    "deu": "de",
-    "rus": "ru",
-    "fra": "fr",
-    "spa": "es",
-    "ces": "cs",
-    "cze": "cs",
-    "pol": "pl",
-    "slk": "sk",
-    "slo": "sk",
-
-}
-
-
 function normalizeAuthorName(author: EbookMetadata["authors"][0]) {
     return `${author.first_name || ""} ${author.last_name}`.trim();
 }
@@ -65,7 +48,7 @@ export async function metaToEbook(meta: EbookMetadata | null): Promise<EbookForm
         try {
             const languages = await apiClient.listLanguages();
             const lang = meta.language.toLowerCase();
-            const matchingLanguage = languages.find(({ code, name }) => code.toLowerCase() === lang || code.toLowerCase() === LANG_CODES[lang] || name.toLowerCase() === lang);
+            const matchingLanguage = languages.find(({ code }) => code.toLowerCase() === lang);
             if (matchingLanguage) {
                 language = matchingLanguage;
             }
