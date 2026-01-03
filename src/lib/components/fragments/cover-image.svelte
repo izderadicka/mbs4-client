@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiClient } from "$lib/api/client";
   import NoCoverIcon from "@lucide/svelte/icons/book-x";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { type HTMLAttributes } from "svelte/elements";
   import { on } from "svelte/events";
 
@@ -16,19 +16,26 @@
   } & DivAttributes = $props();
 
   let src = $state<string | null>(null);
+  let abort: AbortController | null = null;
 
-  onMount(() => {
-    if (!file) return;
-    let abort = new AbortController();
+  $effect(() => {
+    if (!file) {
+      src = null;
+      return;
+    }
+    if (abort) abort.abort();
+    // if (src) URL.revokeObjectURL(src);
+    abort = new AbortController();
     let future: Promise<Blob | null>;
     if (uploaded) {
       future = apiClient.loadExtractedCover(file, abort.signal);
     } else {
-      future = apiClient.loadCover(file);
+      future = apiClient.loadCover(file, abort.signal);
     }
 
     future
       .then((imageBlob) => {
+        abort = null;
         if (imageBlob) {
           src = URL.createObjectURL(imageBlob);
         }
@@ -36,9 +43,10 @@
       .catch((e) => console.error(e));
 
     return () => {
-      abort.abort();
+      abort?.abort();
       if (src) {
         URL.revokeObjectURL(src);
+        src = null;
       }
     };
   });

@@ -18,7 +18,7 @@
   import EbookMenu from "$lib/components/item-menu.svelte";
 
   const { data }: PageProps = $props();
-  const { ebook } = data;
+  let ebook = $derived(data.ebook);
 
   async function onMainMenuSelected(action: EbookMenuActions) {
     console.log("MainMenu action", action);
