@@ -5,6 +5,7 @@ import { AUTOLOGIN } from "$lib/dev.js";
 import type { Role } from "$lib/api";
 
 export const ssr = false;
+export const prerender = false;
 
 export async function load({ url, fetch }) {
   apiClient.setFetch(fetch);
