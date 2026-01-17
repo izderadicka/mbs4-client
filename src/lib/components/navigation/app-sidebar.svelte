@@ -49,7 +49,7 @@
         },
         {
           title: "Series",
-          url: "#",
+          url: "/series",
         },
       ],
     },

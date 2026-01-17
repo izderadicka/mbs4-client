@@ -298,6 +298,11 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async listSeries(queryParams?: ListParams) {
+    const { data, response } = await this.client.GET("/api/series", { params: { query: queryParams } });
+    return this.checkResponse(response, data);
+  }
+
   async getEbook(id: number): Promise<Ebook> {
     const { data, response } = await this.client.GET(`/api/ebook/{id}`, {
       params: { path: { id } },

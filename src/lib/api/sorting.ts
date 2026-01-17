@@ -55,5 +55,33 @@ export function authorSort(sort?: string): AuthorSorting {
     return sort in AUTHOR_SORTING ? sort as AuthorSorting : AUTHOR_SORTING_DEFAULT;
 }
 
+const SERIES_SORTING = {
+    "latest": "-created",
+    "oldest": "created",
+    "title": "title",
+    "reverse-title": "-title"
+}
+export type SeriesSorting = keyof typeof SERIES_SORTING;
+const SERIES_SORTING_DEFAULT: SeriesSorting = "latest";
+
+export function seriesSortQuery(sorting?: string) {
+    if (!sorting) {
+        return SERIES_SORTING[SERIES_SORTING_DEFAULT];
+    }
+
+    if (!(sorting in SERIES_SORTING)) {
+        return SERIES_SORTING[SERIES_SORTING_DEFAULT];
+    }
+
+    return SERIES_SORTING[sorting as SeriesSorting];
+}
+
+export function seriesSort(sort?: string): SeriesSorting {
+    if (!sort) {
+        return SERIES_SORTING_DEFAULT;
+    }
+    return sort in SERIES_SORTING ? sort as SeriesSorting : SERIES_SORTING_DEFAULT;
+}
+
 
 
