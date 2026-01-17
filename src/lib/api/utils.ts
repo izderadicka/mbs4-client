@@ -43,13 +43,13 @@ export function getListingParams(url: URL,) {
 
 }
 
-export async function prepareEbookQuery(url: URL) {
+export async function prepareEbookQuery(url: URL, isSeries?: boolean) {
     const { page, page_size, sort } = getListingParams(url)
 
     const genresParam = url.searchParams.get("genres") || undefined;
     const genres = genresParam ? await genresFilter(genresParam) : undefined;
     const genresIds = IdsList(genres);
-    const sortValue = ebookSort(sort)
+    const sortValue = ebookSort(sort, isSeries);
 
     return {
         query: {

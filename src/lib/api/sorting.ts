@@ -2,11 +2,14 @@ const EBOOK_SORTING = {
     "latest": "-e.created",
     "oldest": "e.created",
     "title": "e.title",
-    "reverse-title": "-e.title"
+    "reverse-title": "-e.title",
+    "series-index": "e.series_index",
+    "reverse-series-index": "-e.series_index"
 }
 
 export type EbookSorting = keyof typeof EBOOK_SORTING;
 const EBOOK_SORTING_DEFAULT: EbookSorting = "latest";
+const EBOOK_SERIES_SORTING_DEFAULT: EbookSorting = "series-index";
 
 export function ebookSortQuery(sorting?: string) {
     if (!sorting) {
@@ -20,9 +23,9 @@ export function ebookSortQuery(sorting?: string) {
     return EBOOK_SORTING[sorting as EbookSorting];
 }
 
-export function ebookSort(sort?: string): EbookSorting {
+export function ebookSort(sort?: string, isSeries?: boolean): EbookSorting {
     if (!sort) {
-        return EBOOK_SORTING_DEFAULT;
+        return isSeries ? EBOOK_SERIES_SORTING_DEFAULT : EBOOK_SORTING_DEFAULT;
     }
     return sort in EBOOK_SORTING ? sort as EbookSorting : EBOOK_SORTING_DEFAULT;
 }

@@ -7,6 +7,15 @@
     { label: "Title", value: "title" },
     { label: "Reverse Title", value: "reverse-title" },
   ];
+
+  const SORTING_SERIES: { label: string; value: EbookSorting }[] = [
+    { label: "Newest", value: "latest" },
+    { label: "Oldest", value: "oldest" },
+    { label: "Title", value: "title" },
+    { label: "Reverse Title", value: "reverse-title" },
+    { label: "Series Index", value: "series-index" },
+    { label: "Rev. Series Idx", value: "reverse-series-index" },
+  ];
 </script>
 
 <script lang="ts">
@@ -20,9 +29,6 @@
   import TableIcon from "@lucide/svelte/icons/rows-3";
   import GridIcon from "@lucide/svelte/icons/layout-grid";
   import CoverIcon from "$lib/components/fragments/cover-icon.svelte";
-  import * as Select from "$lib/components/ui/select";
-  import SortIcon from "@lucide/svelte/icons/arrow-down-narrow-wide";
-  import SelectTrigger from "./fragments/select-trigger-modified.svelte";
   import { goto } from "$app/navigation";
   import GenreField from "./fields/genre-field.svelte";
   import { superForm } from "sveltekit-superforms";
@@ -32,11 +38,17 @@
     ebooks: PagedEbookShort;
     sort?: EbookSorting;
     genres?: GenreShort[];
+    isSeries?: boolean;
   };
 
   type Layout = "table" | "grid";
 
-  let { ebooks, sort = $bindable(), genres = $bindable() }: Props = $props();
+  let {
+    ebooks,
+    sort = $bindable(),
+    genres = $bindable(),
+    isSeries,
+  }: Props = $props();
 
   let layout = $state<Layout>("grid");
 
@@ -90,7 +102,10 @@
         disabled={layout === "table"}
         class="cursor-pointer"><TableIcon /></Button>
     </ButtonGroup.Root>
-    <SortSelect bind:sort {onSortChange} sorting={SORTING} />
+    <SortSelect
+      bind:sort
+      {onSortChange}
+      sorting={isSeries ? SORTING_SERIES : SORTING} />
   </div>
   <div class="flex-1">
     <GenreField

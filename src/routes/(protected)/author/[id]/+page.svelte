@@ -3,15 +3,21 @@
   import EbookList from "$lib/components/ebook-list.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
   import Title from "$lib/components/title.svelte";
+  import { breadcrumb } from "$lib/globals.svelte";
 
-  type props = {
-    data: {
-      author: Author;
-    };
-  };
   let { data } = $props();
   let author = $derived(data.author);
-  let ebooks;
+  let authorName = $derived(
+    author.first_name
+      ? author.first_name + " " + author.last_name
+      : author.last_name,
+  );
+  $effect(() => {
+    breadcrumb.path = [
+      { name: "Authors", path: "/author" },
+      { name: authorName },
+    ];
+  });
 </script>
 
 <Title>

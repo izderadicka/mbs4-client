@@ -217,6 +217,13 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async listSeriesEbooks(seriesId: number, queryParams?: ListParams) {
+    const { data, response } = await this.client.GET("/api/series/{id}/ebooks", {
+      params: { path: { id: seriesId }, query: queryParams },
+    });
+    return this.checkResponse(response, data);
+  }
+
   async retrieveMetadata(uploadInfo: components["schemas"]["UploadInfo"]) {
     const { data, response } = await this.client.POST(
       "/api/convert/extract_meta",
@@ -295,6 +302,13 @@ export class ApiClient {
 
   async listAuthors(queryParams?: ListParams) {
     const { data, response } = await this.client.GET("/api/author", { params: { query: queryParams } });
+    return this.checkResponse(response, data);
+  }
+
+  async getSeries(id: number): Promise<Series> {
+    const { data, response } = await this.client.GET(`/api/series/{id}`, {
+      params: { path: { id } },
+    });
     return this.checkResponse(response, data);
   }
 
