@@ -1,7 +1,7 @@
 <script lang="ts">
   // TODO: there is problem when resizing window, but it's not a big deal now
   import { apiClient } from "$lib/api/client";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import * as Card from "$lib/components/ui/card/index.js";
   import * as Carousel from "$lib/components/ui/carousel/index.js";
   import Subtitle from "./subtitle.svelte";
@@ -34,9 +34,15 @@
         sort: ebookSortQuery("latest"),
       });
       ebooks = page.rows;
-      console.debug("Loaded ebooks", ebooks.length);
-      console.debug("Have api", carouselApi);
-      carouselApi?.reInit();
+
+      // hack to enable next button
+      await tick();
+      const nextButton = document.querySelector(
+        '[data-slot="carousel-next"]',
+      ) as HTMLButtonElement;
+      if (nextButton && ebooks.length > perView) {
+        nextButton.setAttribute("aria-disabled", "false");
+      }
     } catch (error) {
       console.error("Loading ebooks", error);
     }
