@@ -196,32 +196,26 @@
   }
 </script>
 
-<!-- {@debug open} -->
-
-<!-- Always-visible input; Popover opens only when results exist -->
 <Popover.Root bind:open>
-  <Popover.Trigger disabled>
-    <div class="w-full">
-      <div class="relative">
-        <Input
-          {placeholder}
-          value={query}
-          autocomplete="off"
-          oninput={(e) => {
-            e.stopPropagation();
-            onInput((e.currentTarget as HTMLInputElement).value);
-          }}
-          onkeydown={onKeydown}
-          class="w-full"
-        />
-        {#if loading}
-          <Loader2
-            class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin opacity-70"
-          />
-        {/if}
-      </div>
+  <div class="w-full">
+    <div class="relative">
+      <Input
+        {placeholder}
+        value={query}
+        autocomplete="off"
+        oninput={(e) => {
+          e.stopPropagation();
+          onInput((e.currentTarget as HTMLInputElement).value);
+        }}
+        onkeydown={onKeydown}
+        class="w-full" />
+      {#if loading}
+        <Loader2
+          class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin opacity-70" />
+      {/if}
     </div>
-  </Popover.Trigger>
+  </div>
+  <Popover.Trigger />
 
   <Popover.Content
     align="start"
@@ -232,16 +226,14 @@
     onOpenAutoFocus={(e) => e.preventDefault()}
     onCloseAutoFocus={(e) => e.preventDefault()}
     sideOffset={4}
-    collisionPadding={8}
-  >
+    collisionPadding={8}>
     {#if results.length > 0}
       <ScrollArea class="h-72 overflow-x-hidden min-w-0">
         <ul
           role="listbox"
           data-ba-list
           bind:this={listRoot}
-          class="w-full min-w-0"
-        >
+          class="w-full min-w-0">
           {#each results as book, i}
             <li class="min-w-0">
               <button
@@ -256,18 +248,15 @@
                 onmousedown={(e) => {
                   e.preventDefault();
                   selectAt(i);
-                }}
-              >
+                }}>
                 {#if renderItem}
                   {@render renderItem({ book })}
                 {:else}
                   <div class="flex min-w-0 flex-col">
                     <span class="truncate min-w-0 font-medium"
-                      >{book.doc.Ebook.title}</span
-                    >
+                      >{book.doc.Ebook.title}</span>
                     <span
-                      class="truncate min-w-0 text-xs text-muted-foreground"
-                    >
+                      class="truncate min-w-0 text-xs text-muted-foreground">
                       {fmtAuthors(book.doc.Ebook.authors)}
                       {#if book.doc.Ebook.series}
                         · {fmtSeries(book.doc.Ebook)}
@@ -282,8 +271,7 @@
         <Scrollbar
           orientation="vertical"
           forceMount
-          class="!opacity-100 transition-none"
-        />
+          class="!opacity-100 transition-none" />
       </ScrollArea>
     {:else if !loading && query.trim().length >= minChars}
       <div class="px-3 py-2 text-sm text-muted-foreground">{emptyText}</div>
