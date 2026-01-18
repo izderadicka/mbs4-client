@@ -3,6 +3,8 @@
   breadcrumb.path = [];
   import BookAutocomplete from "$lib/components/fragments/search-autocomplete.svelte";
   import { goto } from "$app/navigation";
+  import LibraryStats from "$lib/components/library-stats.svelte";
+  import NewEbooks from "$lib/components/new-ebooks.svelte";
 
   function onSelect(ebookId: number) {
     goto(`/ebook/${ebookId}`);
@@ -16,5 +18,8 @@
 <BookAutocomplete
   placeholder="Search by title, author, or series…"
   {onSelect}
-  {onSearch}
-/>
+  {onSearch} />
+
+<LibraryStats />
+
+<NewEbooks />

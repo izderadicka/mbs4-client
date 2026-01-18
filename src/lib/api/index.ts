@@ -99,3 +99,9 @@ export interface ConversionResult extends ConversionResultBase {
 }
 
 export type Role = "Admin" | "Trusted";
+
+export interface LibraryStats {
+  totalEbooks: number;
+  totalSeries: number;
+  totalAuthors: number;
+}

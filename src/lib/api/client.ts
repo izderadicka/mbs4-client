@@ -16,6 +16,7 @@ import type {
   EbookSource,
   GenreShort,
   LanguageShort,
+  LibraryStats,
   ListParams,
   Series,
   SeriesSearchItem,
@@ -431,6 +432,20 @@ export class ApiClient {
       signal
     });
     return data || null;
+  }
+
+  async getLibraryStats(): Promise<LibraryStats> {
+    const res = Promise.all([
+      this.client.GET("/api/ebook/count"),
+      this.client.GET("/api/series/count"),
+      this.client.GET("/api/author/count"),
+    ]);
+    const [totalEbooks, totalSeries, totalAuthors] = (await res).map((r) => this.checkResponse(r.response, r.data));
+    return {
+      totalEbooks,
+      totalSeries,
+      totalAuthors,
+    };
   }
 
   createEventSource(lastEventId: string | null): EventSource {
