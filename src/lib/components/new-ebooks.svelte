@@ -8,6 +8,7 @@
   import type { EbookShort } from "$lib/api";
   import { ebookSortQuery } from "$lib/api/sorting";
   import type { CarouselAPI } from "./ui/carousel/context";
+  import CoverIcon from "./fragments/cover-icon.svelte";
 
   let container: HTMLDivElement;
   let carouselApi: CarouselAPI | undefined;
@@ -48,7 +49,7 @@
     }
   });
 
-  let cardWidth = 140;
+  let cardWidth = 180;
   let perView = $derived(Math.max(1, Math.floor(width / cardWidth)));
   let expectedWidth = $derived(perView * cardWidth);
 </script>
@@ -69,10 +70,16 @@
       {#each ebooks as ebook (ebook.id)}
         <Carousel.Item class=" " style="flex: 0 0 {100 / perView}%; ">
           <div class="p-1">
-            <Card.Root>
+            <Card.Root class="p-2">
               <Card.Content
-                class="flex aspect-square items-center justify-center p-6">
-                <span class="text-sm font-semibold">{ebook.title}</span>
+                class="flex flex-col aspect-square items-center p-2">
+                <a href="/ebook/{ebook.id}"
+                  ><CoverIcon ebookId={ebook.id} size={128} /></a>
+                <a
+                  href="/ebook/{ebook.id}"
+                  class="w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-center text-xs mt-2">
+                  {ebook.title}
+                </a>
               </Card.Content>
             </Card.Root>
           </div>

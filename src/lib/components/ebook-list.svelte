@@ -126,9 +126,9 @@
       {#each ebooks.rows as ebook (ebook.id)}
         <Card.Root class="p-3 overflow-hidden">
           <Card.Content class="flex gap-4 flex-row">
-            <div class="w-[128px] h-[128px] mr-4">
+            <div class="w-[100px] h-[128px] mr-4">
               <a href="/ebook/{ebook.id}">
-                <CoverIcon ebookId={ebook.id} size={128} />
+                <CoverIcon ebookId={ebook.id} size={90} />
               </a>
             </div>
             <div class="flex-1">

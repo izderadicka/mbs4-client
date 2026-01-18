@@ -81,12 +81,12 @@
 </script>
 
 <div
-  class="block items-center justify-center"
-  style="width: {size}px; max-height: {maxHeight}px;"
+  class="block items-center justify-center overflow-hidden"
+  style="width: {size}px; height: {maxHeight}px;"
   bind:this={iconElement}>
   {#if imageUrl}
-    <img src={imageUrl} alt="" bind:this={iconElement} />
+    <img src={imageUrl} alt="" bind:this={iconElement} width={size} />
   {:else if notFound}
-    <NoCoverIcon size={64} color="var(--color-muted)" />
+    <NoCoverIcon {size} color="var(--color-muted)" />
   {/if}
 </div>
