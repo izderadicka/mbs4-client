@@ -7,6 +7,7 @@
   ];
 </script>
 
+<!-- svelte-ignore state_referenced_locally -->
 <script lang="ts">
   import Title from "$lib/components/title.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
@@ -16,6 +17,7 @@
   import DetailsTable from "./details-table.svelte";
   import SourcesList from "./sources-list.svelte";
   import EbookMenu from "$lib/components/item-menu.svelte";
+  import { goto } from "$app/navigation";
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
@@ -23,7 +25,7 @@
   async function onMainMenuSelected(action: EbookMenuActions) {
     console.log("MainMenu action", action);
     if (action === "edit") {
-      // open the edit dialog
+      goto(`/ebook/${ebook.id}/edit`);
     }
   }
 

@@ -22,6 +22,7 @@ import type {
   SeriesSearchItem,
   Source,
   TokenPayload,
+  UpdateEbook,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
@@ -384,6 +385,14 @@ export class ApiClient {
   async createEbook(ebook: CreateEbook): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook", {
       body: ebook,
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async updateEbook(ebookId: number, ebook: UpdateEbook): Promise<Ebook> {
+    const { data, response } = await this.client.PUT("/api/ebook/{id}", {
+      body: ebook,
+      params: { path: { id: ebookId } },
     });
     return this.checkResponse(response, data);
   }

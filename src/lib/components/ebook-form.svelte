@@ -11,7 +11,7 @@
   import GenreField from "./fields/genre-field.svelte";
   import AuthorField from "./fields/author-field.svelte";
   import Button from "./ui/button/button.svelte";
-  import type { CreateEbook, Ebook } from "$lib/api";
+  import type { CreateEbook, Ebook, UpdateEbook } from "$lib/api";
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
   import FormButtons from "./fragments/form-buttons.svelte";
@@ -19,10 +19,13 @@
   type Props = {
     ebookData?: any;
     afterCreate?: (ebook: Ebook) => Promise<void>;
+    afterUpdate?: (ebook: Ebook) => Promise<void>;
+    afterDelete?: (id: number) => Promise<void>;
     onCancel: () => void | Promise<void>;
   };
 
-  let { ebookData, afterCreate, onCancel }: Props = $props();
+  let { ebookData, afterCreate, afterUpdate, afterDelete, onCancel }: Props =
+    $props();
   if (!ebookData) {
     ebookData = defaults(zod4(EbookSchema));
   }
@@ -53,6 +56,31 @@
           cancel();
           console.error("Failed to create ebook", error);
           toast.error("Failed to create ebook");
+        }
+      } else {
+        const updateEbookData: UpdateEbook = {
+          id: form.data.id,
+          version: form.data.version,
+          title: form.data.title,
+          authors: form.data.authors?.map((a: { id: number }) => a.id),
+          series_id: form.data.series?.id,
+          series_index: form.data.series_index,
+          description: form.data.description,
+          language_id: form.data.language?.id,
+          genres: form.data.genres?.map((g: { id: number }) => g.id),
+        };
+        try {
+          const ebook = await apiClient.updateEbook(
+            form.data.id,
+            updateEbookData,
+          );
+          if (afterUpdate) {
+            await afterUpdate(ebook);
+          }
+        } catch (error) {
+          cancel();
+          console.error("Failed to update ebook", error);
+          toast.error("Failed to update ebook");
         }
       }
     },
