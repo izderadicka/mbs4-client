@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ebook/{id}/merge/{to_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mergeEbook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ebook/{id}/source": {
         parameters: {
             query?: never;
@@ -622,7 +638,7 @@ export interface paths {
         get: operations["getSource"];
         put: operations["updateSource"];
         post?: never;
-        delete: operations["deleteSource"];
+        delete: operations["deleteSourceWithFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -754,6 +770,23 @@ export interface paths {
         put?: never;
         post: operations["uploadForm"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/uploaded/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete recently uploaded file (for advanced uploads processing) */
+        delete: operations["deleteUploaded"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1908,6 +1941,27 @@ export interface operations {
             };
         };
     };
+    mergeEbook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                to_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Merge ebook to other ebook */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listEbookSources: {
         parameters: {
             query?: never;
@@ -2716,7 +2770,7 @@ export interface operations {
             };
         };
     };
-    deleteSource: {
+    deleteSourceWithFile: {
         parameters: {
             query?: never;
             header?: never;
@@ -2900,6 +2954,19 @@ export interface operations {
                 };
             };
         };
+    };
+    deleteUploaded: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Path to file */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
     };
     search: {
         parameters: {
