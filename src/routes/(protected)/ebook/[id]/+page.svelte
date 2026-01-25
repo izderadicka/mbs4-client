@@ -9,15 +9,13 @@
 
 <!-- svelte-ignore state_referenced_locally -->
 <script lang="ts">
-  import Title from "$lib/components/title.svelte";
-  import Subtitle from "$lib/components/subtitle.svelte";
   import type { PageProps } from "./$types";
   import { breadcrumb } from "$lib/globals.svelte";
-  import AuthorsList from "$lib/components/fragments/authors-list.svelte";
   import DetailsTable from "./details-table.svelte";
   import SourcesList from "./sources-list.svelte";
   import EbookMenu from "$lib/components/item-menu.svelte";
   import { goto } from "$app/navigation";
+  import EbookInfo from "./ebook-info.svelte";
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
@@ -26,6 +24,8 @@
     console.log("MainMenu action", action);
     if (action === "edit") {
       goto(`/ebook/${ebook.id}/edit`);
+    } else if (action === "merge") {
+      goto(`/ebook/${ebook.id}/merge`);
     }
   }
 
@@ -33,18 +33,7 @@
 </script>
 
 <div class="flex pr-5">
-  <div>
-    <Title>{ebook.title}</Title>
-    {#if ebook.series}
-      <Subtitle
-        ><a href="/series/{ebook.series.id}">{ebook.series.title}</a>
-        #{ebook.series_index}</Subtitle>
-    {/if}
-    {#if ebook.authors}
-      <Subtitle level={2} class="italic"
-        ><AuthorsList authors={ebook.authors} /></Subtitle>
-    {/if}
-  </div>
+  <EbookInfo {ebook} />
   <div class="w-7 ml-auto">
     <EbookMenu
       onMenuSelected={onMainMenuSelected}

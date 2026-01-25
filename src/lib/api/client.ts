@@ -397,6 +397,13 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async mergeEbook(id: number, toId: number): Promise<void> {
+    const { response } = await this.client.POST("/api/ebook/{id}/merge/{to_id}", {
+      params: { path: { id, to_id: toId } },
+    });
+    return this.checkResponse(response);
+  }
+
   async addSourceToEbook(ebookId: number, fileInfo: EbookFileInfo): Promise<Source> {
     const { data, response } = await this.client.POST("/api/ebook/{id}/source", {
       body: fileInfo,
