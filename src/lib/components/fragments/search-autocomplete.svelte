@@ -26,6 +26,7 @@
     onSelect = null,
     onSearch = null,
     renderItem,
+    skip_ids = undefined,
   }: {
     load?: Loader;
     maxResults?: number;
@@ -37,6 +38,7 @@
     renderItem?: Snippet<[{ book: EbookSearchItem }]>;
     onSelect?: SelectHandler | null;
     onSearch?: SearchHandler | null;
+    skip_ids?: number[];
   } = $props();
 
   // ---- State ----
@@ -84,6 +86,9 @@
       const data = await load(q, controller.signal);
       if (seq !== requestSequence) return; // stale response
       results = (data ?? []).slice(0, maxResults);
+      if (skip_ids) {
+        results = results.filter((r) => !skip_ids.includes(r.doc.Ebook.id));
+      }
       open = results.length > 0;
       highlight = autoSelectFirst && results.length ? 0 : -1;
     } catch (e: any) {

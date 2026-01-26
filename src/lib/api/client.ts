@@ -153,7 +153,8 @@ export class ApiClient {
     }
   }
 
-  private checkResponse<T>(response: Response, data?: T): T {
+  private checkResponseCode(response: Response) {
+
     if (response.status === 401) {
       appUser.user = null;
       goto("/login");
@@ -162,6 +163,10 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`, { cause: response });
     }
+
+  }
+  private checkResponse<T>(response: Response, data?: T): T {
+    this.checkResponseCode(response);
 
     if (!data) {
       throw new Error("No data");
@@ -401,7 +406,7 @@ export class ApiClient {
     const { response } = await this.client.POST("/api/ebook/{id}/merge/{to_id}", {
       params: { path: { id, to_id: toId } },
     });
-    return this.checkResponse(response);
+    return this.checkResponseCode(response);
   }
 
   async addSourceToEbook(ebookId: number, fileInfo: EbookFileInfo): Promise<Source> {

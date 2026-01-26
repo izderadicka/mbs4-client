@@ -5,6 +5,13 @@
   import Label from "$lib/components/ui/label/label.svelte";
   import { breadcrumb } from "$lib/globals.svelte.js";
   import EbookInfo from "../ebook-info.svelte";
+  import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import { goto } from "$app/navigation";
+  import { apiClient } from "$lib/api/client";
+  import { toast } from "svelte-sonner";
+
+  type MergeDirection = "to" | "from";
 
   let { data } = $props();
   let ebook = $derived(data.ebook);
@@ -16,10 +23,66 @@
   ];
 
   let otherEbook: Ebook | null = $state(null);
+  let mergeDirection: MergeDirection = $state("to");
+
+  async function onSelect(ebookId: number) {
+    try {
+      otherEbook = await apiClient.getEbook(ebookId);
+    } catch (error) {
+      console.error("Failed to get other ebook", error);
+      toast.error("Failed to get other ebook");
+    }
+  }
+
+  async function onMerge() {
+    let finalId = null;
+    try {
+      if (mergeDirection === "to") {
+        await apiClient.mergeEbook(ebook.id, otherEbook!.id);
+        finalId = otherEbook!.id;
+      } else {
+        await apiClient.mergeEbook(otherEbook!.id, ebook.id);
+        finalId = ebook.id;
+      }
+    } catch (error) {
+      console.error("Failed to merge ebooks", error);
+      toast.error("Failed to merge ebooks");
+      return;
+    }
+    await goto(`/ebook/${finalId}`);
+  }
+
+  async function onCancel() {
+    await goto(`/ebook/${ebook.id}`);
+  }
 </script>
 
-<Title>Merge Ebook</Title>
+<Title>Merge This Ebook</Title>
 <EbookInfo {ebook} />
 
 <Label>Search Other Ebook</Label>
-<BookAutocomplete onSelect={(ebookID) => {}} />
+<BookAutocomplete {onSelect} skip_ids={[ebook.id]} />
+
+<RadioGroup.Root bind:value={mergeDirection}>
+  <div class="flex items-center space-x-2">
+    <RadioGroup.Item value="to" id="option-merge-to" />
+    <Label for="option-merge-to">Merge to other ebook</Label>
+  </div>
+  <div class="flex items-center space-x-2">
+    <RadioGroup.Item value="from" id="option-merge-from" />
+    <Label for="option-merge-from">Merge other ebook here</Label>
+  </div>
+</RadioGroup.Root>
+
+{#if otherEbook}
+  <Title
+    >{mergeDirection === "to" ? "Merge to" : "Merge from"} Other Ebook</Title>
+
+  <EbookInfo ebook={otherEbook} />
+{/if}
+<div class="flex justify-end gap-20">
+  <div class="flex gap-2">
+    <Button variant="outline" onclick={onCancel}>Cancel</Button>
+    <Button onclick={onMerge} disabled={otherEbook === null}>Merge</Button>
+  </div>
+</div>
