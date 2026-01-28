@@ -15,6 +15,7 @@
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
   import FormButtons from "./fragments/form-buttons.svelte";
+  import DeleteDialog from "./delete-dialog.svelte";
 
   type Props = {
     ebookData?: any;
@@ -86,6 +87,27 @@
     },
   });
   const { form: formData, enhance } = form;
+
+  function onDelete() {
+    deleteDialog.openDialog({
+      id: $formData.id,
+      name: "ebook",
+      detail: $formData.title,
+    });
+  }
+
+  async function onConfirmedDelete(id: number) {
+    try {
+      await apiClient.deleteEbook(id);
+      if (afterDelete) {
+        await afterDelete(id);
+      }
+    } catch (error) {
+      console.error("Failed to delete ebook", error);
+      toast.error("Failed to delete ebook");
+    }
+  }
+  let deleteDialog: DeleteDialog;
 </script>
 
 <form method="POST" use:enhance class="space-y-6">
@@ -141,5 +163,7 @@
     <Form.FieldErrors />
     <Form.Description>Detailed description of ebook</Form.Description>
   </Form.Field>
-  <FormButtons id={$formData.id} {onCancel} />
+  <FormButtons id={$formData.id} {onCancel} {onDelete} />
 </form>
+
+<DeleteDialog bind:this={deleteDialog} {onConfirmedDelete} />

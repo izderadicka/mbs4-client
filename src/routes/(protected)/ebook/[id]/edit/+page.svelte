@@ -4,6 +4,7 @@
   import EbookForm from "$lib/components/ebook-form.svelte";
   import Title from "$lib/components/title.svelte";
   import { breadcrumb } from "$lib/globals.svelte";
+  import { toast } from "svelte-sonner";
 
   const { data } = $props();
   let ebookData = $derived(data.ebook);
@@ -23,7 +24,12 @@
   async function onCancel() {
     await goto(`/ebook/${ebookData.id}`);
   }
+
+  async function afterDelete() {
+    toast("Ebook deleted");
+    await goto("/ebook");
+  }
 </script>
 
 <Title>Edit Ebook Info</Title>
-<EbookForm {ebookData} {onCancel} {afterUpdate} />
+<EbookForm {ebookData} {onCancel} {afterUpdate} {afterDelete} />

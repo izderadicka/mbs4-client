@@ -14,7 +14,7 @@
   import Spinner from "$lib/components/ui/spinner/spinner.svelte";
   import { lastEvent } from "$lib/globals.svelte";
   import { toast } from "svelte-sonner";
-  import DeleteDialog from "./delete-dialog.svelte";
+  import DeleteDialog from "$lib/components/delete-dialog.svelte";
 
   let {
     sources,

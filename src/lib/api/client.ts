@@ -30,6 +30,7 @@ import createClient, { type Client } from "openapi-fetch";
 import type { paths, components } from "./types";
 import { DEV_API_URL } from "$lib/config";
 import { IS_DEV } from "$lib/dev";
+import { error } from "@sveltejs/kit";
 
 function getApiBaseUrl(): string {
   const { protocol, hostname, origin } = window.location;
@@ -161,7 +162,7 @@ export class ApiClient {
       throw new Error("Unauthorized");
     }
     if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+      error(response.status, `Request failed with status ${response.status}`);
     }
 
   }
@@ -400,6 +401,13 @@ export class ApiClient {
       params: { path: { id: ebookId } },
     });
     return this.checkResponse(response, data);
+  }
+
+  async deleteEbook(id: number) {
+    const { response } = await this.client.DELETE("/api/ebook/{id}", {
+      params: { path: { id } },
+    });
+    this.checkResponseCode(response);
   }
 
   async mergeEbook(id: number, toId: number): Promise<void> {
