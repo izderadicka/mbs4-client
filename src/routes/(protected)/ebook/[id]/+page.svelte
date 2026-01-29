@@ -26,6 +26,8 @@
       goto(`/ebook/${ebook.id}/edit`);
     } else if (action === "merge") {
       goto(`/ebook/${ebook.id}/merge`);
+    } else if (action === "cover") {
+      goto(`/ebook/${ebook.id}/cover`);
     }
   }
 
