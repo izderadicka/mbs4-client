@@ -3,15 +3,23 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import { apiClient } from "$lib/api/client";
-  import type { EbookCoverInfo, UploadInfo } from "$lib/api";
+  import type { EbookCoverInfo } from "$lib/api";
   import { toast } from "svelte-sonner";
   import Title from "$lib/components/title.svelte";
   import { goto } from "$app/navigation";
+  import { breadcrumb } from "$lib/globals.svelte";
 
   let form: HTMLFormElement | null = null;
   let fileSelected = $state(false);
   let { data } = $props();
   let ebook = $derived(data.ebook);
+
+  breadcrumb.path = [
+    { name: "Ebooks", path: "/ebook" },
+    // svelte-ignore state_referenced_locally
+    { name: ebook.title, path: `/ebook/${ebook.id}` },
+    { name: "Cover" },
+  ];
 
   async function handleFileUpload(event: Event) {
     if (!form) throw new Error("No form found");
@@ -38,9 +46,13 @@
   }
 
   let inputValue = $state("");
+
+  function onCancel() {
+    goto(`/ebook/${ebook.id}`);
+  }
 </script>
 
-<Title>Upload Cover for Ebook:</Title>
+<Title>Upload Cover for Ebook: {ebook.title}</Title>
 <form
   bind:this={form}
   action="/upload"
@@ -57,6 +69,7 @@
       onchange={handleFileChange}
       class="w-full" />
     <div class="flex justify-end gap-2">
+      <Button variant="outline" onclick={onCancel}>Cancel</Button>
       <Button onclick={handleFileUpload} disabled={!fileSelected}
         >Upload</Button>
     </div>
