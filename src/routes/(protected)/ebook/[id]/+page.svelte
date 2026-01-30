@@ -21,13 +21,12 @@
   let ebook = $derived(data.ebook);
 
   async function onMainMenuSelected(action: EbookMenuActions) {
-    console.log("MainMenu action", action);
     if (action === "edit") {
-      goto(`/ebook/${ebook.id}/edit`);
+      await goto(`/ebook/${ebook.id}/edit`);
     } else if (action === "merge") {
-      goto(`/ebook/${ebook.id}/merge`);
+      await goto(`/ebook/${ebook.id}/merge`);
     } else if (action === "cover") {
-      goto(`/ebook/${ebook.id}/cover`);
+      await goto(`/ebook/${ebook.id}/cover`);
     }
   }
 

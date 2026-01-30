@@ -6,14 +6,17 @@
     id?: number | null;
     onCancel: () => void | Promise<void>;
     onDelete?: (id: number) => void;
+    deleteDisabled?: boolean;
   };
-  let { id, onCancel, onDelete }: Props = $props();
+  let { id, onCancel, onDelete, deleteDisabled }: Props = $props();
 </script>
 
 <div class="flex justify-end gap-20">
-  {#if id}
-    <Button variant="destructive" onclick={() => onDelete && onDelete(id)}
-      >Delete</Button>
+  {#if id && onDelete}
+    <Button
+      variant="destructive"
+      disabled={deleteDisabled}
+      onclick={() => onDelete(id)}>Delete</Button>
   {/if}
   <div class="flex gap-2">
     <Button variant="outline" onclick={onCancel}>Cancel</Button>

@@ -22,6 +22,7 @@ import type {
   SeriesSearchItem,
   Source,
   TokenPayload,
+  UpdateAuthor,
   UpdateEbook,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
@@ -388,6 +389,14 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async updateAuthor(author: UpdateAuthor): Promise<Author> {
+    const { data, response } = await this.client.PUT("/api/author/{id}", {
+      body: author,
+      params: { path: { id: author.id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
   async createEbook(ebook: CreateEbook): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook", {
       body: ebook,
@@ -395,10 +404,10 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
-  async updateEbook(ebookId: number, ebook: UpdateEbook): Promise<Ebook> {
+  async updateEbook(ebook: UpdateEbook): Promise<Ebook> {
     const { data, response } = await this.client.PUT("/api/ebook/{id}", {
       body: ebook,
-      params: { path: { id: ebookId } },
+      params: { path: { id: ebook.id } },
     });
     return this.checkResponse(response, data);
   }

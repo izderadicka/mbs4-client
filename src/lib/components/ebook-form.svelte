@@ -71,10 +71,7 @@
           genres: form.data.genres?.map((g: { id: number }) => g.id),
         };
         try {
-          const ebook = await apiClient.updateEbook(
-            form.data.id,
-            updateEbookData,
-          );
+          const ebook = await apiClient.updateEbook(updateEbookData);
           if (afterUpdate) {
             await afterUpdate(ebook);
           }

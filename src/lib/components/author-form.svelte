@@ -6,13 +6,26 @@
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import type { Author, CreateAuthor, UpdateAuthor } from "$lib/api";
+  import FormButtons from "$lib/components/fragments/form-buttons.svelte";
+  import DeleteDialog from "./delete-dialog.svelte";
+  import { apiClient } from "$lib/api/client";
+  import { toast } from "svelte-sonner";
+  import { on } from "svelte/events";
 
   let {
     authorData = null,
-    onCreate = null,
+    afterCreate = undefined,
+    afterDelete = undefined,
+    afterUpdate = undefined,
+    onCancel,
+    onError = undefined,
   }: {
-    authorData?: CreateAuthor | UpdateAuthor | null;
-    onCreate?: null | ((author: CreateAuthor) => void);
+    authorData?: (CreateAuthor | UpdateAuthor) | null;
+    afterCreate?: null | ((author: Author) => Promise<void>);
+    afterUpdate?: null | ((author: Author) => Promise<void>);
+    afterDelete?: null | ((id: number) => Promise<void>);
+    onCancel: () => void | Promise<void>;
+    onError?: (error: any) => void | Promise<void>;
   } = $props();
   if (!authorData) {
     authorData = {
@@ -24,17 +37,45 @@
     dataType: "json",
     validators: zod4Client(AuthorSchema),
     onUpdate: async ({ form }) => {
-      console.log("Created series", form);
-      if (onCreate) {
-        onCreate({
-          first_name: form.data.first_name,
+      if (!("id" in form.data) || !form.data.id) {
+        const author: CreateAuthor = {
           last_name: form.data.last_name,
+          first_name: form.data.first_name,
           description: form.data.description,
-        });
+        };
+        try {
+          const newAuthor = await apiClient.createAuthor(author);
+          await afterCreate?.(newAuthor);
+        } catch (error) {
+          console.error("Failed to create author", error);
+          toast.error("Failed to create author");
+          onError?.(error);
+        }
+      } else {
+        const author: UpdateAuthor = {
+          id: form.data.id,
+          version: form.data.version,
+          last_name: form.data.last_name,
+          first_name: form.data.first_name,
+          description: form.data.description,
+        };
+        try {
+          const updatedAuthor = await apiClient.updateAuthor(author);
+          await afterUpdate?.(updatedAuthor);
+        } catch (error) {
+          console.error("Failed to update author", error);
+          toast.error("Failed to update author");
+          onError?.(error);
+        }
       }
     },
   });
   const { form: formData, enhance } = form;
+
+  let deleteDialog: DeleteDialog;
+
+  async function onDelete() {}
+  async function onConfirmedDelete(id: number) {}
 </script>
 
 <form method="POST" use:enhance class="space-y-6">
@@ -47,8 +88,7 @@
     </Form.Control>
     <Form.FieldErrors />
     <Form.Description
-      >First name of the author, including middle names (optional)</Form.Description
-    >
+      >First name of the author, including middle names (optional)</Form.Description>
   </Form.Field>
 
   <Form.Field {form} name="last_name">
@@ -60,8 +100,7 @@
     </Form.Control>
     <Form.FieldErrors />
     <Form.Description
-      >Last name of the author, including nobiliary particle (de, le, von, etc.)</Form.Description
-    >
+      >Last name of the author, including nobiliary particle (de, le, von, etc.)</Form.Description>
   </Form.Field>
 
   <Form.Field {form} name="description">
@@ -74,5 +113,10 @@
     <Form.FieldErrors />
     <Form.Description>Detailed description of author</Form.Description>
   </Form.Field>
-  <Form.Button>Submit</Form.Button>
+  <FormButtons
+    id={"id" in $formData ? $formData.id : null}
+    {onCancel}
+    {onDelete} />
 </form>
+
+<DeleteDialog bind:this={deleteDialog} {onConfirmedDelete} />

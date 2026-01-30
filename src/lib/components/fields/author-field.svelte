@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    type Author,
     type AuthorSearchItem,
     type AuthorShort,
     type CreateAuthor,
@@ -55,6 +56,7 @@
     value = value.filter((a) => a.id !== aid);
   }
 
+  // svelte-ignore non_reactive_update
   let dialog: CreateDialog;
 
   function selectAuthor(author: AuthorShort) {
@@ -63,14 +65,14 @@
     authors = [];
   }
 
-  async function onCreate(author: CreateAuthor) {
+  async function afterCreate(author: Author) {
     dialog.close();
     try {
       const newAuthor = await apiClient.createAuthor(author);
       selectAuthor({
-        id: newAuthor.id,
-        last_name: newAuthor.last_name,
-        first_name: newAuthor.first_name,
+        id: author.id,
+        last_name: author.last_name,
+        first_name: author.first_name,
       });
     } catch (error) {
       console.error("Failed to create author", error);
@@ -105,20 +107,16 @@
       "
             role="combobox"
             aria-expanded={open}
-            tabindex="0"
-          >
+            tabindex="0">
             <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
               {#each value || [] as author (author.id)}
                 <span
-                  class="ml-1 inline-flex items-center gap-1 border-l border-gray-300 pl-2 first:border-none first:pl-0"
-                >
+                  class="ml-1 inline-flex items-center gap-1 border-l border-gray-300 pl-2 first:border-none first:pl-0">
                   <span class="ml-1"
                     ><span>{author.first_name} {author.last_name}</span>
                     <ClearButton
                       size="6"
-                      onActivation={() => removeAuthor(author.id)}
-                    /></span
-                  >
+                      onActivation={() => removeAuthor(author.id)} /></span>
                 </span>
               {/each}
             </div>
@@ -141,8 +139,7 @@
                   onSelect={() => {
                     selectAuthor(author);
                     closeAndFocusTrigger();
-                  }}
-                >
+                  }}>
                   {author.first_name}
                   {author.last_name}
                 </Command.Item>
@@ -157,11 +154,9 @@
               value="__new_cmd__"
               onSelect={() => {
                 dialog.open();
-              }}
-            >
+              }}>
               <NewAuthorIcon />
-              Create new author</Command.Item
-            >
+              Create new author</Command.Item>
           {/if}
           {#if value && value.length > 0}
             <Command.Item
@@ -169,11 +164,9 @@
                 value = null;
                 closeAndFocusTrigger();
               }}
-              value="__reset_cmd__"
-            >
+              value="__reset_cmd__">
               <ClearIcon />
-              No authors</Command.Item
-            >
+              No authors</Command.Item>
           {/if}
         </Command.Group>
       </Command.Root>
@@ -184,5 +177,9 @@
 </Form.Field>
 
 <CreateDialog bind:this={dialog} entityName="author">
-  <AuthorForm {onCreate} authorData={{ last_name: filter }} />
+  <AuthorForm
+    {afterCreate}
+    onCancel={dialog.close}
+    onError={dialog.close}
+    authorData={{ last_name: filter }} />
 </CreateDialog>
