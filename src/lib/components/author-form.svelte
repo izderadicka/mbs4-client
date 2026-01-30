@@ -19,6 +19,7 @@
     afterUpdate = undefined,
     onCancel,
     onError = undefined,
+    hasBooks = true,
   }: {
     authorData?: (CreateAuthor | UpdateAuthor) | null;
     afterCreate?: null | ((author: Author) => Promise<void>);
@@ -26,6 +27,7 @@
     afterDelete?: null | ((id: number) => Promise<void>);
     onCancel: () => void | Promise<void>;
     onError?: (error: any) => void | Promise<void>;
+    hasBooks?: boolean;
   } = $props();
   if (!authorData) {
     authorData = {
@@ -115,6 +117,7 @@
   </Form.Field>
   <FormButtons
     id={"id" in $formData ? $formData.id : null}
+    deleteDisabled={hasBooks}
     {onCancel}
     {onDelete} />
 </form>

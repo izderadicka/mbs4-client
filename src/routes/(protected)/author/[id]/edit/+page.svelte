@@ -7,6 +7,7 @@
 
   let { data } = $props();
   let author = $derived(data.author);
+  let hasBooks = $derived(data.hasBooks);
 
   breadcrumb.path = [
     { name: "Authors", path: "/author" },
@@ -31,4 +32,4 @@
 
 <Title>Edit Author</Title>
 
-<AuthorForm authorData={author} {onCancel} {afterUpdate} />
+<AuthorForm authorData={author} {onCancel} {afterUpdate} {hasBooks} />
