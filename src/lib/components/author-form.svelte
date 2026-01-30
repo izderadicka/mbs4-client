@@ -76,8 +76,26 @@
 
   let deleteDialog: DeleteDialog;
 
-  async function onDelete() {}
-  async function onConfirmedDelete(id: number) {}
+  async function onDelete() {
+    if ("id" in $formData) {
+      deleteDialog.openDialog({
+        id: $formData.id,
+        name: "author",
+        detail: $formData.last_name,
+      });
+    } else {
+      console.error("Author id not provided");
+    }
+  }
+  async function onConfirmedDelete(id: number) {
+    try {
+      await apiClient.deleteAuthor(id);
+      await afterDelete?.(id);
+    } catch (error) {
+      console.error("Failed to delete author", error);
+      toast.error("Failed to delete author");
+    }
+  }
 </script>
 
 <form method="POST" use:enhance class="space-y-6">

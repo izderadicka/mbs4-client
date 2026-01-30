@@ -28,8 +28,17 @@
   async function afterUpdate(author: Author) {
     await goto("/author/" + author.id);
   }
+
+  async function afterDelete(id: number) {
+    await goto("/author");
+  }
 </script>
 
 <Title>Edit Author</Title>
 
-<AuthorForm authorData={author} {onCancel} {afterUpdate} {hasBooks} />
+<AuthorForm
+  authorData={author}
+  {onCancel}
+  {afterUpdate}
+  {afterDelete}
+  {hasBooks} />

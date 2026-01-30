@@ -397,6 +397,13 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async deleteAuthor(id: number) {
+    const { response } = await this.client.DELETE("/api/author/{id}", {
+      params: { path: { id } },
+    });
+    this.checkResponseCode(response);
+  }
+
   async createEbook(ebook: CreateEbook): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook", {
       body: ebook,
