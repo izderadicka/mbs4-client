@@ -1,5 +1,6 @@
 <script lang="ts">
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+  import { Button } from "./ui/button";
 
   let open = $state(false);
 
@@ -38,7 +39,11 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={onConfirm}>Delete</AlertDialog.Action>
+      <AlertDialog.Action>
+        {#snippet child()}
+          <Button variant="destructive" onclick={onConfirm}>Delete</Button>
+        {/snippet}
+      </AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
