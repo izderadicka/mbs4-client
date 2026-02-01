@@ -20,6 +20,7 @@
   import { toast } from "svelte-sonner";
   import CreateDialog from "$lib/components/fragments/create-dialog.svelte";
   import AuthorForm from "../author-form.svelte";
+  import { formatName } from "$lib/utils";
 
   let {
     value = $bindable(),
@@ -113,7 +114,7 @@
                 <span
                   class="ml-1 inline-flex items-center gap-1 border-l border-gray-300 pl-2 first:border-none first:pl-0">
                   <span class="ml-1"
-                    ><span>{author.first_name} {author.last_name}</span>
+                    ><span>{formatName(author)}</span>
                     <ClearButton
                       size="6"
                       onActivation={() => removeAuthor(author.id)} /></span>
@@ -140,8 +141,7 @@
                     selectAuthor(author);
                     closeAndFocusTrigger();
                   }}>
-                  {author.first_name}
-                  {author.last_name}
+                  {formatName(author)}
                 </Command.Item>
               {/each}
             </Command.Group>

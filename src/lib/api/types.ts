@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/author/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mergeAuthor"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversion": {
         parameters: {
             query?: never;
@@ -276,7 +292,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ebook/{id}/merge/{to_id}": {
+    "/api/ebook/{id}/merge": {
         parameters: {
             query?: never;
             header?: never;
@@ -284,8 +300,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        post: operations["mergeEbook"];
+        put: operations["mergeEbook"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1102,6 +1118,10 @@ export interface components {
             email: string;
             password: string;
         };
+        MergeRequest: {
+            /** Format: int64 */
+            ebook_id: number;
+        };
         OperationTicket: {
             id: string;
             /** Format: date-time */
@@ -1394,6 +1414,7 @@ export interface components {
             version: number;
         };
         UploadForm: {
+            kind?: null | components["schemas"]["UploadKind"];
             /** Format: binary */
             file: string;
         };
@@ -1405,6 +1426,8 @@ export interface components {
             hash: string;
             original_name?: string | null;
         };
+        /** @enum {string} */
+        UploadKind: "Ebook" | "Cover";
         User: {
             /** Format: int64 */
             id: number;
@@ -1594,6 +1617,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Page_EbookShort"];
                 };
+            };
+        };
+    };
+    mergeAuthor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Merge author to other author */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1947,11 +1994,14 @@ export interface operations {
             header?: never;
             path: {
                 id: number;
-                to_id: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeRequest"];
+            };
+        };
         responses: {
             /** @description Merge ebook to other ebook */
             200: {

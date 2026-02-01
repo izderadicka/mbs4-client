@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { formatName } from "$lib/utils";
   import { type HTMLAttributes } from "svelte/elements";
 
   type AuthorShort = {
@@ -19,8 +20,7 @@
 </script>
 
 {#snippet authorSnippet(author: AuthorShort)}
-  {#if author.first_name}<span>{author.first_name} </span>{/if}
-  <span>{author.last_name}</span>
+  {formatName(author)}
 {/snippet}
 
 <span {...restProps}>

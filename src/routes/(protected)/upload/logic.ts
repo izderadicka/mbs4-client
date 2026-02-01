@@ -3,10 +3,9 @@
 import type { EbookMetadata, Source, UploadInfo } from "$lib/api";
 import { apiClient } from "$lib/api/client";
 import type { EbookFormData } from "$lib/schemas";
+import { formatName } from "$lib/utils";
 
-function normalizeAuthorName(author: EbookMetadata["authors"][0]) {
-    return `${author.first_name || ""} ${author.last_name}`.trim();
-}
+
 export async function metaToEbook(meta: EbookMetadata | null): Promise<EbookFormData | null> {
     if (!meta) return null;
     const title = meta.title || "";
@@ -15,7 +14,7 @@ export async function metaToEbook(meta: EbookMetadata | null): Promise<EbookForm
     const authors = [];
     for (const authorName of meta.authors) {
         try {
-            const phrase = normalizeAuthorName(authorName);
+            const phrase = formatName(authorName);
             if (!phrase) continue;
             const candidates = await apiClient.searchAuthor(phrase, 2);
             if (candidates.length == 1) {

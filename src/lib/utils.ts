@@ -15,3 +15,7 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
   ref?: U | null;
 };
+
+export function formatName(name: { first_name?: string | null, last_name: string }) {
+  return (name.first_name ? `${name.first_name} ${name.last_name}` : name.last_name).trim();
+}

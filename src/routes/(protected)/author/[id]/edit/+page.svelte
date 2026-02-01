@@ -4,6 +4,7 @@
   import AuthorForm from "$lib/components/author-form.svelte";
   import Title from "$lib/components/title.svelte";
   import { breadcrumb } from "$lib/globals.svelte";
+  import { formatName } from "$lib/utils.js";
 
   let { data } = $props();
   let author = $derived(data.author);
@@ -13,9 +14,7 @@
     { name: "Authors", path: "/author" },
     // svelte-ignore state_referenced_locally
     {
-      name: author.first_name
-        ? author.first_name + " " + author.last_name
-        : author.last_name,
+      name: formatName(author),
       path: "/author/" + author.id,
     },
     { name: "Edit" },

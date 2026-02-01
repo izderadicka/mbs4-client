@@ -10,8 +10,7 @@
   import { goto } from "$app/navigation";
   import { apiClient } from "$lib/api/client";
   import { toast } from "svelte-sonner";
-
-  type MergeDirection = "to" | "from";
+  import type { MergeDirection } from "$lib/types/app";
 
   let { data } = $props();
   let ebook = $derived(data.ebook);
@@ -23,7 +22,7 @@
   ];
 
   let otherEbook: Ebook | null = $state(null);
-  let mergeDirection: MergeDirection = $state("to");
+  let mergeDirection: MergeDirection = $state("from");
 
   async function onSelect(ebookId: number) {
     try {
@@ -57,7 +56,6 @@
   }
 </script>
 
-<Title>Merge This Ebook</Title>
 <EbookInfo {ebook} />
 
 <Label>Search Other Ebook</Label>
@@ -65,24 +63,22 @@
 
 <RadioGroup.Root bind:value={mergeDirection}>
   <div class="flex items-center space-x-2">
-    <RadioGroup.Item value="to" id="option-merge-to" />
-    <Label for="option-merge-to">Merge to other ebook</Label>
-  </div>
-  <div class="flex items-center space-x-2">
     <RadioGroup.Item value="from" id="option-merge-from" />
     <Label for="option-merge-from">Merge other ebook here</Label>
+  </div>
+  <div class="flex items-center space-x-2">
+    <RadioGroup.Item value="to" id="option-merge-to" />
+    <Label for="option-merge-to">Merge to other ebook</Label>
   </div>
 </RadioGroup.Root>
 
 {#if otherEbook}
-  <Title
-    >{mergeDirection === "to" ? "Merge to" : "Merge from"} Other Ebook</Title>
-
   <EbookInfo ebook={otherEbook} />
 {/if}
 <div class="flex justify-end gap-20">
   <div class="flex gap-2">
     <Button variant="outline" onclick={onCancel}>Cancel</Button>
-    <Button onclick={onMerge} disabled={otherEbook === null}>Merge</Button>
+    <Button onclick={onMerge} disabled={otherEbook === null}
+      >Merge {#if mergeDirection === "from"}From{:else}To{/if}</Button>
   </div>
 </div>

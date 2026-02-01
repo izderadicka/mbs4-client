@@ -4,6 +4,7 @@
   import EbookSearch from "$lib/components/ebook-search.svelte";
   import { onMount } from "svelte";
   import Button from "$lib/components/ui/button/button.svelte";
+  import { formatName } from "$lib/utils";
 
   let {
     metadata,
@@ -24,7 +25,7 @@
     if (metadata) {
       let query = `${metadata.title}`;
       if (metadata.authors && metadata.authors.length > 0) {
-        query += ` ${metadata.authors.map((a) => `${a.first_name || ""} ${a.last_name}`).join(" ")}`;
+        query += ` ${metadata.authors.map(formatName).join(" ")}`;
       }
       if (metadata.series) {
         query += ` ${metadata.series.title}`;

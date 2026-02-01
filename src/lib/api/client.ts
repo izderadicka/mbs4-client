@@ -427,8 +427,9 @@ export class ApiClient {
   }
 
   async mergeEbook(id: number, toId: number): Promise<void> {
-    const { response } = await this.client.POST("/api/ebook/{id}/merge/{to_id}", {
-      params: { path: { id, to_id: toId } },
+    const { response } = await this.client.PUT("/api/ebook/{id}/merge", {
+      params: { path: { id: toId } },
+      body: { ebook_id: id }
     });
     return this.checkResponseCode(response);
   }

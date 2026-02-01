@@ -22,3 +22,5 @@ export interface EventData {
   type: string,
   data: any,
 }
+
+export type MergeDirection = "to" | "from";

@@ -15,14 +15,11 @@
 
   import AuthorMenu from "$lib/components/item-menu.svelte";
   import { goto } from "$app/navigation";
+  import { formatName } from "$lib/utils.js";
 
   let { data } = $props();
   let author = $derived(data.author);
-  let authorName = $derived(
-    author.first_name
-      ? author.first_name + " " + author.last_name
-      : author.last_name,
-  );
+  let authorName = $derived(formatName(author));
   $effect(() => {
     breadcrumb.path = [
       { name: "Authors", path: "/author" },
@@ -41,8 +38,7 @@
 
 <div class="flex pr-5">
   <Title>
-    {author.first_name}
-    {author.last_name}
+    {formatName(author)}
   </Title>
   <div class="w-7 ml-auto">
     <AuthorMenu
