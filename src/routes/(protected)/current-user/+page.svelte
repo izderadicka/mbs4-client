@@ -2,7 +2,7 @@
   import { appUser, breadcrumb } from "$lib/globals.svelte";
   import Title from "$lib/components/title.svelte";
 
-  breadcrumb.path = [{ name: "Upload Ebook", path: "/upload" }];
+  breadcrumb.path = [{ name: "Current User" }];
 </script>
 
 <Title>Your details</Title>

@@ -400,6 +400,14 @@ export class ApiClient {
     }
   }
 
+  async mergeSeries(id: number, toId: number): Promise<void> {
+    const { response } = await this.client.PUT("/api/series/{id}/merge", {
+      params: { path: { id: toId } },
+      body: { series_id: id }
+    });
+    this.checkResponseCode(response);
+  }
+
   async createAuthor(author: CreateAuthor): Promise<Author> {
     const { data, response } = await this.client.POST("/api/author", {
       body: author,

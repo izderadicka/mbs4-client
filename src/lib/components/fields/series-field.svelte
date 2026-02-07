@@ -1,27 +1,5 @@
-<script lang="ts" module>
-  import type {
-    CreateSeries,
-    Series,
-    SeriesSearchItem,
-    SeriesShort,
-  } from "$lib/api";
-  const SERIES: SeriesShort[] = [
-    { id: 1, title: "Lord of the Rings" },
-    { id: 2, title: "Hobbit" },
-    { id: 3, title: "Silmarillion" },
-    { id: 4, title: "Children of Hurin" },
-    { id: 5, title: "Fellowship of the Ring" },
-    { id: 6, title: "Two Towers" },
-    { id: 7, title: "Return of the King" },
-    {
-      id: 8,
-      title:
-        "Extremely long series title that should be truncated maybe with ellipsis or something",
-    },
-  ];
-</script>
-
 <script lang="ts">
+  import type { Series, SeriesSearchItem, SeriesShort } from "$lib/api";
   import * as Form from "$lib/components/ui/form";
   import CheckIcon from "@lucide/svelte/icons/check";
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
@@ -42,8 +20,18 @@
   let {
     form,
     value = $bindable(null),
-  }: { form: SuperForm<any>; value: { id: number; title: string } | null } =
-    $props();
+    disableCreate = false,
+    label = "Series",
+    description = "Series title",
+    omitSeriesId,
+  }: {
+    form: SuperForm<any>;
+    value: { id: number; title: string } | null;
+    disableCreate?: boolean;
+    label?: string;
+    description?: string;
+    omitSeriesId?: number;
+  } = $props();
 
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement | null>(null);
@@ -77,7 +65,8 @@
   }
 
   async function search(query: string, limit: number, signal: AbortSignal) {
-    return await apiClient.searchSeries(query, limit, signal);
+    const res = await apiClient.searchSeries(query, limit, signal);
+    return res.filter((s) => s.doc.Series.id !== omitSeriesId);
   }
 
   async function onResult(res: SeriesSearchItem[] | null) {
@@ -95,7 +84,7 @@
   <Popover.Root bind:open>
     <Form.Control>
       {#snippet children({ props })}
-        <Form.Label>Series</Form.Label>
+        <Form.Label>{label}</Form.Label>
         <Popover.Trigger
           {...props}
           bind:ref={triggerRef}
@@ -135,7 +124,7 @@
         </Command.Group>
         <Command.Separator forceMount={true} />
         <Command.Group value="commands">
-          {#if filter && filter.length >= 3}
+          {#if filter && filter.length >= 3 && !disableCreate}
             <Command.Item
               value="__new_cmd__"
               onSelect={() => {
@@ -159,7 +148,7 @@
     </Popover.Content>
   </Popover.Root>
   <Form.FieldErrors />
-  <Form.Description>Series title</Form.Description>
+  <Form.Description>{description}</Form.Description>
 </Form.Field>
 
 <CreateDialog bind:this={dialog} entityName="series">

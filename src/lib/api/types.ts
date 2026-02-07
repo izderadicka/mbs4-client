@@ -596,6 +596,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/series/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mergeSeries"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/source": {
         parameters: {
             query?: never;
@@ -1302,6 +1318,10 @@ export interface components {
             created: string;
             /** Format: date-time */
             modified: string;
+        };
+        SeriesMergeRequest: {
+            /** Format: int64 */
+            series_id: number;
         };
         SeriesShort: {
             /** Format: int64 */
@@ -2684,6 +2704,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Page_EbookShort"];
                 };
+            };
+        };
+    };
+    mergeSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Merge series to other series */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
