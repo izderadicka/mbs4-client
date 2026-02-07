@@ -404,6 +404,14 @@ export class ApiClient {
     this.checkResponseCode(response);
   }
 
+  async mergeAuthor(id: number, toId: number): Promise<void> {
+    const { response } = await this.client.PUT("/api/author/{id}/merge", {
+      params: { path: { id: toId } },
+      body: { author_id: id }
+    });
+    this.checkResponseCode(response);
+  }
+
   async createEbook(ebook: CreateEbook): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook", {
       body: ebook,

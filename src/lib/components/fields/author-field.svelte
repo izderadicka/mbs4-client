@@ -3,7 +3,6 @@
     type Author,
     type AuthorSearchItem,
     type AuthorShort,
-    type CreateAuthor,
   } from "$lib/api";
 
   import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
@@ -25,12 +24,27 @@
   let {
     value = $bindable(),
     form,
-  }: { value: AuthorShort[] | null; form: SuperForm<any> } = $props();
+    label = "Authors",
+    description = "Ebook authors",
+    disableCreate = false,
+    selectOneOnly = false,
+    omitAuthorId,
+  }: {
+    value: AuthorShort[] | null;
+    form: SuperForm<any>;
+    label?: string;
+    description?: string;
+    disableCreate?: boolean;
+    selectOneOnly?: boolean;
+    omitAuthorId?: number;
+  } = $props();
 
   let open = $state(false);
   let triggerRef = $state<HTMLElement | null>(null);
   let authors: AuthorShort[] = $state([]);
-  const freeAuthors = $derived(authors.filter((a) => !isSelected(a.id)));
+  const freeAuthors = $derived(
+    authors.filter((a) => !isSelected(a.id) && a.id !== omitAuthorId),
+  );
   let filter = $state("");
 
   function isSelected(aid: number): boolean {
@@ -61,7 +75,11 @@
   let dialog: CreateDialog;
 
   function selectAuthor(author: AuthorShort) {
-    value = [...(value || []), author];
+    if (selectOneOnly) {
+      value = [author];
+    } else {
+      value = [...(value || []), author];
+    }
     filter = "";
     authors = [];
   }
@@ -89,7 +107,7 @@
 <Form.Field {form} name="authors">
   <Popover.Root bind:open>
     <Form.Control>
-      <Form.Label>Authors</Form.Label>
+      <Form.Label>{label}</Form.Label>
       <Popover.Trigger bind:ref={triggerRef}>
         {#snippet child({ props })}
           <div
@@ -149,7 +167,7 @@
         </Command.Group>
         <Command.Separator forceMount={true} />
         <Command.Group value="commands">
-          {#if filter && filter.length >= 3}
+          {#if filter && filter.length >= 3 && !disableCreate}
             <Command.Item
               value="__new_cmd__"
               onSelect={() => {
@@ -173,7 +191,7 @@
     </Popover.Content>
   </Popover.Root>
   <Form.FieldErrors />
-  <Form.Description>Ebook authors</Form.Description>
+  <Form.Description>{description}</Form.Description>
 </Form.Field>
 
 <CreateDialog bind:this={dialog} entityName="author">

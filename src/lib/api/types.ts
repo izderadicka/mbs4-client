@@ -874,6 +874,10 @@ export interface components {
             /** Format: date-time */
             modified: string;
         };
+        AuthorMergeRequest: {
+            /** Format: int64 */
+            author_id: number;
+        };
         AuthorShort: {
             /** Format: int64 */
             id: number;
@@ -1038,6 +1042,10 @@ export interface components {
             /** Format: float */
             quality?: number | null;
         };
+        EbookMergeRequest: {
+            /** Format: int64 */
+            ebook_id: number;
+        };
         EbookShort: {
             /** Format: int64 */
             id: number;
@@ -1117,10 +1125,6 @@ export interface components {
         LoginCredentials: {
             email: string;
             password: string;
-        };
-        MergeRequest: {
-            /** Format: int64 */
-            ebook_id: number;
         };
         OperationTicket: {
             id: string;
@@ -1631,7 +1635,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MergeRequest"];
+                "application/json": components["schemas"]["AuthorMergeRequest"];
             };
         };
         responses: {
@@ -1999,7 +2003,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MergeRequest"];
+                "application/json": components["schemas"]["EbookMergeRequest"];
             };
         };
         responses: {
