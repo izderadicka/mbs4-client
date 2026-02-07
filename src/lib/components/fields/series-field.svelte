@@ -83,6 +83,10 @@
   async function onResult(res: SeriesSearchItem[] | null) {
     series = res ? res.map((item) => item.doc.Series) : [];
   }
+
+  async function onError() {
+    dialog.close();
+  }
 </script>
 
 <SearchSupport {filter} {search} {onResult} />
@@ -159,5 +163,9 @@
 </Form.Field>
 
 <CreateDialog bind:this={dialog} entityName="series">
-  <SeriesForm seriesData={{ title: filter }} {afterCreate} {onCancel} />
+  <SeriesForm
+    seriesData={{ title: filter }}
+    {afterCreate}
+    {onCancel}
+    {onError} />
 </CreateDialog>
