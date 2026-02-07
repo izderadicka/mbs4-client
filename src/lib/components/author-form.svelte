@@ -39,6 +39,9 @@
     dataType: "json",
     validators: zod4Client(AuthorSchema),
     onUpdate: async ({ form }) => {
+      if (!form.valid) {
+        return;
+      }
       if (!("id" in form.data) || !form.data.id) {
         const author: CreateAuthor = {
           last_name: form.data.last_name,

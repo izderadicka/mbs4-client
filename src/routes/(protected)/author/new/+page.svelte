@@ -15,7 +15,7 @@
 
 <Title>New Author</Title>
 <p class="italic text-muted-foreground">
-  But better way is to create new author during file upload
+  But better way is to create new author during ebook file upload
 </p>
 
 <AuthorForm {onCancel} {afterCreate} />

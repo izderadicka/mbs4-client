@@ -24,6 +24,7 @@ import type {
   TokenPayload,
   UpdateAuthor,
   UpdateEbook,
+  UpdateSeries,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
@@ -380,6 +381,23 @@ export class ApiClient {
       body: series,
     });
     return this.checkResponse(response, data);
+  }
+
+  async updateSeries(series: UpdateSeries): Promise<Series> {
+    const { data, response } = await this.client.PUT("/api/series/{id}", {
+      body: series,
+      params: { path: { id: series.id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async deleteSeries(id: number) {
+    const { response } = await this.client.DELETE("/api/series/{id}", {
+      params: { path: { id } },
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+    }
   }
 
   async createAuthor(author: CreateAuthor): Promise<Author> {

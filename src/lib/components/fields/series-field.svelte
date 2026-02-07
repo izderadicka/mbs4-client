@@ -1,5 +1,10 @@
 <script lang="ts" module>
-  import type { CreateSeries, SeriesSearchItem, SeriesShort } from "$lib/api";
+  import type {
+    CreateSeries,
+    Series,
+    SeriesSearchItem,
+    SeriesShort,
+  } from "$lib/api";
   const SERIES: SeriesShort[] = [
     { id: 1, title: "Lord of the Rings" },
     { id: 2, title: "Hobbit" },
@@ -60,16 +65,14 @@
 
   let dialog: CreateDialog;
 
-  async function onCreate(series: CreateSeries) {
+  async function afterCreate(newSeries: Series) {
     dialog.close();
-    try {
-      const newSeries = await apiClient.createSeries(series);
-      value = { id: newSeries.id, title: newSeries.title };
-    } catch (error) {
-      console.error("Failed to create series", error);
-      toast.error("Failed to create series");
-    }
+    value = { id: newSeries.id, title: newSeries.title };
+    closeAndFocusTrigger();
+  }
 
+  function onCancel() {
+    dialog.close();
     closeAndFocusTrigger();
   }
 
@@ -98,8 +101,7 @@
             "w-full justify-between",
           )}
           role="combobox"
-          aria-expanded={open}
-        >
+          aria-expanded={open}>
           <span class="truncate">{value?.title || "Select a series..."}</span>
           <ChevronsUpDownIcon class="opacity-50" />
         </Popover.Trigger>
@@ -119,11 +121,9 @@
                 onSelect={() => {
                   value = ser;
                   closeAndFocusTrigger();
-                }}
-              >
+                }}>
                 <CheckIcon
-                  class={cn(value?.id !== ser.id && "text-transparent")}
-                />
+                  class={cn(value?.id !== ser.id && "text-transparent")} />
                 {ser.title}
               </Command.Item>
             {/each}
@@ -136,11 +136,9 @@
               value="__new_cmd__"
               onSelect={() => {
                 dialog.open();
-              }}
-            >
+              }}>
               <NewSeriesIcon />
-              Create new series</Command.Item
-            >
+              Create new series</Command.Item>
           {/if}
           {#if value}
             <Command.Item
@@ -148,11 +146,9 @@
                 value = null;
                 closeAndFocusTrigger();
               }}
-              value="__reset_cmd__"
-            >
+              value="__reset_cmd__">
               <ClearIcon />
-              No series</Command.Item
-            >
+              No series</Command.Item>
           {/if}
         </Command.Group>
       </Command.Root>
@@ -163,5 +159,5 @@
 </Form.Field>
 
 <CreateDialog bind:this={dialog} entityName="series">
-  <SeriesForm seriesData={{ title: filter }} {onCreate} />
+  <SeriesForm seriesData={{ title: filter }} {afterCreate} {onCancel} />
 </CreateDialog>
