@@ -1,9 +1,7 @@
 <script lang="ts">
   import { apiClient } from "$lib/api/client";
   import NoCoverIcon from "@lucide/svelte/icons/book-x";
-  import { onDestroy, onMount } from "svelte";
   import { type HTMLAttributes } from "svelte/elements";
-  import { on } from "svelte/events";
 
   type DivAttributes = HTMLAttributes<HTMLDivElement>;
   let {

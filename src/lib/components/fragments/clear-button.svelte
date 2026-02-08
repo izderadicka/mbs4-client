@@ -2,6 +2,7 @@
   import Button from "../ui/button/button.svelte";
   import ClearIcon from "@lucide/svelte/icons/x";
   import { type HTMLButtonAttributes } from "svelte/elements";
+
   type Props = {
     onActivation: () => any;
     size: string;
@@ -21,5 +22,4 @@
   onkeydown={(e) => {
     e.stopPropagation();
     if (e.key === "Enter") onActivation;
-  }}><ClearIcon /></Button
->
+  }}><ClearIcon /></Button>
