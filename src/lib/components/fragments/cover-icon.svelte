@@ -15,7 +15,7 @@
   };
   let { ebookId, size = 64 }: Props = $props();
 
-  const maxHeight = $derived(Math.round(size * 1.4142));
+  const maxHeight = $derived(Math.round(size * 1.5)); // Add 1.5  for ratio to display usual book covers - Octavio printing
   let abort: AbortController | null = null;
   let observer: IntersectionObserver | null = null;
 
