@@ -1,6 +1,6 @@
 <script lang="ts">
   import { formatName } from "$lib/utils";
-  import { type HTMLAttributes } from "svelte/elements";
+  import type { HTMLAttributes } from "svelte/elements";
 
   type AuthorShort = {
     id?: number;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "../ui/button/button.svelte";
   import ClearIcon from "@lucide/svelte/icons/x";
-  import { type HTMLButtonAttributes } from "svelte/elements";
+  import type { HTMLButtonAttributes } from "svelte/elements";
 
   type Props = {
     onActivation: () => any;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiClient } from "$lib/api/client";
   import NoCoverIcon from "@lucide/svelte/icons/book-x";
-  import { type HTMLAttributes } from "svelte/elements";
+  import type { HTMLAttributes } from "svelte/elements";
 
   type DivAttributes = HTMLAttributes<HTMLDivElement>;
   let {
