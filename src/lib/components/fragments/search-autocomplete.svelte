@@ -199,11 +199,14 @@
       ? `${ebook.series} #${ebook.series_index}`
       : ebook.series;
   }
+
+  // svelte-ignore non_reactive_update
+  let inputElement: HTMLElement;
 </script>
 
 <Popover.Root bind:open>
   <div class="w-full">
-    <div class="relative">
+    <div class="relative" bind:this={inputElement}>
       <Input
         {placeholder}
         value={query}
@@ -211,6 +214,12 @@
         oninput={(e) => {
           e.stopPropagation();
           onInput((e.currentTarget as HTMLInputElement).value);
+        }}
+        onfocus={(e) => {
+          e.stopPropagation();
+          if (query.trim().length >= minChars && results.length > 0) {
+            open = true;
+          }
         }}
         onkeydown={onKeydown}
         class="w-full" />
@@ -223,17 +232,22 @@
   <Popover.Trigger />
 
   <Popover.Content
+    customAnchor={inputElement}
+    side="bottom"
     align="start"
     class="p-0 overflow-hidden
          w-[min(100vw-1rem,var(--radix-popover-trigger-width))]
          sm:w-[--radix-popover-trigger-width]
-         max-w-[var(--bits-floating-anchor-width)]"
+         max-w-(--bits-floating-anchor-width)
+         flex flex-col"
+    style="max-height: min(18rem, var(--bits-popover-content-available-height));"
     onOpenAutoFocus={(e) => e.preventDefault()}
     onCloseAutoFocus={(e) => e.preventDefault()}
     sideOffset={4}
     collisionPadding={8}>
     {#if results.length > 0}
-      <ScrollArea class="h-72 overflow-x-hidden min-w-0">
+      <ScrollArea
+        class="flex-1 min-h-0 overflow-x-hidden overflow-y-scroll min-w-0">
         <ul
           role="listbox"
           data-ba-list
