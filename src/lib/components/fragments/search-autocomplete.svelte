@@ -200,13 +200,19 @@
       : ebook.series;
   }
 
+  function reopen() {
+    if (!open && query.trim().length >= minChars && results.length > 0) {
+      open = true;
+    }
+  }
+
   // svelte-ignore non_reactive_update
-  let inputElement: HTMLElement;
+  let inputWrapperElement: HTMLElement;
 </script>
 
 <Popover.Root bind:open>
   <div class="w-full">
-    <div class="relative" bind:this={inputElement}>
+    <div class="relative" bind:this={inputWrapperElement}>
       <Input
         {placeholder}
         value={query}
@@ -215,11 +221,8 @@
           e.stopPropagation();
           onInput((e.currentTarget as HTMLInputElement).value);
         }}
-        onfocus={(e) => {
-          if (query.trim().length >= minChars && results.length > 0) {
-            open = true;
-          }
-        }}
+        onfocus={reopen}
+        onclick={reopen}
         onkeydown={onKeydown}
         class="w-full" />
       {#if loading}
@@ -231,9 +234,10 @@
   <Popover.Trigger />
 
   <Popover.Content
-    customAnchor={inputElement}
+    customAnchor={inputWrapperElement}
     side="bottom"
     align="start"
+    trapFocus={false}
     class="p-0 overflow-hidden
          w-[min(100vw-1rem,var(--radix-popover-trigger-width))]
          sm:w-[--radix-popover-trigger-width]
