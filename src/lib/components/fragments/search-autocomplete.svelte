@@ -216,7 +216,6 @@
           onInput((e.currentTarget as HTMLInputElement).value);
         }}
         onfocus={(e) => {
-          e.stopPropagation();
           if (query.trim().length >= minChars && results.length > 0) {
             open = true;
           }
