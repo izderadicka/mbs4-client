@@ -528,6 +528,11 @@ export class ApiClient {
     };
   }
 
+  async listProviders(): Promise<string[]> {
+    const { data, response } = await this.client.GET("/auth/providers");
+    return this.checkResponse(response, data);
+  }
+
   createEventSource(lastEventId: string | null): EventSource {
     let url = this.fullUrl("/events");
     if (lastEventId) {

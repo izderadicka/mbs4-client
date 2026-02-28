@@ -11,6 +11,10 @@
   appUser.user = null;
   localStorage.removeItem("user");
 
+  let { data } = $props();
+  // svelte-ignore state_referenced_locally
+  let providers = data.providers;
+
   async function login(event: Event) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
@@ -44,6 +48,6 @@
       failed={appUser.failedLogin}
       ssoAction={redirectToSSO}
       message={LOGIN_MESSAGE}
-    />
+      {providers} />
   </form>
 </div>
