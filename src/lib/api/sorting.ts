@@ -86,5 +86,33 @@ export function seriesSort(sort?: string): SeriesSorting {
     return sort in SERIES_SORTING ? sort as SeriesSorting : SERIES_SORTING_DEFAULT;
 }
 
+const BOOKSHELF_SORTING = {
+    "latest": "-created",
+    "oldest": "created",
+    "name": "name",
+    "reverse-name": "-name"
+}
+export type BookshelfSorting = keyof typeof BOOKSHELF_SORTING;
+const BOOKSHELF_SORTING_DEFAULT: BookshelfSorting = "name";
+
+export function bookshelfSortQuery(sorting?: string) {
+    if (!sorting) {
+        return BOOKSHELF_SORTING[BOOKSHELF_SORTING_DEFAULT];
+    }
+
+    if (!(sorting in BOOKSHELF_SORTING)) {
+        return BOOKSHELF_SORTING[BOOKSHELF_SORTING_DEFAULT];
+    }
+
+    return BOOKSHELF_SORTING[sorting as BookshelfSorting];
+}
+
+export function bookshelfSort(sort?: string): BookshelfSorting {
+    if (!sort) {
+        return BOOKSHELF_SORTING_DEFAULT;
+    }
+    return sort in BOOKSHELF_SORTING ? sort as BookshelfSorting : BOOKSHELF_SORTING_DEFAULT;
+}
+
 
 

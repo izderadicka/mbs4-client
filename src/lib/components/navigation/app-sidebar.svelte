@@ -4,6 +4,7 @@
   import CogIcon from "@lucide/svelte/icons/settings";
   import UploadIcon from "@lucide/svelte/icons/upload";
   import SearchIcon from "@lucide/svelte/icons/search";
+  import BookshelfIcon from "@lucide/svelte/icons/book-check";
 
   interface InnerMenuItem {
     title: string;
@@ -50,6 +51,21 @@
         {
           title: "Series",
           url: "/series",
+        },
+      ],
+    },
+    {
+      title: "Bookshelves",
+      icon: BookshelfIcon,
+      isOpen: true,
+      items: [
+        {
+          title: "Mine",
+          url: "/bookshelf",
+        },
+        {
+          title: "Public",
+          url: "bookshelf?public",
         },
       ],
     },

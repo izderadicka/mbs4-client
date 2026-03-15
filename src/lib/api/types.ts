@@ -100,6 +100,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bookshelf/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMyBookshelves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookshelf/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPublicBookshelves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookshelf/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listBookshelfItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversion": {
         parameters: {
             query?: never;
@@ -921,6 +969,18 @@ export interface components {
             id: number;
             name: string;
         };
+        BookshelfListing: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** Format: int64 */
+            items_count: number;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
+            /** Format: date-time */
+            modified: string;
+        };
         Conversion: {
             /** Format: int64 */
             id: number;
@@ -1177,6 +1237,28 @@ export interface components {
                 id: number;
                 last_name: string;
                 first_name?: string | null;
+            }[];
+        };
+        Page_BookshelfListing: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
+            total: number;
+            rows: {
+                /** Format: int64 */
+                id: number;
+                name: string;
+                /** Format: int64 */
+                items_count: number;
+                created_by?: string | null;
+                /** Format: date-time */
+                created: string;
+                /** Format: date-time */
+                modified: string;
             }[];
         };
         Page_ConversionShort: {
@@ -1681,6 +1763,83 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listMyBookshelves: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BookshelfListing"];
+                };
+            };
+        };
+    };
+    listPublicBookshelves: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BookshelfListing"];
+                };
+            };
+        };
+    };
+    listBookshelfItems: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BookshelfListing"];
+                };
             };
         };
     };

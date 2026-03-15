@@ -484,6 +484,12 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async listBookshelves(publicOnly: boolean, queryParams?: ListParams) {
+    const url = publicOnly ? "/api/bookshelf/public" : "/api/bookshelf/mine";
+    const { data, response } = await this.client.GET(url, { params: { query: queryParams } });
+    return this.checkResponse(response, data);
+  }
+
   async loadIcon(ebookId: number, signal?: AbortSignal): Promise<Blob | null> {
     const { data } = await this.client.GET("/files/icon/{id}", {
       params: { path: { id: ebookId } },
