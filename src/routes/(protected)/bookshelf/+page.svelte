@@ -25,10 +25,12 @@
     publicOnly ? "Public Bookshelves" : "My Bookshelves",
   );
 
-  breadcrumb.path = [{ name: breadcrumbName }];
+  $effect(() => {
+    breadcrumb.path = [{ name: breadcrumbName }];
+  });
 </script>
 
-<Title>Authors</Title>
+<Title>Bookshelves</Title>
 
 <div class="flex gap-2">
   <SortSelect bind:sort sorting={SORTING} />

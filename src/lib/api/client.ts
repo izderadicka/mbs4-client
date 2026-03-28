@@ -4,6 +4,7 @@ import type {
   Author,
   AuthorSearchItem,
   AuthorShort,
+  Bookshelf,
   ConversionRequest,
   CreateAuthor,
   CreateEbook,
@@ -484,9 +485,23 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async getBookshelf(id: number): Promise<Bookshelf> {
+    const { data, response } = await this.client.GET(`/api/bookshelf/{id}`, {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
   async listBookshelves(publicOnly: boolean, queryParams?: ListParams) {
     const url = publicOnly ? "/api/bookshelf/public" : "/api/bookshelf/mine";
     const { data, response } = await this.client.GET(url, { params: { query: queryParams } });
+    return this.checkResponse(response, data);
+  }
+
+  async listBookshelfItems(bookshelfId: number, queryParams?: ListParams) {
+    const { data, response } = await this.client.GET(`/api/bookshelf/{id}/items`, {
+      params: { path: { id: bookshelfId }, query: queryParams },
+    });
     return this.checkResponse(response, data);
   }
 

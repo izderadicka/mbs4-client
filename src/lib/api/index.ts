@@ -14,6 +14,13 @@ export type EbookShort = components["schemas"]["EbookShort"];
 export type CreateEbook = components["schemas"]["CreateEbook"];
 export type UpdateEbook = components["schemas"]["UpdateEbook"];
 export type PagedEbookShort = components["schemas"]["Page_EbookShort"];
+
+//Bookshelf
+export type Bookshelf = components["schemas"]["Bookshelf"];
+export type PagedBookshelfItem = components["schemas"]["Page_BookshelfItemListing"];
+export type BookshelfItem = PagedBookshelfItem["rows"][number];
+
+
 // Author
 export type AuthorShort = components["schemas"]["AuthorShort"];
 export type CreateAuthor = components["schemas"]["CreateAuthor"];

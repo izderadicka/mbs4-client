@@ -114,5 +114,35 @@ export function bookshelfSort(sort?: string): BookshelfSorting {
     return sort in BOOKSHELF_SORTING ? sort as BookshelfSorting : BOOKSHELF_SORTING_DEFAULT;
 }
 
+const BOOKSHELF_ITEM_SORTING = {
+    "latest": "-created",
+    "oldest": "created",
+    "title": "title",
+    "reverse-title": "-title",
+    "order": "order",
+    "reverse-order": "-order"
+}
+export type BookshelfItemSorting = keyof typeof BOOKSHELF_ITEM_SORTING;
+const BOOKSHELF_ITEM_SORTING_DEFAULT: BookshelfItemSorting = "order";
+
+export function bookshelfItemSortQuery(sorting?: string) {
+    if (!sorting) {
+        return BOOKSHELF_ITEM_SORTING[BOOKSHELF_ITEM_SORTING_DEFAULT];
+    }
+
+    if (!(sorting in BOOKSHELF_ITEM_SORTING)) {
+        return BOOKSHELF_ITEM_SORTING[BOOKSHELF_ITEM_SORTING_DEFAULT];
+    }
+
+    return BOOKSHELF_ITEM_SORTING[sorting as BookshelfItemSorting];
+}
+
+export function bookshelfItemSort(sort?: string): BookshelfItemSorting {
+    if (!sort) {
+        return BOOKSHELF_ITEM_SORTING_DEFAULT;
+    }
+    return sort in BOOKSHELF_ITEM_SORTING ? sort as BookshelfItemSorting : BOOKSHELF_ITEM_SORTING_DEFAULT;
+}
+
 
 
