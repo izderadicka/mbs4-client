@@ -1,5 +1,6 @@
 <script lang="ts">
   import NoCoverIcon from "@lucide/svelte/icons/book-x";
+  import SeriesIcon from "@lucide/svelte/icons/library-big";
   import { apiClient } from "$lib/api/client";
   import { onDestroy, onMount } from "svelte";
 
@@ -55,7 +56,7 @@
         observer.observe(iconElement);
       }
 
-      if (ebookId !== loadedIconId) {
+      if (ebookId >= 0 && ebookId !== loadedIconId) {
         if (isVisible) {
           loadImage();
         } else {
@@ -86,6 +87,8 @@
   bind:this={iconElement}>
   {#if imageUrl}
     <img src={imageUrl} alt="" bind:this={iconElement} width={size} />
+  {:else if ebookId < 0}
+    <SeriesIcon {size} color="var(--color-muted)" />
   {:else if notFound}
     <NoCoverIcon {size} color="var(--color-muted)" />
   {/if}

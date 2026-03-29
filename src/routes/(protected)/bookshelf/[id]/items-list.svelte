@@ -24,6 +24,7 @@
   import CoverIcon from "$lib/components/fragments/cover-icon.svelte";
   import { goto } from "$app/navigation";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
+  import ItemMenu from "./item-menu.svelte";
 
   type Props = {
     items: PagedBookshelfItem;
@@ -43,6 +44,10 @@
     }
 
     return "";
+  }
+
+  function onItemMenuSelected(item: BookshelfItem, action: string) {
+    console.debug(`Action ${action} on bookshelf item ${item}`);
   }
 </script>
 
@@ -72,25 +77,32 @@
       {#each items.rows as item (item.id)}
         <Card.Root class="p-3 overflow-hidden">
           <Card.Content class="flex gap-4 flex-row">
-            <div class="w-[100px] h-[138px] mr-4">
+            <div class="w-25 h-34.5 mr-4">
               <a href={buildLink(item)}>
-                <CoverIcon ebookId={item.ebook_id || 0} size={90} />
+                <CoverIcon ebookId={item.ebook_id || -1} size={90} />
               </a>
             </div>
             <div class="flex-1">
-              <div class="text-lg font-bold">
-                <a href={buildLink(item)}>{item.title}</a>
+              <div class="flex">
+                <div class="text-lg font-bold flex-1">
+                  <a href={buildLink(item)}>{item.title}</a>
+                </div>
+                <div class="w-2">
+                  <ItemMenu {item} {onItemMenuSelected} />
+                </div>
               </div>
               <AuthorsList
                 authors={item.authors || []}
                 short={true}
                 class="italic" />
-              <!-- {#if item.series}
-                <div>
-                  <a href="/series/{item.series.id}"
-                    >{item.series?.title} #{item.series_index}</a>
-                </div>
-              {/if} -->
+              {#if item.series_title}
+                <p class="text-muted-foreground">
+                  {item.series_title} #{item.series_index}
+                </p>
+              {/if}
+              {#if item.note}
+                <p class="text-sm mt-0.5">{item.note}</p>
+              {/if}
             </div>
           </Card.Content>
         </Card.Root>
@@ -102,16 +114,18 @@
     <Table.Root class="table-fixed w-full">
       <Table.Header>
         <Table.Row>
-          <Table.Head class="w-[4rem]">Id</Table.Head>
+          <Table.Head class="w-16"></Table.Head>
           <Table.Head class="w-[20%]">Authors</Table.Head>
           <Table.Head>Title</Table.Head>
           <Table.Head class="hidden lg:table-cell">Note</Table.Head>
+          <Table.Head class="w-12"></Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
         {#each items.rows as item (item.id)}
           <Table.Row>
-            <Table.Cell class="font-medium">{item.id}</Table.Cell>
+            <Table.Cell class="font-medium"
+              >{item.item_type === "EBOOK" ? "Ebook" : "Series"}</Table.Cell>
             <Table.Cell class="truncate"
               ><AuthorsList
                 authors={item.authors || []}
@@ -120,6 +134,9 @@
               ><a href={buildLink(item)}>{item.title}</a></Table.Cell>
             <Table.Cell class="truncate hidden lg:table-cell"
               >{item.note}</Table.Cell>
+            <Table.Cell>
+              <ItemMenu {item} {onItemMenuSelected} />
+            </Table.Cell>
           </Table.Row>
         {/each}
       </Table.Body>
