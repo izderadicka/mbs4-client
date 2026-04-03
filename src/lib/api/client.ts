@@ -7,6 +7,7 @@ import type {
   Bookshelf,
   ConversionRequest,
   CreateAuthor,
+  CreateBookshelf,
   CreateEbook,
   CreateSeries,
   Ebook,
@@ -24,6 +25,7 @@ import type {
   Source,
   TokenPayload,
   UpdateAuthor,
+  UpdateBookshelf,
   UpdateEbook,
   UpdateSeries,
 } from ".";
@@ -481,6 +483,21 @@ export class ApiClient {
     const { data, response } = await this.client.PUT("/api/ebook/{id}/cover", {
       body: coverInfo,
       params: { path: { id: ebookId } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async createBookshelf(bookshelf: CreateBookshelf): Promise<Bookshelf> {
+    const { data, response } = await this.client.POST("/api/bookshelf", {
+      body: bookshelf,
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async updateBookshelf(bookshelf: UpdateBookshelf): Promise<Bookshelf> {
+    const { data, response } = await this.client.PUT("/api/bookshelf/{id}", {
+      body: bookshelf,
+      params: { path: { id: bookshelf.id } },
     });
     return this.checkResponse(response, data);
   }

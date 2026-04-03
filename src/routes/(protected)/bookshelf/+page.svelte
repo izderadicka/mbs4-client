@@ -59,8 +59,7 @@
           >{@render linked(bookshelf.id)}</Table.Cell>
         <Table.Cell class="truncate"
           >{@render linked(bookshelf.name)}</Table.Cell>
-        <Table.Cell class="truncate"
-          >{@render linked(bookshelf.items_count)}</Table.Cell>
+        <Table.Cell class="truncate">{bookshelf.items_count}</Table.Cell>
       </Table.Row>
     {/each}
   </Table.Body>

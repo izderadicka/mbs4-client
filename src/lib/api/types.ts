@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bookshelf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createBookshelf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bookshelf/mine": {
         parameters: {
             query?: never;
@@ -140,7 +156,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getBookshelf"];
-        put?: never;
+        put: operations["updateBookshelf"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1067,6 +1083,12 @@ export interface components {
             description?: string | null;
             created_by?: string | null;
         };
+        CreateBookshelf: {
+            name: string;
+            description?: string | null;
+            public: boolean;
+            created_by?: string | null;
+        };
         CreateEbook: {
             title: string;
             description?: string | null;
@@ -1550,6 +1572,15 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        UpdateBookshelf: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            description?: string | null;
+            public: boolean;
+            /** Format: int64 */
+            version: number;
+        };
         UpdateEbook: {
             /** Format: int64 */
             id: number;
@@ -1846,6 +1877,30 @@ export interface operations {
             };
         };
     };
+    createBookshelf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookshelf"];
+            };
+        };
+        responses: {
+            /** @description Created Bookshelf */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bookshelf"];
+                };
+            };
+        };
+    };
     listMyBookshelves: {
         parameters: {
             query?: {
@@ -1908,6 +1963,32 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Get bookshelf */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bookshelf"];
+                };
+            };
+        };
+    };
+    updateBookshelf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBookshelf"];
+            };
+        };
+        responses: {
+            /** @description Updated Bookshelf */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -17,6 +17,8 @@ export type PagedEbookShort = components["schemas"]["Page_EbookShort"];
 
 //Bookshelf
 export type Bookshelf = components["schemas"]["Bookshelf"];
+export type CreateBookshelf = components["schemas"]["CreateBookshelf"];
+export type UpdateBookshelf = components["schemas"]["UpdateBookshelf"];
 export type PagedBookshelfItem = components["schemas"]["Page_BookshelfItemListing"];
 export type BookshelfItem = PagedBookshelfItem["rows"][number];
 

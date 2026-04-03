@@ -98,6 +98,15 @@ export const AuthorSchema = z.object({
     created_by: z.nullish(z.string()),
 });
 
+export const BookshelfSchema = z.object({
+    id: z.optional(z.number().positive()),
+    version: z.optional(z.number().positive()),
+    name: z.string().min(1).max(255),
+    description: z.nullish(z.string().max(5000)),
+    public: z.boolean(),
+    created_by: z.nullish(z.string()),
+})
+
 function customValidate(
     schema: z.ZodTypeAny,
     messages: { custom?: string; too_big?: string } = {},
