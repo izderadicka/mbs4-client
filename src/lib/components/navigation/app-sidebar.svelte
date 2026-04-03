@@ -65,7 +65,7 @@
         },
         {
           title: "Public",
-          url: "bookshelf?public",
+          url: "/bookshelf?public",
         },
       ],
     },

@@ -9,6 +9,7 @@
   import ItemsList from "./items-list.svelte";
   import BookshelfMenu from "$lib/components/item-menu.svelte";
   import type { it } from "vitest";
+  import { goto } from "$app/navigation";
 
   const { data } = $props();
   const bookshelf = $derived(data.bookshelf);
@@ -23,17 +24,23 @@
   // svelte-ignore state_referenced_locally
   breadcrumb.path = [parent_segment, { name: bookshelf.name }];
 
-  function onMainMenuSelected(action: string) {}
+  function onMainMenuSelected(action: string) {
+    if (action === "edit") {
+      goto(`/bookshelf/${bookshelf.id}/edit`);
+    }
+  }
 </script>
 
 <div class="flex pr-5">
   <Title>{bookshelf.name}</Title>
-  <div class="w-7 ml-auto">
-    <BookshelfMenu
-      onMenuSelected={onMainMenuSelected}
-      menu={BOOKSHELF_MENU}
-      title="Bookshelf Actions" />
-  </div>
+  {#if isMime}
+    <div class="w-7 ml-auto">
+      <BookshelfMenu
+        onMenuSelected={onMainMenuSelected}
+        menu={BOOKSHELF_MENU}
+        title="Bookshelf Actions" />
+    </div>
+  {/if}
 </div>
 
 {#if bookshelf.description}
