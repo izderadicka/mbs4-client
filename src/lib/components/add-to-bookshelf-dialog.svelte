@@ -176,6 +176,11 @@
             Choose which bookshelf should contain this item.
           </Form.Description>
         {/if}
+        <div>
+          <Button href="/bookshelf/new" variant="link" class="h-auto px-0">
+            Create new bookshelf
+          </Button>
+        </div>
       </Form.Field>
 
       <Form.Field {form} name="note">

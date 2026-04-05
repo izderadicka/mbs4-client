@@ -18,6 +18,9 @@
   import { goto } from "$app/navigation";
   import EbookInfo from "./ebook-info.svelte";
   import AddToBookshelfDialog from "$lib/components/add-to-bookshelf-dialog.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import PlusIcon from "@lucide/svelte/icons/plus";
+  import LibraryBigIcon from "@lucide/svelte/icons/library-big";
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
@@ -31,8 +34,12 @@
     } else if (action === "cover") {
       await goto(`/ebook/${ebook.id}/cover`);
     } else if (action === "bookshelf") {
-      await addToBookshelfDialog?.open();
+      await onAddToBookshelf();
     }
+  }
+
+  async function onAddToBookshelf() {
+    await addToBookshelfDialog?.open();
   }
 
   breadcrumb.path = [{ name: "Ebooks", path: "/ebook" }, { name: ebook.title }];
@@ -40,11 +47,20 @@
 
 <div class="flex pr-5">
   <EbookInfo {ebook} />
-  <div class="w-7 ml-auto">
+  <div class="ml-auto flex items-start gap-2">
+    <Button onclick={onAddToBookshelf}>
+      <span class="hidden md:inline">Add to Bookshelf</span>
+      <span class="inline-flex items-center gap-1 md:hidden">
+        <PlusIcon class="size-4" />
+        <LibraryBigIcon class="size-4" />
+      </span>
+    </Button>
+    <div class="w-7">
     <EbookMenu
       onMenuSelected={onMainMenuSelected}
       menu={EBOOK_MENU}
       title="Ebook Actions" />
+    </div>
   </div>
 </div>
 
