@@ -1,9 +1,10 @@
 <script lang="ts" module>
-  type EbookMenuActions = "edit" | "cover" | "merge";
+  type EbookMenuActions = "edit" | "cover" | "merge" | "bookshelf";
   const EBOOK_MENU: { name: string; action: EbookMenuActions }[] = [
     { name: "Edit This Ebook", action: "edit" },
     { name: "Change Cover Image", action: "cover" },
     { name: "Merge with Other Ebook", action: "merge" },
+    { name: "Add to Bookshelf", action: "bookshelf" },
   ];
 </script>
 
@@ -16,9 +17,11 @@
   import EbookMenu from "$lib/components/item-menu.svelte";
   import { goto } from "$app/navigation";
   import EbookInfo from "./ebook-info.svelte";
+  import AddToBookshelfDialog from "$lib/components/add-to-bookshelf-dialog.svelte";
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
+  let addToBookshelfDialog: AddToBookshelfDialog | null = null;
 
   async function onMainMenuSelected(action: EbookMenuActions) {
     if (action === "edit") {
@@ -27,6 +30,8 @@
       await goto(`/ebook/${ebook.id}/merge`);
     } else if (action === "cover") {
       await goto(`/ebook/${ebook.id}/cover`);
+    } else if (action === "bookshelf") {
+      await addToBookshelfDialog?.open();
     }
   }
 
@@ -50,3 +55,9 @@
     conversions={data.conversions}
     ebookId={ebook.id} />
 </div>
+
+<AddToBookshelfDialog
+  bind:this={addToBookshelfDialog}
+  title={ebook.title}
+  ebookId={ebook.id}
+  itemType="EBOOK" />
