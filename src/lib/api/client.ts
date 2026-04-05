@@ -5,9 +5,11 @@ import type {
   AuthorSearchItem,
   AuthorShort,
   Bookshelf,
+  BookshelfItemMutationResponse,
   ConversionRequest,
   CreateAuthor,
   CreateBookshelf,
+  CreateBookshelfItem,
   CreateEbook,
   CreateSeries,
   Ebook,
@@ -26,6 +28,7 @@ import type {
   TokenPayload,
   UpdateAuthor,
   UpdateBookshelf,
+  UpdateBookshelfItem,
   UpdateEbook,
   UpdateSeries,
 } from ".";
@@ -527,6 +530,35 @@ export class ApiClient {
       params: { path: { id: bookshelfId }, query: queryParams },
     });
     return this.checkResponse(response, data);
+  }
+
+  async addBookshelfItem(
+    bookshelfId: number,
+    item: CreateBookshelfItem,
+  ): Promise<BookshelfItemMutationResponse> {
+    const { data, response } = await this.client.POST("/api/bookshelf/{id}/items", {
+      body: item,
+      params: { path: { id: bookshelfId } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async updateBookshelfItem(
+    bookshelfId: number,
+    item: UpdateBookshelfItem,
+  ): Promise<BookshelfItemMutationResponse> {
+    const { data, response } = await this.client.PUT("/api/bookshelf/{id}/items/{item_id}", {
+      body: item,
+      params: { path: { id: bookshelfId, item_id: item.id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async deleteBookshelfItem(bookshelfId: number, itemId: number) {
+    const { response } = await this.client.DELETE("/api/bookshelf/{id}/items/{item_id}", {
+      params: { path: { id: bookshelfId, item_id: itemId } },
+    });
+    this.checkResponseCode(response);
   }
 
   async loadIcon(ebookId: number, signal?: AbortSignal): Promise<Blob | null> {

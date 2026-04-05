@@ -17,8 +17,13 @@ export type PagedEbookShort = components["schemas"]["Page_EbookShort"];
 
 //Bookshelf
 export type Bookshelf = components["schemas"]["Bookshelf"];
+export type BookshelfListing = components["schemas"]["BookshelfListing"];
 export type CreateBookshelf = components["schemas"]["CreateBookshelf"];
 export type UpdateBookshelf = components["schemas"]["UpdateBookshelf"];
+export type CreateBookshelfItem = components["schemas"]["CreateBookshelfItem"];
+export type UpdateBookshelfItem = components["schemas"]["UpdateBookshelfItem"];
+export type BookshelfItemMutationResponse = components["schemas"]["BookshelfItemMutationResponse"];
+export type PagedBookshelfListing = components["schemas"]["Page_BookshelfListing"];
 export type PagedBookshelfItem = components["schemas"]["Page_BookshelfItemListing"];
 export type BookshelfItem = PagedBookshelfItem["rows"][number];
 
