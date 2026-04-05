@@ -1,5 +1,7 @@
 <script lang="ts" module>
+  import type { BookshelfItem } from "$lib/api";
   import { type BookshelfItemSorting } from "$lib/api/sorting";
+  import type { ItemMenuActions } from "./item-menu.svelte";
 
   const SORTING: { label: string; value: BookshelfItemSorting }[] = [
     { label: "Newest", value: "latest" },
@@ -9,10 +11,21 @@
     { label: "Order", value: "order" },
     { label: "Reverse Order", value: "reverse-order" },
   ];
+
+  function buildLink(item: BookshelfItem) {
+    if (item.ebook_id) {
+      return `/ebook/${item.ebook_id}`;
+    } else if (item.series_id) {
+      return `/series/${item.series_id}`;
+    }
+
+    return "";
+  }
 </script>
 
 <script lang="ts">
-  import type { BookshelfItem, PagedBookshelfItem } from "$lib/api";
+  import type { PagedBookshelfItem } from "$lib/api";
+  import { apiClient } from "$lib/api/client";
   import * as Table from "$lib/components/ui/table/index.js";
   import AuthorsList from "$lib/components/fragments/authors-list.svelte";
   import Pager from "$lib/components/pager.svelte";
@@ -24,30 +37,52 @@
   import CoverIcon from "$lib/components/fragments/cover-icon.svelte";
   import { goto } from "$app/navigation";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
+  import { toast } from "svelte-sonner";
   import ItemMenu from "./item-menu.svelte";
 
   type Props = {
+    bookshelfId: number;
     items: PagedBookshelfItem;
     sort: BookshelfItemSorting;
   };
 
-  let { items, sort }: Props = $props();
+  let { bookshelfId, items, sort }: Props = $props();
 
   type Layout = "table" | "grid";
   let layout = $state<Layout>("grid");
 
-  function buildLink(item: BookshelfItem) {
-    if (item.ebook_id) {
-      return `/ebook/${item.ebook_id}`;
-    } else if (item.series_id) {
-      return `/series/${item.series_id}`;
-    }
-
-    return "";
+  function goToPreviousPage() {
+    const url = new URL(window.location.href);
+    const previousPage = Math.max(1, items.page - 1);
+    url.searchParams.set("page", String(previousPage));
+    return goto(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  function onItemMenuSelected(item: BookshelfItem, action: string) {
-    console.debug(`Action ${action} on bookshelf item ${item}`);
+  function onItemMenuSelected(item: BookshelfItem, action: ItemMenuActions) {
+    if (action === "remove") {
+      onRemoveItem(item.id);
+    }
+  }
+
+  async function onRemoveItem(id: number) {
+    try {
+      await apiClient.deleteBookshelfItem(bookshelfId, id);
+
+      if (items.rows.length === 1 && items.page > 1) {
+        await goToPreviousPage();
+        return;
+      }
+
+      items = {
+        ...items,
+        rows: items.rows.filter((item) => item.id !== id),
+        total: Math.max(0, items.total - 1),
+      };
+      toast.success("Item removed from bookshelf");
+    } catch (error) {
+      console.error("Failed to remove bookshelf item", error);
+      toast.error("Failed to remove bookshelf item");
+    }
   }
 </script>
 
@@ -143,5 +178,8 @@
     </Table.Root>
   {/if}
 
-  <Pager count={items.total} pageSize={items.page_size} page={items.page} />
+  <Pager
+    count={items.total}
+    pageSize={items.page_size}
+    page={items.page} />
 {/if}

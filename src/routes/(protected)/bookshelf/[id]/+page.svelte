@@ -47,4 +47,4 @@
   <p>{bookshelf.description}</p>
 {/if}
 
-<ItemsList items={data.items} sort={data.sort} />
+<ItemsList bookshelfId={bookshelf.id} items={data.items} sort={data.sort} />
