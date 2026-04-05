@@ -107,6 +107,12 @@ export const BookshelfSchema = z.object({
     created_by: z.nullish(z.string()),
 })
 
+export const BookshelfItemSchema = z.object({
+    bookshelf_id: z.number().positive("Bookshelf is required."),
+    note: z.nullish(z.string().max(255)),
+    order: z.nullable(z.int()),
+});
+
 function customValidate(
     schema: z.ZodTypeAny,
     messages: { custom?: string; too_big?: string } = {},
