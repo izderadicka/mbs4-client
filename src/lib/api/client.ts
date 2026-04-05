@@ -502,6 +502,13 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  async deleteBookshelf(id: number) {
+    const { response } = await this.client.DELETE("/api/bookshelf/{id}", {
+      params: { path: { id } },
+    });
+    this.checkResponseCode(response);
+  }
+
   async getBookshelf(id: number): Promise<Bookshelf> {
     const { data, response } = await this.client.GET(`/api/bookshelf/{id}`, {
       params: { path: { id } },

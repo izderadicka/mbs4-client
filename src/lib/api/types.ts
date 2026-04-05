@@ -158,7 +158,7 @@ export interface paths {
         get: operations["getBookshelf"];
         put: operations["updateBookshelf"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteBookshelf"];
         options?: never;
         head?: never;
         patch?: never;
@@ -173,8 +173,24 @@ export interface paths {
         };
         get: operations["listBookshelfItems"];
         put?: never;
-        post?: never;
+        post: operations["addBookshelfItem"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookshelf/{id}/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateBookshelfItem"];
+        post?: never;
+        delete: operations["deleteBookshelfItem"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1035,6 +1051,10 @@ export interface components {
             /** Format: int64 */
             series_index?: number | null;
         };
+        BookshelfItemMutationResponse: {
+            /** Format: int64 */
+            id: number;
+        };
         BookshelfListing: {
             /** Format: int64 */
             id: number;
@@ -1087,6 +1107,17 @@ export interface components {
             name: string;
             description?: string | null;
             public: boolean;
+            created_by?: string | null;
+        };
+        CreateBookshelfItem: {
+            note?: string | null;
+            item_type: string;
+            /** Format: int64 */
+            ebook_id?: number | null;
+            /** Format: int64 */
+            series_id?: number | null;
+            /** Format: int64 */
+            order?: number | null;
             created_by?: string | null;
         };
         CreateEbook: {
@@ -1581,6 +1612,15 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        UpdateBookshelfItem: {
+            /** Format: int64 */
+            id: number;
+            note?: string | null;
+            /** Format: int64 */
+            order?: number | null;
+            /** Format: int64 */
+            version: number;
+        };
         UpdateEbook: {
             /** Format: int64 */
             id: number;
@@ -1999,6 +2039,18 @@ export interface operations {
             };
         };
     };
+    deleteBookshelf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
+    };
     listBookshelfItems: {
         parameters: {
             query?: {
@@ -2025,6 +2077,72 @@ export interface operations {
                 };
             };
         };
+    };
+    addBookshelfItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookshelfItem"];
+            };
+        };
+        responses: {
+            /** @description Created Bookshelf item */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookshelfItemMutationResponse"];
+                };
+            };
+        };
+    };
+    updateBookshelfItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBookshelfItem"];
+            };
+        };
+        responses: {
+            /** @description Updated Bookshelf item */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookshelfItemMutationResponse"];
+                };
+            };
+        };
+    };
+    deleteBookshelfItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
     };
     listConversion: {
         parameters: {
