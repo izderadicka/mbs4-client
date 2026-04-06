@@ -107,11 +107,16 @@ export const BookshelfSchema = z.object({
     created_by: z.nullish(z.string()),
 })
 
-export const BookshelfItemSchema = z.object({
-    bookshelf_id: z.number().positive("Bookshelf is required."),
+export const BookshelfItemFieldsSchema = z.object({
     note: z.nullish(z.string().max(255)),
     order: z.nullable(z.int()),
 });
+
+export const AddToBookshelfSchema = BookshelfItemFieldsSchema.extend({
+    bookshelf_id: z.number().positive("Bookshelf is required."),
+});
+
+export const EditBookshelfItemSchema = BookshelfItemFieldsSchema;
 
 function customValidate(
     schema: z.ZodTypeAny,

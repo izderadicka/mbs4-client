@@ -38,6 +38,7 @@
   import { goto } from "$app/navigation";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
   import { toast } from "svelte-sonner";
+  import EditItemDialog from "./edit-item-dialog.svelte";
   import ItemMenu from "./item-menu.svelte";
 
   type Props = {
@@ -50,6 +51,11 @@
 
   type Layout = "table" | "grid";
   let layout = $state<Layout>("grid");
+  let editDialog: EditItemDialog | null = null;
+
+  function reloadCurrentPage() {
+    return goto(window.location.href, { invalidateAll: true });
+  }
 
   function goToPreviousPage() {
     const url = new URL(window.location.href);
@@ -61,6 +67,8 @@
   function onItemMenuSelected(item: BookshelfItem, action: ItemMenuActions) {
     if (action === "remove") {
       onRemoveItem(item.id);
+    } else if (action === "edit") {
+      editDialog?.openDialog(item);
     }
   }
 
@@ -82,6 +90,17 @@
     } catch (error) {
       console.error("Failed to remove bookshelf item", error);
       toast.error("Failed to remove bookshelf item");
+    }
+  }
+
+  async function onItemUpdated(updatedItem: BookshelfItem, note: string | null) {
+    items = {
+      ...items,
+      rows: items.rows.map((item) => item.id === updatedItem.id ? { ...item, note } : item),
+    };
+
+    if (sort === "order" || sort === "reverse-order") {
+      await reloadCurrentPage();
     }
   }
 </script>
@@ -183,3 +202,8 @@
     pageSize={items.page_size}
     page={items.page} />
 {/if}
+
+<EditItemDialog
+  bind:this={editDialog}
+  {bookshelfId}
+  onUpdated={onItemUpdated} />

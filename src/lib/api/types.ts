@@ -1036,6 +1036,8 @@ export interface components {
             id: number;
             note?: string | null;
             /** Format: int64 */
+            order?: number | null;
+            /** Format: int64 */
             version: number;
             /** Format: date-time */
             created: string;
@@ -1357,6 +1359,8 @@ export interface components {
                 /** Format: int64 */
                 id: number;
                 note?: string | null;
+                /** Format: int64 */
+                order?: number | null;
                 /** Format: int64 */
                 version: number;
                 /** Format: date-time */

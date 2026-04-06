@@ -8,7 +8,7 @@
   import { Input } from "$lib/components/ui/input";
   import * as Select from "$lib/components/ui/select";
   import { Textarea } from "$lib/components/ui/textarea";
-  import { BookshelfItemSchema } from "$lib/schemas";
+  import { AddToBookshelfSchema } from "$lib/schemas";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { toast } from "svelte-sonner";
@@ -36,7 +36,7 @@
   const form = superForm(initialData, {
     SPA: true,
     dataType: "json",
-    validators: zod4Client(BookshelfItemSchema),
+    validators: zod4Client(AddToBookshelfSchema),
     onUpdate: async ({ form }) => {
       if (!form.valid) {
         return;
