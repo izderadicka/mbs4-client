@@ -1,8 +1,10 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+
   type Props = {
     value?: string;
     onValueChange?: (value: string) => void;
-    children?: () => void;
+    children?: Snippet;
   };
 
   let { value = "", onValueChange, children }: Props = $props();
@@ -13,4 +15,6 @@
   value={value}
   oninput={(e) => onValueChange?.((e.currentTarget as HTMLInputElement).value)}
 />
-{@render children?.()}
+{#if children}
+  {@render children()}
+{/if}

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+
   let {
     type = "button",
     disabled = false,
@@ -8,10 +10,12 @@
     type?: "button" | "submit";
     disabled?: boolean;
     onclick?: (event: MouseEvent) => void;
-    children?: () => void;
+    children?: Snippet;
   } = $props();
 </script>
 
 <button {type} {disabled} {onclick}>
-  {@render children?.()}
+  {#if children}
+    {@render children()}
+  {/if}
 </button>

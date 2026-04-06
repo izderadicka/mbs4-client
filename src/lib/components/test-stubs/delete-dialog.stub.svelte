@@ -18,7 +18,7 @@
 </script>
 
 {#if entity}
-  <button type="button" onclick={() => onConfirmedDelete(entity.id)}>
+  <button type="button" onclick={() => onConfirmedDelete(entity!.id)}>
     Confirm Delete
   </button>
 {/if}

@@ -7,7 +7,7 @@
 
   let { onRestart }: { onRestart: () => void } = $props();
 
-  let timerId: number | null = null;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
   let waitingLong = $state(false);
   onMount(() => {
     timerId = setTimeout(() => {
