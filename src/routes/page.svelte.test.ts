@@ -1,6 +1,5 @@
-import { page } from "vitest/browser";
 import { describe, expect, it, vi } from "vitest";
-import { render } from "vitest-browser-svelte";
+import { render, screen } from "@testing-library/svelte";
 
 vi.mock("$lib/api/client", () => ({
   apiClient: {
@@ -23,15 +22,13 @@ describe("/+page.svelte", () => {
   it("renders the protected home page widgets", async () => {
     render(Page);
 
-    await expect
-      .element(page.getByRole("heading", { name: "Library Statistics" }))
-      .toBeInTheDocument();
-    await expect
-      .element(page.getByRole("heading", { name: "Latest Ebooks" }))
-      .toBeInTheDocument();
-    await expect.element(page.getByText("12")).toBeInTheDocument();
-    await expect
-      .element(page.getByRole("link", { name: "Test Ebook" }))
-      .toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Library Statistics" }),
+    ).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "Latest Ebooks" }),
+    ).toBeTruthy();
+    expect(await screen.findByText("12")).toBeTruthy();
+    expect(await screen.findByRole("link", { name: "Test Ebook" })).toBeTruthy();
   });
 });

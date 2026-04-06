@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render } from "vitest-browser-svelte";
+import { render, waitFor } from "@testing-library/svelte";
 import { appUser } from "$lib/globals.svelte";
 
 const goto = vi.fn();
@@ -26,7 +26,7 @@ describe("(protected)/+layout.svelte", () => {
   it("redirects unauthenticated users to /login on mount", async () => {
     render(ProtectedLayout);
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(goto).toHaveBeenCalledWith("/login");
     });
   });
