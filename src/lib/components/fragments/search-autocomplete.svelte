@@ -27,6 +27,7 @@
     onSearch = null,
     renderItem,
     skip_ids = undefined,
+    initialValue = "",
   }: {
     load?: Loader;
     maxResults?: number;
@@ -39,11 +40,13 @@
     onSelect?: SelectHandler | null;
     onSearch?: SearchHandler | null;
     skip_ids?: number[];
+    initialValue?: string;
   } = $props();
 
   // ---- State ----
   let open = $state(false);
-  let query = $state("");
+  // svelte-ignore state_referenced_locally
+  let query = $state(initialValue);
   let results = $state<EbookSearchItem[]>([]);
   let loading = $state(false);
   let highlight = $state(-1);
@@ -70,7 +73,7 @@
     debounceId = window.setTimeout(() => runSearch(query), debounceMs);
   }
 
-  async function runSearch(q: string) {
+  async function runSearch(q: string, shouldOpen = true) {
     if (q.trim().length < minChars) {
       results = [];
       open = false;
@@ -81,7 +84,7 @@
     const controller = new AbortController();
     inFlightController = controller;
     const seq = ++requestSequence;
-    loading = true;
+    if (shouldOpen) loading = true;
     try {
       const data = await load(q, controller.signal);
       if (seq !== requestSequence) return; // stale response
@@ -89,8 +92,10 @@
       if (skip_ids) {
         results = results.filter((r) => !skip_ids.includes(r.doc.Ebook.id));
       }
-      open = results.length > 0;
-      highlight = autoSelectFirst && results.length ? 0 : -1;
+      if (shouldOpen) {
+        open = results.length > 0;
+        highlight = autoSelectFirst && results.length ? 0 : -1;
+      }
     } catch (e: any) {
       if (e.name === "AbortError") {
         console.log("Search aborted");
@@ -105,6 +110,13 @@
       if (seq === requestSequence) loading = false;
     }
   }
+
+  // Pre-warm results when initialValue is provided so reopen() can open synchronously on focus.
+  $effect(() => {
+    if (initialValue.trim().length >= minChars) {
+      runSearch(initialValue, false);
+    }
+  });
 
   async function doSearch(
     q: string,
@@ -201,8 +213,12 @@
   }
 
   function reopen() {
-    if (!open && query.trim().length >= minChars && results.length > 0) {
-      open = true;
+    if (!open && query.trim().length >= minChars) {
+      if (results.length > 0) {
+        open = true;
+      } else {
+        runSearch(query);
+      }
     }
   }
 
