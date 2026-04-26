@@ -36,7 +36,7 @@ describe("routes/+layout load", () => {
     const result = await load({
       url: new URL("http://localhost:3000/"),
       fetch: fetchMock as typeof fetch,
-    });
+    } as Parameters<typeof load>[0]);
 
     expect(apiClientMock.setFetch).toHaveBeenCalledWith(fetchMock);
     expect(apiClientMock.retrieveToken).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe("routes/+layout load", () => {
     const result = await load({
       url: new URL("http://localhost:3000/"),
       fetch: vi.fn() as typeof fetch,
-    });
+    } as Parameters<typeof load>[0]);
 
     expect(apiClientMock.retrieveToken).not.toHaveBeenCalled();
     expect(result).toEqual({ user: null });
@@ -72,7 +72,7 @@ describe("routes/+layout load", () => {
     const result = await load({
       url: new URL("http://localhost:3000/?trt=ticket-123"),
       fetch: fetchMock as typeof fetch,
-    });
+    } as Parameters<typeof load>[0]);
 
     expect(apiClientMock.setFetch).toHaveBeenCalledWith(fetchMock);
     expect(apiClientMock.retrieveToken).toHaveBeenCalledWith("ticket-123");
@@ -86,7 +86,7 @@ describe("routes/+layout load", () => {
     const result = await load({
       url: new URL("http://localhost:3000/?trt=ticket-123"),
       fetch: vi.fn() as typeof fetch,
-    });
+    } as Parameters<typeof load>[0]);
 
     expect(apiClientMock.retrieveToken).toHaveBeenCalledWith("ticket-123");
     expect(localStorage.getItem("mbs4.user")).toBeNull();
