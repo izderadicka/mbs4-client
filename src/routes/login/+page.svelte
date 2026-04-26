@@ -9,7 +9,7 @@
   breadcrumb.path = [{ name: "Login", path: "/login" }];
   console.log("login");
   appUser.user = null;
-  localStorage.removeItem("user");
+  localStorage.removeItem("mbs4.user");
 
   let { data } = $props();
   // svelte-ignore state_referenced_locally
@@ -29,7 +29,7 @@
 
       appUser.user = user;
       appUser.failedLogin = false;
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("mbs4.user", JSON.stringify(user));
       goto("/");
     } catch (e) {
       console.error(e);

@@ -127,7 +127,7 @@ describe("bookshelf item mutations", () => {
       ],
     });
     addBookshelfItem.mockResolvedValue({ id: 101 });
-    localStorage.setItem("mbs4:last-bookshelf-id", "9");
+    localStorage.setItem("mbs4.last-bookshelf-id", "9");
 
     const { component } = render(AddToBookshelfDialog, {
       title: "Dune",

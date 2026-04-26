@@ -14,7 +14,7 @@
     appUser.user = user;
   } else {
     appUser.user = null;
-    localStorage.removeItem("user");
+    localStorage.removeItem("mbs4.user");
   }
 
   onMount(() => {

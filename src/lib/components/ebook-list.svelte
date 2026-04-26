@@ -33,6 +33,7 @@
   import GenreField from "./fields/genre-field.svelte";
   import { superForm } from "sveltekit-superforms";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
+  import { appSettings } from "$lib/settings.svelte";
 
   type Props = {
     ebooks: PagedEbookShort;
@@ -50,7 +51,7 @@
     isSeries,
   }: Props = $props();
 
-  let layout = $state<Layout>("grid");
+  let layout = $state<Layout>(appSettings.ebookLayout);
 
   const buildHref = () => {
     const u = new URL(window.location.href);

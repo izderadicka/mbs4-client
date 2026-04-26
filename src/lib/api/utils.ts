@@ -2,6 +2,21 @@ import { DEFAULT_PAGE_SIZE } from "$lib/config";
 import { genresFilter, IdsList } from "./filter";
 import { ebookSort, ebookSortQuery } from "./sorting";
 
+// Kept in sync with PAGE_SIZES in settings.svelte.ts — cannot import due to pipeline separation
+const SETTINGS_KEY = "mbs4.settings";
+const VALID_PAGE_SIZES = [10, 25, 50, 100];
+
+function getStoredPageSize(): number {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_PAGE_SIZE;
+    const v = Number(JSON.parse(raw).pageSize);
+    return VALID_PAGE_SIZES.includes(v) ? v : DEFAULT_PAGE_SIZE;
+  } catch {
+    return DEFAULT_PAGE_SIZE;
+  }
+}
+
 export function decodeJwt<T = unknown>(token: string): T {
     try {
         const [, payload] = token.split(".");
@@ -28,11 +43,11 @@ export function decodeJwt<T = unknown>(token: string): T {
     }
 }
 
-export function getListingParams(url: URL,) {
+export function getListingParams(url: URL) {
     const page = parseInt(url.searchParams.get("page") || "1");
-    const pageSize = parseInt(
-        url.searchParams.get("page_size") || String(DEFAULT_PAGE_SIZE),
-    );
+    const pageSizeParam = url.searchParams.get("page_size");
+    // URL param wins; falls back to stored setting, then config default
+    const pageSize = pageSizeParam ? parseInt(pageSizeParam) : getStoredPageSize();
     const sort = url.searchParams.get("sort") || undefined;
 
     return {
@@ -40,7 +55,6 @@ export function getListingParams(url: URL,) {
         page_size: pageSize,
         sort,
     };
-
 }
 
 export async function prepareEbookQuery(url: URL, isSeries?: boolean) {

@@ -72,14 +72,8 @@
 
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: Settings2Icon,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-      ],
     },
 
     {

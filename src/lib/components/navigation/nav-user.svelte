@@ -14,7 +14,7 @@
 
   function logout() {
     appUser.user = null;
-    localStorage.removeItem("user");
+    localStorage.removeItem("mbs4.user");
     apiClient.logout();
     goto("/login");
   }

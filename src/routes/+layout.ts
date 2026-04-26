@@ -15,7 +15,7 @@ export async function load({ url, fetch }) {
     try {
       const user = await apiClient.retrieveToken(trToken);
 
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("mbs4.user", JSON.stringify(user));
       return {
         user,
       };
@@ -37,7 +37,7 @@ export async function load({ url, fetch }) {
         },
       };
     }
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("mbs4.user");
     if (storedUser) {
       const user: User = JSON.parse(storedUser);
       if (

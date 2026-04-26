@@ -7,10 +7,12 @@
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
   import { MediaQuery } from "svelte/reactivity";
   import * as Pagination from "$lib/components/ui/pagination/index.js";
-  import { goto } from "$app/navigation";
+  import { goto, replaceState } from "$app/navigation";
   import Label from "./ui/label/label.svelte";
   import * as Select from "$lib/components/ui/select/index.js";
   import { DEFAULT_PAGE_SIZE, SCREEN_WIDTH_LG } from "$lib/config";
+  import { appSettings } from "$lib/settings.svelte";
+  import { onMount } from "svelte";
 
   type Props = {
     count: number;
@@ -23,7 +25,18 @@
 
   const siblingCount = $derived(isDesktop.current ? 3 : 0);
   let perPage: string = $state(String(pageSize));
+  $effect(() => {
+    perPage = String(pageSize);
+  });
   let perPageNumber = $derived(Number(perPage));
+
+  onMount(() => {
+    const u = new URL(window.location.href);
+    if (!u.searchParams.has("page_size") && appSettings.pageSize !== DEFAULT_PAGE_SIZE) {
+      u.searchParams.set("page_size", String(appSettings.pageSize));
+      replaceState(u.pathname + "?" + u.searchParams.toString(), {});
+    }
+  });
 
   const buildHref = (p: number) => {
     const u = new URL(window.location.href);
@@ -34,6 +47,10 @@
 
   function onPageChange(p: number) {
     goto(buildHref(p));
+  }
+
+  function onPageSizeChange(_: string) {
+    onPageChange(page);
   }
 </script>
 
@@ -77,7 +94,7 @@
       bind:value={perPage}
       type="single"
       name="page-size"
-      onValueChange={(_) => onPageChange(page)}
+      onValueChange={onPageSizeChange}
     >
       <Select.Trigger class="w-[4rem]">
         {perPage}

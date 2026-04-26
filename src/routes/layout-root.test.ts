@@ -31,7 +31,7 @@ describe("routes/+layout load", () => {
       tokenValidity: Date.now() + 10 * 60 * 1000,
     };
     const fetchMock = vi.fn();
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("mbs4.user", JSON.stringify(user));
 
     const result = await load({
       url: new URL("http://localhost:3000/"),
@@ -49,7 +49,7 @@ describe("routes/+layout load", () => {
       roles: ["Trusted"],
       tokenValidity: Date.now() + 4 * 60 * 1000,
     };
-    localStorage.setItem("user", JSON.stringify(staleUser));
+    localStorage.setItem("mbs4.user", JSON.stringify(staleUser));
 
     const result = await load({
       url: new URL("http://localhost:3000/"),
@@ -76,7 +76,7 @@ describe("routes/+layout load", () => {
 
     expect(apiClientMock.setFetch).toHaveBeenCalledWith(fetchMock);
     expect(apiClientMock.retrieveToken).toHaveBeenCalledWith("ticket-123");
-    expect(localStorage.getItem("user")).toBe(JSON.stringify(user));
+    expect(localStorage.getItem("mbs4.user")).toBe(JSON.stringify(user));
     expect(result).toEqual({ user });
   });
 
@@ -89,7 +89,7 @@ describe("routes/+layout load", () => {
     });
 
     expect(apiClientMock.retrieveToken).toHaveBeenCalledWith("ticket-123");
-    expect(localStorage.getItem("user")).toBeNull();
+    expect(localStorage.getItem("mbs4.user")).toBeNull();
     expect(result).toEqual({
       user: null,
       failedLogin: true,

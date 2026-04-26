@@ -13,7 +13,7 @@
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { toast } from "svelte-sonner";
 
-  const LAST_BOOKSHELF_KEY = "mbs4:last-bookshelf-id";
+  const LAST_BOOKSHELF_KEY = "mbs4.last-bookshelf-id";
 
   let {
     title,
