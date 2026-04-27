@@ -28,14 +28,14 @@
           {#snippet child({ props })}
             <Sidebar.MenuButton
               size="lg"
-              class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
               {...props}
             >
               <UserIcon class="size-5" />
-              <div class="grid flex-1 text-left text-sm leading-tight">
+              <div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span class="truncate text-xs">{appUser.user?.email}</span>
               </div>
-              <ChevronsUpDownIcon class="ml-auto size-4" />
+              <ChevronsUpDownIcon class="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
             </Sidebar.MenuButton>
           {/snippet}
         </DropdownMenu.Trigger>
