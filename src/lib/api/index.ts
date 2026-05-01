@@ -114,6 +114,11 @@ export interface ConversionResult extends ConversionResultBase {
 
 export type Role = "Admin" | "Trusted";
 
+// User
+export type User = components["schemas"]["User"];
+export type CreateUser = components["schemas"]["CreateUser"];
+export type UpdateUser = components["schemas"]["UpdateUser"];
+
 export interface LibraryStats {
   totalEbooks: number;
   totalSeries: number;

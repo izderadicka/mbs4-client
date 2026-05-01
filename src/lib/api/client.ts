@@ -31,6 +31,9 @@ import type {
   UpdateBookshelfItem,
   UpdateEbook,
   UpdateSeries,
+  CreateUser,
+  UpdateUser,
+  User as ApiUser,
 } from ".";
 import { appUser } from "$lib/globals.svelte";
 import { goto } from "$app/navigation";
@@ -431,6 +434,31 @@ export class ApiClient {
 
   async deleteAuthor(id: number) {
     const { response } = await this.client.DELETE("/api/author/{id}", {
+      params: { path: { id } },
+    });
+    this.checkResponseCode(response);
+  }
+
+  async listUsers(): Promise<ApiUser[]> {
+    const { data, response } = await this.client.GET("/users");
+    return this.checkResponse(response, data);
+  }
+
+  async createUser(user: CreateUser): Promise<ApiUser> {
+    const { data, response } = await this.client.POST("/users", { body: user });
+    return this.checkResponse(response, data);
+  }
+
+  async updateUser(id: number, user: UpdateUser): Promise<ApiUser> {
+    // path-level params typed as `never` in generated types; cast required
+    const { data, response } = await (this.client.PUT as any)(`/users/${id}`, {
+      body: user,
+    });
+    return this.checkResponse(response, data as ApiUser);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    const { response } = await this.client.DELETE("/users/{id}", {
       params: { path: { id } },
     });
     this.checkResponseCode(response);

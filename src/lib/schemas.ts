@@ -98,6 +98,20 @@ export const AuthorSchema = z.object({
     created_by: z.nullish(z.string()),
 });
 
+export const CreateUserSchema = z.object({
+  email: z.string().email().max(255),
+  name: z.string().min(1).max(255),
+  password: z.nullish(z.string().min(8)),
+  roles: z.nullable(z.array(z.string())),
+});
+
+export const UpdateUserSchema = z.object({
+  id: z.number().positive(),
+  name: z.string().min(1).max(255),
+  password: z.nullish(z.string().min(8)),
+  roles: z.nullable(z.array(z.string())),
+});
+
 export const BookshelfSchema = z.object({
     id: z.optional(z.number().positive()),
     version: z.optional(z.number().positive()),

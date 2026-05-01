@@ -80,10 +80,11 @@
       title: "Admin",
       url: "#",
       icon: CogIcon,
+      requiredRole: "Admin",
       items: [
         {
-          title: "General",
-          url: "#",
+          title: "Users",
+          url: "/admin/users",
         },
       ],
     },
