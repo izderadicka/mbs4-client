@@ -976,7 +976,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        put: operations["editUser"];
         post?: never;
         delete: operations["deleteUser"];
         options?: never;
@@ -1693,6 +1693,11 @@ export interface components {
             quality?: number | null;
             /** Format: int64 */
             version: number;
+        };
+        UpdateUser: {
+            name: string;
+            password?: string | null;
+            roles?: string[] | null;
         };
         UploadForm: {
             kind?: null | components["schemas"]["UploadKind"];
@@ -3641,6 +3646,33 @@ export interface operations {
         responses: {
             /** @description Create new User */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    editUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUser"];
+            };
+        };
+        responses: {
+            /** @description Updated User */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
