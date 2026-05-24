@@ -1,5 +1,10 @@
 <script lang="ts" module>
-  type EbookMenuActions = "edit" | "cover" | "merge" | "bookshelf";
+  type EbookMenuActions =
+    | "edit"
+    | "cover"
+    | "merge"
+    | "bookshelf"
+    | `search:${number}`;
   const EBOOK_MENU: { name: string; action: EbookMenuActions }[] = [
     { name: "Edit This Ebook", action: "edit" },
     { name: "Change Cover Image", action: "cover" },
@@ -21,12 +26,31 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import LibraryBigIcon from "@lucide/svelte/icons/library-big";
+  import { appSettings } from "$lib/settings.svelte";
+  import { buildOnlineSearchUrl } from "$lib/utils";
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
   let addToBookshelfDialog: AddToBookshelfDialog | null = null;
 
+  let menu = $derived([
+    ...EBOOK_MENU,
+    ...appSettings.onlineSearches.map((s, i) => ({
+      name: `Search on ${s.name}`,
+      action: `search:${i}` as const,
+    })),
+  ]);
+
   async function onMainMenuSelected(action: EbookMenuActions) {
+    if (action.startsWith("search:")) {
+      const idx = Number(action.slice("search:".length));
+      const engine = appSettings.onlineSearches[idx];
+      if (engine) {
+        const url = buildOnlineSearchUrl(engine.urlTemplate, ebook);
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
     if (action === "edit") {
       await goto(`/ebook/${ebook.id}/edit`);
     } else if (action === "merge") {
@@ -58,7 +82,7 @@
     <div class="w-7">
     <EbookMenu
       onMenuSelected={onMainMenuSelected}
-      menu={EBOOK_MENU}
+      {menu}
       title="Ebook Actions" />
     </div>
   </div>

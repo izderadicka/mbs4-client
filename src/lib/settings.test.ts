@@ -71,6 +71,107 @@ describe("settings", () => {
     });
   });
 
+  describe("onlineSearches", () => {
+    const DEFAULT_ENGINE = {
+      name: "Databáze knih",
+      urlTemplate:
+        "https://www.databazeknih.cz/vyhledavani/knihy?q={title}+{author_last}",
+    };
+
+    it("returns the default engine when localStorage is empty", async () => {
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual([DEFAULT_ENGINE]);
+    });
+
+    it("round-trips a valid stored array of multiple engines", async () => {
+      const stored = [
+        DEFAULT_ENGINE,
+        { name: "Google", urlTemplate: "https://www.google.com/search?q={title}" },
+      ];
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ onlineSearches: stored }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual(stored);
+    });
+
+    it("falls back to default when onlineSearches is null", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ pageSize: 10, onlineSearches: null }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual([DEFAULT_ENGINE]);
+    });
+
+    it("falls back to default when onlineSearches is a string", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ pageSize: 10, onlineSearches: "garbage" }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual([DEFAULT_ENGINE]);
+    });
+
+    it("accepts an empty stored array (user removed all engines)", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ onlineSearches: [] }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual([]);
+    });
+
+    it("drops invalid entries while keeping valid ones", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          onlineSearches: [
+            DEFAULT_ENGINE,
+            { name: "", urlTemplate: "https://x/?q={title}" },
+            { name: "NoScheme", urlTemplate: "example.com/?q={title}" },
+            { name: "OK", urlTemplate: "https://x/?q={title}" },
+            null,
+          ],
+        }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.onlineSearches).toEqual([
+        DEFAULT_ENGINE,
+        { name: "OK", urlTemplate: "https://x/?q={title}" },
+      ]);
+    });
+
+    it("setOnlineSearches updates appSettings and persists to localStorage", async () => {
+      const { appSettings, setOnlineSearches } = await import(
+        "$lib/settings.svelte"
+      );
+      const next = [
+        { name: "Goodreads", urlTemplate: "https://www.goodreads.com/search?q={title}" },
+      ];
+      setOnlineSearches(next);
+      expect(appSettings.onlineSearches).toEqual(next);
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).onlineSearches).toEqual(
+        next,
+      );
+    });
+
+    it("setOnlineSearches filters invalid entries before persisting", async () => {
+      const { appSettings, setOnlineSearches } = await import(
+        "$lib/settings.svelte"
+      );
+      setOnlineSearches([
+        { name: "OK", urlTemplate: "https://x/?q={title}" },
+        { name: "", urlTemplate: "https://x/?q={title}" },
+        { name: "NoScheme", urlTemplate: "x/?q={title}" },
+      ]);
+      expect(appSettings.onlineSearches).toEqual([
+        { name: "OK", urlTemplate: "https://x/?q={title}" },
+      ]);
+    });
+  });
+
   describe("setters", () => {
     it("setPageSize updates appSettings and persists to localStorage", async () => {
       const { appSettings, setPageSize } = await import("$lib/settings.svelte");

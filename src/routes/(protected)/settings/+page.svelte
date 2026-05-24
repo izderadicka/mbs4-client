@@ -6,28 +6,50 @@
   import Label from "$lib/components/ui/label/label.svelte";
   import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import Button from "$lib/components/ui/button/button.svelte";
+  import { Input } from "$lib/components/ui/input/index.js";
   import GridIcon from "@lucide/svelte/icons/layout-grid";
   import TableIcon from "@lucide/svelte/icons/rows-3";
+  import TrashIcon from "@lucide/svelte/icons/trash-2";
+  import PlusIcon from "@lucide/svelte/icons/plus";
   import {
     appSettings,
     setPageSize,
     setEbookLayout,
     setSearchResultsLimit,
+    setOnlineSearches,
     PAGE_SIZES,
     SEARCH_RESULT_LIMITS,
     type PageSize,
     type SearchResultLimit,
+    type OnlineSearch,
   } from "$lib/settings.svelte";
 
   breadcrumb.path = [{ name: "Settings", path: "/settings" }];
 
   let pageSizeStr = $state(String(appSettings.pageSize));
   let searchLimitStr = $state(String(appSettings.searchResultsLimit));
+
+  let searches: OnlineSearch[] = $state(
+    appSettings.onlineSearches.map((s) => ({ ...s })),
+  );
+
+  function persistSearches() {
+    setOnlineSearches(searches);
+  }
+
+  function addSearch() {
+    searches.push({ name: "", urlTemplate: "" });
+  }
+
+  function removeSearch(index: number) {
+    searches.splice(index, 1);
+    persistSearches();
+  }
 </script>
 
 <Title>Settings</Title>
 
-<div class="flex flex-col gap-6 max-w-lg">
+<div class="flex flex-col gap-6 max-w-2xl">
 
   <Card.Root>
     <Card.Header>
@@ -96,6 +118,46 @@
           </Select.Content>
         </Select.Root>
       </div>
+    </Card.Content>
+  </Card.Root>
+
+  <Card.Root>
+    <Card.Header>
+      <Card.Title>Online Search</Card.Title>
+      <Card.Description>
+        Search engines available from the ebook detail page. Placeholders:
+        <code>{"{title}"}</code>, <code>{"{series}"}</code>,
+        <code>{"{author}"}</code>, <code>{"{author_first}"}</code>,
+        <code>{"{author_last}"}</code>. All author placeholders are left empty
+        when the ebook has more than one author.
+      </Card.Description>
+    </Card.Header>
+    <Card.Content class="flex flex-col gap-3">
+      {#each searches as search, i (i)}
+        <div class="flex items-start gap-2">
+          <div class="flex flex-col gap-1 flex-1 min-w-0">
+            <Input
+              placeholder="Name (e.g. Databáze knih)"
+              bind:value={search.name}
+              onblur={persistSearches} />
+            <Input
+              placeholder="https://example.com/search?q={'{title}'}+{'{author_last}'}"
+              bind:value={search.urlTemplate}
+              onblur={persistSearches} />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Remove search engine"
+            onclick={() => removeSearch(i)}
+            class="shrink-0">
+            <TrashIcon class="size-4" />
+          </Button>
+        </div>
+      {/each}
+      <Button variant="outline" onclick={addSearch} class="self-start gap-1">
+        <PlusIcon class="size-4" /> Add search engine
+      </Button>
     </Card.Content>
   </Card.Root>
 
