@@ -3,6 +3,18 @@
   "private": true,
   "version": "0.0.2",
   "type": "module",
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "svelte-preprocess"
+    ]
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -11,7 +23,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "vitest",
-    "test": "npm run test:unit -- --run",
+    "test": "vitest run",
     "test:browser": "vitest --config vitest.browser.config.ts --run --passWithNoTests",
     "openapi": "curl -f http://localhost:3000/api-docs/openapi.json -o openapi/openapi.json && openapi-typescript openapi/openapi.json --output src/lib/api/types.ts",
     "fmt": "prettier --write  \"src/**/*\""
