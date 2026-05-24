@@ -25,3 +25,7 @@ vite.config.ts.timestamp-*
 .vscode
 /build
 .codex
+.claude
+
+# Package manager (project uses pnpm; prevent stray npm lockfiles)
+package-lock.json
