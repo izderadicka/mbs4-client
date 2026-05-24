@@ -9,6 +9,8 @@
   import { ebookSortQuery } from "$lib/api/sorting";
   import type { CarouselAPI } from "./ui/carousel/context";
   import CoverIcon from "./fragments/cover-icon.svelte";
+  import RefreshIcon from "@lucide/svelte/icons/refresh-cw";
+  import Button from "./ui/button/button.svelte";
 
   let container: HTMLDivElement;
   let carouselApi: CarouselAPI | undefined;
@@ -28,7 +30,10 @@
   });
 
   let ebooks = $state<EbookShort[]>([]);
-  onMount(async () => {
+  let reloading = $state(false);
+
+  async function loadEbooks() {
+    reloading = true;
     try {
       const page = await apiClient.listEbooks({
         page_size: 20,
@@ -46,15 +51,30 @@
       }
     } catch (error) {
       console.error("Loading ebooks", error);
+    } finally {
+      reloading = false;
     }
-  });
+  }
+
+  onMount(loadEbooks);
 
   let cardWidth = 180;
   let perView = $derived(Math.max(1, Math.floor(width / cardWidth)));
   let expectedWidth = $derived(perView * cardWidth);
 </script>
 
-<Subtitle>Latest Ebooks</Subtitle>
+<div class="flex items-center gap-2">
+  <Subtitle>Latest Ebooks</Subtitle>
+  <Button
+    variant="ghost"
+    size="icon"
+    class="h-6 w-6 cursor-pointer"
+    aria-label="Reload latest ebooks"
+    disabled={reloading}
+    onclick={loadEbooks}>
+    <RefreshIcon class={reloading ? "animate-spin" : ""} />
+  </Button>
+</div>
 
 <div bind:this={container} class="relative px-12 min-w-0">
   <Carousel.Root
