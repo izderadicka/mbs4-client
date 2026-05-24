@@ -7,6 +7,7 @@
 
   let { data } = $props();
   breadcrumb.path = [{ name: "Search", path: "/search" }];
+  const AUTHORS_LIMIT = 2;
 </script>
 
 <BookAutocomplete
@@ -32,11 +33,14 @@
                 <a href="/ebook/{ebook.id}">{ebook.title}</a>
               </div>
               <div class="italic text-sm text-muted-foreground truncate">
-                {#each ebook.authors.slice(0, 2) as author, i}
+                {#each ebook.authors.slice(0, AUTHORS_LIMIT) as author, i}
                   <a href="/author/{author.id}">{author.name}</a
-                  >{#if i < ebook.authors.length - 1},
+                  >{#if i < Math.min(ebook.authors.length, AUTHORS_LIMIT) - 1},
                   {/if}
                 {/each}
+                {#if ebook.authors.length > AUTHORS_LIMIT}
+                  and others
+                {/if}
               </div>
               {#if ebook.series}
                 <div class="text-sm truncate">

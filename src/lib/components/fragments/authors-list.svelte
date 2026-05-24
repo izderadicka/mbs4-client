@@ -14,9 +14,8 @@
     short = false,
     ...restProps
   }: { authors: AuthorShort[]; short?: boolean } & SpanAttributes = $props();
-  if (short) {
-    authors = authors.slice(0, 2);
-  }
+  let hasMore = $derived(short && authors.length > 2);
+  let displayed = $derived(short ? authors.slice(0, 2) : authors);
 </script>
 
 {#snippet authorSnippet(author: AuthorShort)}
@@ -24,12 +23,15 @@
 {/snippet}
 
 <span {...restProps}>
-  {#each authors as author, i}
+  {#each displayed as author, i}
     {#if author.id != null}
       <a href={`/author/${author.id}`}>{@render authorSnippet(author)}</a>
     {:else}
       {@render authorSnippet(author)}
     {/if}
-    {i < authors.length - 1 ? ", " : ""}
+    {i < displayed.length - 1 ? ", " : ""}
   {/each}
+  {#if hasMore}
+    and others
+  {/if}
 </span>

@@ -196,10 +196,11 @@
   });
 
   function fmtAuthors(authors: { name: string; id: number }[]) {
-    return authors
+    const names = authors
       .slice(0, 2)
       .map((a) => a.name)
       .join(", ");
+    return authors.length > 2 ? `${names} and others` : names;
   }
   function fmtSeries(ebook: {
     series: string | null;
