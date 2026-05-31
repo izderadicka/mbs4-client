@@ -1,8 +1,17 @@
 <script lang="ts" module>
+  import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
   type AuthorMenuActions = "edit" | "merge";
-  const AUTHOR_MENU: { name: string; action: AuthorMenuActions }[] = [
-    { name: "Edit This Author", action: "edit" },
-    { name: "Merge with Other Author", action: "merge" },
+  const AUTHOR_MENU: {
+    name: string;
+    action: AuthorMenuActions;
+    requiredRole?: Role;
+  }[] = [
+    { name: "Edit This Author", action: "edit", requiredRole: TRUSTED_ROLE },
+    {
+      name: "Merge with Other Author",
+      action: "merge",
+      requiredRole: ADMIN_ROLE,
+    },
   ];
 </script>
 

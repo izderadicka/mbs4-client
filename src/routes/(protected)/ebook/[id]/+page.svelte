@@ -1,22 +1,39 @@
 <script lang="ts" module>
+  import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
   type EbookMenuActions =
     | "edit"
     | "cover"
     | "merge"
     | "bookshelf"
     | `search:${number}`;
-  const EBOOK_MENU: { name: string; action: EbookMenuActions }[] = [
-    { name: "Edit This Ebook", action: "edit" },
-    { name: "Change Cover Image", action: "cover" },
-    { name: "Merge with Other Ebook", action: "merge" },
-    { name: "Add to Bookshelf", action: "bookshelf" },
+  const EBOOK_MENU: {
+    name: string;
+    action: EbookMenuActions;
+    requiredRole?: Role;
+  }[] = [
+    { name: "Edit This Ebook", action: "edit", requiredRole: TRUSTED_ROLE },
+    {
+      name: "Change Cover Image",
+      action: "cover",
+      requiredRole: TRUSTED_ROLE,
+    },
+    {
+      name: "Merge with Other Ebook",
+      action: "merge",
+      requiredRole: TRUSTED_ROLE,
+    },
+    {
+      name: "Add to Bookshelf",
+      action: "bookshelf",
+      requiredRole: TRUSTED_ROLE,
+    },
   ];
 </script>
 
 <!-- svelte-ignore state_referenced_locally -->
 <script lang="ts">
   import type { PageProps } from "./$types";
-  import { breadcrumb } from "$lib/globals.svelte";
+  import { breadcrumb, hasAnyRole } from "$lib/globals.svelte";
   import DetailsTable from "./details-table.svelte";
   import SourcesList from "./sources-list.svelte";
   import EbookMenu from "$lib/components/item-menu.svelte";
@@ -72,13 +89,15 @@
 <div class="flex pr-5">
   <EbookInfo {ebook} />
   <div class="ml-auto flex items-start gap-2">
-    <Button onclick={onAddToBookshelf}>
-      <span class="hidden md:inline">Add to Bookshelf</span>
-      <span class="inline-flex items-center gap-1 md:hidden">
-        <PlusIcon class="size-4" />
-        <LibraryBigIcon class="size-4" />
-      </span>
-    </Button>
+    {#if hasAnyRole(TRUSTED_ROLE, ADMIN_ROLE)}
+      <Button onclick={onAddToBookshelf}>
+        <span class="hidden md:inline">Add to Bookshelf</span>
+        <span class="inline-flex items-center gap-1 md:hidden">
+          <PlusIcon class="size-4" />
+          <LibraryBigIcon class="size-4" />
+        </span>
+      </Button>
+    {/if}
     <div class="w-7">
     <EbookMenu
       onMenuSelected={onMainMenuSelected}

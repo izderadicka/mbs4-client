@@ -1,9 +1,22 @@
 <script lang="ts" module>
+  import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
   type SeriesMenuActions = "edit" | "merge" | "bookshelf";
-  const SERIES_MENU: { name: string; action: SeriesMenuActions }[] = [
-    { name: "Edit This Series", action: "edit" },
-    { name: "Merge with Other Series", action: "merge" },
-    { name: "Add to Bookshelf", action: "bookshelf" },
+  const SERIES_MENU: {
+    name: string;
+    action: SeriesMenuActions;
+    requiredRole?: Role;
+  }[] = [
+    { name: "Edit This Series", action: "edit", requiredRole: TRUSTED_ROLE },
+    {
+      name: "Merge with Other Series",
+      action: "merge",
+      requiredRole: ADMIN_ROLE,
+    },
+    {
+      name: "Add to Bookshelf",
+      action: "bookshelf",
+      requiredRole: TRUSTED_ROLE,
+    },
   ];
 </script>
 
@@ -17,7 +30,7 @@
   import Subtitle from "$lib/components/subtitle.svelte";
   import Title from "$lib/components/title.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
-  import { breadcrumb } from "$lib/globals.svelte";
+  import { breadcrumb, hasAnyRole } from "$lib/globals.svelte";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import LibraryBigIcon from "@lucide/svelte/icons/library-big";
 
@@ -52,13 +65,15 @@
     {series.title}
   </Title>
   <div class="ml-auto flex items-start gap-2">
-    <Button onclick={onAddToBookshelf}>
-      <span class="hidden md:inline">Add to Bookshelf</span>
-      <span class="inline-flex items-center gap-1 md:hidden">
-        <PlusIcon class="size-4" />
-        <LibraryBigIcon class="size-4" />
-      </span>
-    </Button>
+    {#if hasAnyRole(TRUSTED_ROLE, ADMIN_ROLE)}
+      <Button onclick={onAddToBookshelf}>
+        <span class="hidden md:inline">Add to Bookshelf</span>
+        <span class="inline-flex items-center gap-1 md:hidden">
+          <PlusIcon class="size-4" />
+          <LibraryBigIcon class="size-4" />
+        </span>
+      </Button>
+    {/if}
     <div class="w-7">
       <SeriesMenu
         onMenuSelected={onMainMenuSelected}

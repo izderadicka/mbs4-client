@@ -17,3 +17,7 @@ export function lastEvent() {
 export function hasRole(role: Role): boolean {
   return !!appUser.user?.roles.includes(role);
 }
+
+export function hasAnyRole(...roles: Role[]): boolean {
+  return roles.some(hasRole);
+}
