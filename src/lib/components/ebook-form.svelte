@@ -131,7 +131,10 @@
         <Form.Control>
           {#snippet children({ props })}
             <Form.Label>Series Index</Form.Label>
-            <Input {...props} bind:value={$formData.series_index} />
+            <Input
+              {...props}
+              type="number"
+              bind:value={$formData.series_index} />
           {/snippet}
         </Form.Control>
         <Form.FieldErrors />
