@@ -1,5 +1,6 @@
 <script lang="ts">
   import { breadcrumb, hasRole } from "$lib/globals.svelte";
+  import { ADMIN_ROLE } from "$lib/api";
   import Title from "$lib/components/title.svelte";
   import * as Table from "$lib/components/ui/table/index.js";
   import { Button } from "$lib/components/ui/button";
@@ -14,7 +15,7 @@
 <Title>Users</Title>
 
 <div class="flex gap-2">
-  {#if hasRole("Admin")}
+  {#if hasRole(ADMIN_ROLE)}
     <Button class="ml-auto" href="/admin/users/new"><AddIcon /><span class="ml-2 hidden md:inline">Add</span></Button>
   {/if}
 </div>

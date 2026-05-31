@@ -9,6 +9,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import Button from "$lib/components/ui/button/button.svelte";
   import type { EbookConversion, EbookSource } from "$lib/api";
+  import { ADMIN_ROLE, TRUSTED_ROLE } from "$lib/api";
   import { hasRole } from "$lib/globals.svelte";
   type Props = {
     source: EbookSource | EbookConversion;
@@ -53,11 +54,11 @@
     <DropdownMenu.Group>
       <DropdownMenu.Label>Ebook File Actions</DropdownMenu.Label>
       <DropdownMenu.Separator />
-      {#if (sourceType === "conversion" && hasRole("Trusted")) || hasRole("Admin")}
+      {#if (sourceType === "conversion" && hasRole(TRUSTED_ROLE)) || hasRole(ADMIN_ROLE)}
         <DropdownMenu.Item onSelect={() => onMenuSelected(source, "delete")}
           >Delete File</DropdownMenu.Item>
       {/if}
-      {#if sourceType === "source" && hasRole("Trusted")}
+      {#if sourceType === "source" && hasRole(TRUSTED_ROLE)}
         <DropdownMenu.Sub>
           <DropdownMenu.SubTrigger>Convert to ...</DropdownMenu.SubTrigger>
           <DropdownMenu.SubContent>

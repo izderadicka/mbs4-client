@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Ebook } from "$lib/api";
+  import { ADMIN_ROLE } from "$lib/api";
   import CoverImage from "$lib/components/fragments/cover-image.svelte";
   import * as Table from "$lib/components/ui/table";
   import { hasRole } from "$lib/globals.svelte";
@@ -36,7 +37,7 @@
         <Table.Head>Last updated on</Table.Head>
         <Table.Cell>{ebook.modified}</Table.Cell>
       </Table.Row>
-      {#if hasRole("Admin")}
+      {#if hasRole(ADMIN_ROLE)}
         <Table.Row>
           <Table.Head>Created by</Table.Head>
           <Table.Cell>{ebook.created_by || ""}</Table.Cell>

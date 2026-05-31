@@ -6,6 +6,7 @@
   import { CreateUserSchema, UpdateUserSchema } from "$lib/schemas";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
+  import { ADMIN_ROLE, TRUSTED_ROLE } from "$lib/api";
   import type { User as ApiUser, CreateUser, UpdateUser } from "$lib/api";
   import FormButtons from "$lib/components/fragments/form-buttons.svelte";
   import DeleteDialog from "./delete-dialog.svelte";
@@ -32,7 +33,12 @@
 
   const isEdit = userData != null && "id" in userData;
 
-  const initialData = userData ?? { email: "", name: "", password: null, roles: null };
+  const initialData = userData ?? {
+    email: "",
+    name: "",
+    password: null,
+    roles: null,
+  };
 
   const schema = isEdit ? UpdateUserSchema : CreateUserSchema;
 
@@ -64,7 +70,10 @@
           roles: resolvedRoles(form.data.roles),
         };
         try {
-          const updatedUser = await apiClient.updateUser((initialData as EditUserData).id, payload);
+          const updatedUser = await apiClient.updateUser(
+            (initialData as EditUserData).id,
+            payload,
+          );
           await afterUpdate?.(updatedUser);
         } catch (error) {
           console.error("Failed to update user", error);
@@ -79,14 +88,16 @@
 
   function resolvedRoles(roles: string[] | null | undefined): string[] | null {
     if (!roles || roles.length === 0) return null;
-    if (roles.includes("Admin") && !roles.includes("Trusted")) {
-      return [...roles, "Trusted"];
+    if (roles.includes(ADMIN_ROLE) && !roles.includes(TRUSTED_ROLE)) {
+      return [...roles, TRUSTED_ROLE];
     }
     return roles;
   }
 
-  let isAdmin = $derived(($formData.roles ?? []).includes("Admin"));
-  let isTrusted = $derived(($formData.roles ?? []).includes("Trusted") || isAdmin);
+  let isAdmin = $derived(($formData.roles ?? []).includes(ADMIN_ROLE));
+  let isTrusted = $derived(
+    ($formData.roles ?? []).includes(TRUSTED_ROLE) || isAdmin,
+  );
 
   function toggleRole(role: string, checked: boolean) {
     const current = $formData.roles ?? [];
@@ -124,7 +135,10 @@
       <Form.Control>
         {#snippet children({ props })}
           <Form.Label>Email</Form.Label>
-          <Input {...props} type="email" bind:value={($formData as any).email} />
+          <Input
+            {...props}
+            type="email"
+            bind:value={($formData as any).email} />
         {/snippet}
       </Form.Control>
       <Form.FieldErrors />
@@ -169,14 +183,17 @@
       <label class="flex items-center gap-2 cursor-pointer">
         <Checkbox
           checked={isAdmin}
-          onCheckedChange={(v) => toggleRole("Admin", !!v)} />
+          onCheckedChange={(v) => toggleRole(ADMIN_ROLE, !!v)} />
         <span class="text-sm">Admin</span>
       </label>
-      <label class="flex items-center gap-2 {isAdmin ? 'opacity-50' : 'cursor-pointer'}">
+      <label
+        class="flex items-center gap-2 {isAdmin
+          ? 'opacity-50'
+          : 'cursor-pointer'}">
         <Checkbox
           checked={isTrusted}
           disabled={isAdmin}
-          onCheckedChange={(v) => toggleRole("Trusted", !!v)} />
+          onCheckedChange={(v) => toggleRole(TRUSTED_ROLE, !!v)} />
         <span class="text-sm">Trusted</span>
       </label>
     </div>

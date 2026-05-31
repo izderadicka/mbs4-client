@@ -27,7 +27,7 @@ describe("routes/+layout load", () => {
   it("loads a valid stored user from localStorage", async () => {
     const user = {
       email: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       tokenValidity: Date.now() + 10 * 60 * 1000,
     };
     const fetchMock = vi.fn();
@@ -46,7 +46,7 @@ describe("routes/+layout load", () => {
   it("rejects a stale stored user", async () => {
     const staleUser = {
       email: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       tokenValidity: Date.now() + 4 * 60 * 1000,
     };
     localStorage.setItem("mbs4.user", JSON.stringify(staleUser));
@@ -63,7 +63,7 @@ describe("routes/+layout load", () => {
   it("handles trt callback success and stores the retrieved user", async () => {
     const user = {
       email: "reader@example.com",
-      roles: ["Admin", "Trusted"],
+      roles: ["admin", "trusted"],
       tokenValidity: Date.now() + 60 * 60 * 1000,
     };
     apiClientMock.retrieveToken.mockResolvedValue(user);

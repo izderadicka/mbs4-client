@@ -5,6 +5,7 @@
   import UploadIcon from "@lucide/svelte/icons/upload";
   import SearchIcon from "@lucide/svelte/icons/search";
   import BookshelfIcon from "@lucide/svelte/icons/book-check";
+  import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
 
   interface InnerMenuItem {
     title: string;
@@ -28,7 +29,7 @@
       title: "Upload new Ebook",
       icon: UploadIcon,
       url: "/upload",
-      requiredRole: "Trusted",
+      requiredRole: TRUSTED_ROLE,
     },
     {
       title: "Search",
@@ -80,7 +81,7 @@
       title: "Admin",
       url: "#",
       icon: CogIcon,
-      requiredRole: "Admin",
+      requiredRole: ADMIN_ROLE,
       items: [
         {
           title: "Users",
@@ -104,7 +105,6 @@
   import { useSidebar } from "$lib/components/ui/sidebar/index.js";
   import type { User } from "$lib/types/app";
   import { afterNavigate } from "$app/navigation";
-  import type { Role } from "$lib/api";
 
   afterNavigate(() => {
     sidebar.setOpenMobile(false);

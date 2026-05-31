@@ -2,14 +2,15 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { hasRole } from "$lib/globals.svelte";
+  import { ADMIN_ROLE } from "$lib/api";
 
   const { children } = $props();
 
   onMount(() => {
-    if (!hasRole("Admin")) goto("/");
+    if (!hasRole(ADMIN_ROLE)) goto("/");
   });
 </script>
 
-{#if hasRole("Admin")}
+{#if hasRole(ADMIN_ROLE)}
   {@render children()}
 {/if}

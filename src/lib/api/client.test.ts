@@ -56,7 +56,7 @@ describe("ApiClient Authentication", () => {
   it("successfully logs in and extracts user from JWT token", async () => {
     const token = createJwt({
       sub: "reader@example.com",
-      roles: ["Admin", "Trusted"],
+      roles: ["admin", "trusted"],
       exp: Math.floor(Date.now() / 1000) + 3600,
       iat: Math.floor(Date.now() / 1000),
     });
@@ -77,14 +77,14 @@ describe("ApiClient Authentication", () => {
     );
     expect(user).toEqual({
       email: "reader@example.com",
-      roles: ["Admin", "Trusted"],
+      roles: ["admin", "trusted"],
       tokenValidity: expect.any(Number),
     });
     expect(client.token).toBe(token);
   });
 
   it("redirects to login on 401 unauthorized responses", async () => {
-    appUserMock.user = { email: "reader@example.com", roles: ["Trusted"] };
+    appUserMock.user = { email: "reader@example.com", roles: ["trusted"] };
     openApiClientMock.GET.mockResolvedValue({
       data: undefined,
       response: new Response(null, { status: 401 }),
@@ -100,7 +100,7 @@ describe("ApiClient Authentication", () => {
   it("rejects expired tokens returned during login", async () => {
     const expiredToken = createJwt({
       sub: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       exp: Math.floor(Date.now() / 1000) - 10,
       iat: Math.floor(Date.now() / 1000) - 100,
     });
@@ -121,7 +121,7 @@ describe("ApiClient Authentication", () => {
   it("rejects tokens that are too close to expiry", async () => {
     const nearExpiryToken = createJwt({
       sub: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       exp: Math.floor(Date.now() / 1000) + 30,
       iat: Math.floor(Date.now() / 1000),
     });
@@ -219,7 +219,7 @@ describe("ApiClient Authentication", () => {
   it("retrieves token from SSO callback (retrieveToken)", async () => {
     const token = createJwt({
       sub: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       exp: Math.floor(Date.now() / 1000) + 3600,
       iat: Math.floor(Date.now() / 1000),
     });
@@ -240,7 +240,7 @@ describe("ApiClient Authentication", () => {
     );
     expect(user).toEqual({
       email: "reader@example.com",
-      roles: ["Trusted"],
+      roles: ["trusted"],
       tokenValidity: expect.any(Number),
     });
     expect(client.token).toBe(token);

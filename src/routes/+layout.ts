@@ -2,7 +2,7 @@ import { apiClient } from "$lib/api/client";
 import type { User } from "$lib/types/app";
 import { TOKEN_VALIDITY_MINUTES_MINIMUM } from "$lib/config";
 import { AUTOLOGIN } from "$lib/dev.js";
-import type { Role } from "$lib/api";
+import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
 
 export const ssr = false;
 export const prerender = false;
@@ -30,7 +30,7 @@ export async function load({ url, fetch }) {
       console.log("Auto login for dev");
       return {
         user: {
-          roles: ["Admin", "Trusted"] as Role[],
+          roles: [ADMIN_ROLE, TRUSTED_ROLE] as Role[],
           email: "auto-login@example.com",
           tokenValidity:
             Date.now() + TOKEN_VALIDITY_MINUTES_MINIMUM * 60000 * 1000,

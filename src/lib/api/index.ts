@@ -112,7 +112,10 @@ export interface ConversionResult extends ConversionResultBase {
   conversion?: EbookConversion | null;
 }
 
-export type Role = "Admin" | "Trusted";
+export const ADMIN_ROLE = "admin";
+export const TRUSTED_ROLE = "trusted";
+
+export type Role = typeof ADMIN_ROLE | typeof TRUSTED_ROLE;
 
 // User
 export type User = components["schemas"]["User"];
