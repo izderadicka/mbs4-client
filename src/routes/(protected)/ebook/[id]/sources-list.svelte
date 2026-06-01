@@ -15,6 +15,7 @@
   import { lastEvent } from "$lib/globals.svelte";
   import { toast } from "svelte-sonner";
   import DeleteDialog from "$lib/components/delete-dialog.svelte";
+  import MoveSourceDialog from "$lib/components/move-source-dialog.svelte";
 
   let {
     sources,
@@ -80,8 +81,21 @@
         name: "ebook source",
         detail: `${source.format_extension} (${prettyBytes(source.size)})`,
       });
+    } else if (action === "move") {
+      moveDialog.openDialog(source);
     }
     console.debug("onSourceMenuSelected", source, action);
+  }
+
+  function refreshSources() {
+    apiClient
+      .listEbookSources(ebookId)
+      .then((res) => {
+        sources = res;
+      })
+      .catch((error) => {
+        console.error("Failed to list sources", error);
+      });
   }
 
   function deleteSource(id: number) {
@@ -126,6 +140,7 @@
   }
 
   let deleteDialog: DeleteDialog;
+  let moveDialog: MoveSourceDialog;
 </script>
 
 <Table.Root>
@@ -177,3 +192,7 @@
 </Table.Root>
 
 <DeleteDialog bind:this={deleteDialog} onConfirmedDelete={deleteSource} />
+<MoveSourceDialog
+  bind:this={moveDialog}
+  currentEbookId={ebookId}
+  onMoved={refreshSources} />

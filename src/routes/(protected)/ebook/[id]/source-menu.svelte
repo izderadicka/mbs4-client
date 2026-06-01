@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  export type SourceMenuActions = "delete" | "convert";
+  export type SourceMenuActions = "delete" | "convert" | "move";
   type SourceType = "source" | "conversion";
   const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
 </script>
@@ -59,6 +59,8 @@
           >Delete File</DropdownMenu.Item>
       {/if}
       {#if sourceType === "source" && hasRole(TRUSTED_ROLE)}
+        <DropdownMenu.Item onSelect={() => onMenuSelected(source, "move")}
+          >Move to ebook</DropdownMenu.Item>
         <DropdownMenu.Sub>
           <DropdownMenu.SubTrigger>Convert to ...</DropdownMenu.SubTrigger>
           <DropdownMenu.SubContent>

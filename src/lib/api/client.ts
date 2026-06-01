@@ -276,6 +276,25 @@ export class ApiClient {
     }
   }
 
+  async moveSource(sourceId: number, targetEbookId: number): Promise<void> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.token) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
+    const response = await this.fetch(
+      this.fullUrl(`/api/source/${sourceId}/move`),
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ target_ebook_id: targetEbookId }),
+        credentials: "include",
+      },
+    );
+    this.checkResponseCode(response);
+  }
+
   async searchEbook(
     query: string,
     limit?: number,
