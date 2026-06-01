@@ -278,7 +278,7 @@ export class ApiClient {
 
   async moveSource(sourceId: number, targetEbookId: number): Promise<void> {
     // Path not yet present in generated types; cast required.
-    const { response } = await (this.client.POST as any)("/api/source/{id}/move", {
+    const { response } = await this.client.POST("/api/source/{id}/move", {
       params: { path: { id: sourceId } },
       body: { target_ebook_id: targetEbookId },
     });

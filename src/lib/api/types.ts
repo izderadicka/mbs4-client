@@ -772,6 +772,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/source/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["moveSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -1325,6 +1341,10 @@ export interface components {
             email: string;
             password: string;
         };
+        MoveSourceRequest: {
+            /** Format: int64 */
+            target_ebook_id: number;
+        };
         OperationTicket: {
             id: string;
             /** Format: date-time */
@@ -1708,7 +1728,7 @@ export interface components {
             final_path: string;
             /** Format: int64 */
             size: number;
-            /** @description SHA256 hash */
+            /** @description Lowercase hex content digest: 40 chars (SHA1) or 64 (SHA256). */
             hash: string;
             original_name?: string | null;
         };
@@ -3368,6 +3388,30 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    moveSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveSourceRequest"];
+            };
+        };
+        responses: {
+            /** @description Source moved to target ebook */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
     };
     startOIDCLogin: {
         parameters: {
