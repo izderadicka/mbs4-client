@@ -87,7 +87,7 @@
     console.debug("onSourceMenuSelected", source, action);
   }
 
-  function onSourceMoved(id: number) {
+  function removeSource(id: number) {
     sources = sources.filter((source) => source.id !== id);
   }
 
@@ -95,7 +95,7 @@
     apiClient
       .deleteSource(id)
       .then(() => {
-        sources = sources.filter((source) => source.id !== id);
+        removeSource(id);
       })
       .catch((error) => {
         console.error("Failed to delete source", error);
@@ -174,4 +174,4 @@
 <MoveSourceDialog
   bind:this={moveDialog}
   currentEbookId={ebookId}
-  onMoved={onSourceMoved} />
+  onMoved={removeSource} />
