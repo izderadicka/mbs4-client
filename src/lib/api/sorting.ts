@@ -4,7 +4,10 @@ const EBOOK_SORTING = {
     "title": "e.title",
     "reverse-title": "-e.title",
     "series-index": "e.series_index",
-    "reverse-series-index": "-e.series_index"
+    "reverse-series-index": "-e.series_index",
+    "rating-desc": "-e.rating",
+    "rating-asc": "e.rating",
+    "most-rated": "-e.rating_count"
 }
 
 export type EbookSorting = keyof typeof EBOOK_SORTING;
