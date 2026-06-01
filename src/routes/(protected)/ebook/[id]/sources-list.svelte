@@ -95,14 +95,7 @@
     apiClient
       .deleteSource(id)
       .then(() => {
-        apiClient
-          .listEbookSources(ebookId)
-          .then((res) => {
-            sources = res;
-          })
-          .catch((error) => {
-            console.error("Failed to list sources", error);
-          });
+        sources = sources.filter((source) => source.id !== id);
       })
       .catch((error) => {
         console.error("Failed to delete source", error);
@@ -115,14 +108,7 @@
       apiClient
         .deleteConversion(source.id)
         .then(() => {
-          apiClient
-            .listEbookConversions(ebookId)
-            .then((res) => {
-              conversions = res;
-            })
-            .catch((error) => {
-              console.error("Failed to list conversions", error);
-            });
+          conversions = conversions.filter((c) => c.id !== source.id);
         })
         .catch((error) => {
           console.error("Failed to delete conversion", error);
