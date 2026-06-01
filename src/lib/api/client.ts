@@ -277,21 +277,11 @@ export class ApiClient {
   }
 
   async moveSource(sourceId: number, targetEbookId: number): Promise<void> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
-    }
-    const response = await this.fetch(
-      this.fullUrl(`/api/source/${sourceId}/move`),
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ target_ebook_id: targetEbookId }),
-        credentials: "include",
-      },
-    );
+    // Path not yet present in generated types; cast required.
+    const { response } = await (this.client.POST as any)("/api/source/{id}/move", {
+      params: { path: { id: sourceId } },
+      body: { target_ebook_id: targetEbookId },
+    });
     this.checkResponseCode(response);
   }
 
