@@ -11,7 +11,7 @@
 
   type Props = {
     currentEbookId: number;
-    onMoved?: () => void;
+    onMoved?: (sourceId: number) => void;
   };
 
   let { currentEbookId, onMoved }: Props = $props();
@@ -41,15 +41,16 @@
   async function onConfirm() {
     if (!source || !selectedEbook) return;
     submitting = true;
+    const sourceId = source.id;
     const targetId = selectedEbook.id;
     try {
-      await apiClient.moveSource(source.id, targetId);
+      await apiClient.moveSource(sourceId, targetId);
       toast.success("Source moved");
       dialogOpen = false;
       if (followToTarget) {
         await goto(`/ebook/${targetId}`);
       } else {
-        onMoved?.();
+        onMoved?.(sourceId);
       }
     } catch (error) {
       console.error("Failed to move source", error);

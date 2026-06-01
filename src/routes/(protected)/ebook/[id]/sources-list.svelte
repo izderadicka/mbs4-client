@@ -87,15 +87,8 @@
     console.debug("onSourceMenuSelected", source, action);
   }
 
-  function refreshSources() {
-    apiClient
-      .listEbookSources(ebookId)
-      .then((res) => {
-        sources = res;
-      })
-      .catch((error) => {
-        console.error("Failed to list sources", error);
-      });
+  function onSourceMoved(id: number) {
+    sources = sources.filter((source) => source.id !== id);
   }
 
   function deleteSource(id: number) {
@@ -195,4 +188,4 @@
 <MoveSourceDialog
   bind:this={moveDialog}
   currentEbookId={ebookId}
-  onMoved={refreshSources} />
+  onMoved={onSourceMoved} />
