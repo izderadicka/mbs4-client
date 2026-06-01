@@ -15,6 +15,7 @@
   import { lastEvent } from "$lib/globals.svelte";
   import { toast } from "svelte-sonner";
   import DeleteDialog from "$lib/components/delete-dialog.svelte";
+  import MoveSourceDialog from "$lib/components/move-source-dialog.svelte";
 
   let {
     sources,
@@ -80,22 +81,21 @@
         name: "ebook source",
         detail: `${source.format_extension} (${prettyBytes(source.size)})`,
       });
+    } else if (action === "move") {
+      moveDialog.openDialog(source);
     }
     console.debug("onSourceMenuSelected", source, action);
+  }
+
+  function removeSource(id: number) {
+    sources = sources.filter((source) => source.id !== id);
   }
 
   function deleteSource(id: number) {
     apiClient
       .deleteSource(id)
       .then(() => {
-        apiClient
-          .listEbookSources(ebookId)
-          .then((res) => {
-            sources = res;
-          })
-          .catch((error) => {
-            console.error("Failed to list sources", error);
-          });
+        removeSource(id);
       })
       .catch((error) => {
         console.error("Failed to delete source", error);
@@ -108,14 +108,7 @@
       apiClient
         .deleteConversion(source.id)
         .then(() => {
-          apiClient
-            .listEbookConversions(ebookId)
-            .then((res) => {
-              conversions = res;
-            })
-            .catch((error) => {
-              console.error("Failed to list conversions", error);
-            });
+          conversions = conversions.filter((c) => c.id !== source.id);
         })
         .catch((error) => {
           console.error("Failed to delete conversion", error);
@@ -126,6 +119,7 @@
   }
 
   let deleteDialog: DeleteDialog;
+  let moveDialog: MoveSourceDialog;
 </script>
 
 <Table.Root>
@@ -177,3 +171,7 @@
 </Table.Root>
 
 <DeleteDialog bind:this={deleteDialog} onConfirmedDelete={deleteSource} />
+<MoveSourceDialog
+  bind:this={moveDialog}
+  currentEbookId={ebookId}
+  onMoved={removeSource} />

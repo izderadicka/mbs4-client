@@ -21,6 +21,7 @@
     item?: Snippet<[EbookSearchItem]>;
     onSelect: (ebook: EbookDoc) => void;
     externalControl?: External;
+    skip_ids?: number[];
   };
 
   let query = $state("");
@@ -32,7 +33,14 @@
     item = undefined,
     maxItems = 10,
     externalControl = undefined,
-  } = $props();
+    skip_ids = undefined,
+  }: Props = $props();
+
+  function filterSkipped(items: EbookSearchItem[]): EbookSearchItem[] {
+    if (!skip_ids || skip_ids.length === 0) return items;
+    const skip = new Set(skip_ids);
+    return items.filter((e) => !skip.has(e.doc.Ebook.id));
+  }
 
   export async function submitSearch(q?: string) {
     if (q) {
@@ -44,7 +52,8 @@
       externalControl.handleSubmit(query);
     } else {
       try {
-        ebooks = await apiClient.searchEbook(query, maxItems);
+        const res = await apiClient.searchEbook(query, maxItems);
+        ebooks = filterSkipped(res);
       } catch (error) {
         console.error("Failed to search ebooks", error);
         toast.error("Failed to search ebooks");
@@ -55,7 +64,7 @@
 
   $effect(() => {
     if (externalControl) {
-      ebooks = externalControl.ebooks;
+      ebooks = filterSkipped(externalControl.ebooks);
       query = externalControl.initialQuery ?? "";
     }
   });
