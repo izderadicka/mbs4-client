@@ -404,6 +404,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ebook/{id}/my-rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyEbookRating"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ebook/{id}/rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rateEbook"];
+        delete: operations["deleteEbookRating"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ebook/{id}/source": {
         parameters: {
             query?: never;
@@ -1261,6 +1293,22 @@ export interface components {
             /** Format: int64 */
             ebook_id: number;
         };
+        EbookRating: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            ebook_id: number;
+            /** Format: float */
+            rating?: number | null;
+            description?: string | null;
+            /** Format: int64 */
+            version: number;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
+            /** Format: date-time */
+            modified: string;
+        };
         EbookShort: {
             /** Format: int64 */
             id: number;
@@ -1273,6 +1321,8 @@ export interface components {
             authors?: components["schemas"]["AuthorShort"][] | null;
             /** Format: float */
             rating?: number | null;
+            /** Format: int32 */
+            rating_count?: number | null;
         };
         EbookSource: {
             /** Format: int64 */
@@ -1464,6 +1514,8 @@ export interface components {
                 authors?: components["schemas"]["AuthorShort"][] | null;
                 /** Format: float */
                 rating?: number | null;
+                /** Format: int32 */
+                rating_count?: number | null;
             }[];
         };
         Page_FormatShort: {
@@ -1552,6 +1604,11 @@ export interface components {
                 /** Format: float */
                 quality?: number | null;
             }[];
+        };
+        RateEbookRequest: {
+            /** Format: float */
+            rating: number;
+            description?: string | null;
         };
         RenameBody: {
             from_path: string;
@@ -2542,6 +2599,83 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getMyEbookRating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Caller's current rating */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EbookRating"];
+                };
+            };
+            /** @description No rating by this user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rateEbook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateEbookRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated ebook with new avg rating */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ebook"];
+                };
+            };
+        };
+    };
+    deleteEbookRating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated ebook after removing rating */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ebook"];
+                };
             };
         };
     };
