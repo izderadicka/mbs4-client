@@ -40,6 +40,8 @@
   import { goto } from "$app/navigation";
   import EbookInfo from "./ebook-info.svelte";
   import AddToBookshelfDialog from "$lib/components/add-to-bookshelf-dialog.svelte";
+  import RatingWidget from "$lib/components/rating-widget.svelte";
+  import { apiClient } from "$lib/api/client";
   import Button from "$lib/components/ui/button/button.svelte";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import LibraryBigIcon from "@lucide/svelte/icons/library-big";
@@ -48,7 +50,32 @@
 
   const { data }: PageProps = $props();
   let ebook = $derived(data.ebook);
+  let ratingOverride = $state<{ rating: number | null; count: number | null } | null>(null);
+  let userRatingOverride = $state<{ value: number | null } | null>(null);
+
+  let displayRating = $derived(
+    ratingOverride ? ratingOverride.rating : (ebook.rating ?? null),
+  );
+  let displayRatingCount = $derived(
+    ratingOverride ? ratingOverride.count : (ebook.rating_count ?? null),
+  );
+  let userRating = $derived(
+    userRatingOverride ? userRatingOverride.value : (data.myRating?.rating ?? null),
+  );
+
   let addToBookshelfDialog: AddToBookshelfDialog | null = null;
+
+  async function handleRate(value: number) {
+    const updated = await apiClient.rateEbook(ebook.id, value);
+    ratingOverride = { rating: updated.rating ?? null, count: updated.rating_count ?? null };
+    userRatingOverride = { value };
+  }
+
+  async function handleDeleteRating() {
+    const updated = await apiClient.deleteEbookRating(ebook.id);
+    ratingOverride = { rating: updated.rating ?? null, count: updated.rating_count ?? null };
+    userRatingOverride = { value: null };
+  }
 
   let menu = $derived([
     ...EBOOK_MENU,
@@ -108,6 +135,15 @@
 </div>
 
 <DetailsTable {ebook} />
+<div class="mt-4">
+  <RatingWidget
+    rating={displayRating}
+    count={displayRatingCount}
+    mode="editable"
+    {userRating}
+    onRate={handleRate}
+    onDelete={handleDeleteRating} />
+</div>
 <div class="mt-4">
   <SourcesList
     sources={data.sources}

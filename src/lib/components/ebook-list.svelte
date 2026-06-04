@@ -6,6 +6,9 @@
     { label: "Oldest", value: "oldest" },
     { label: "Title", value: "title" },
     { label: "Reverse Title", value: "reverse-title" },
+    { label: "Rating: high to low", value: "rating-desc" },
+    { label: "Rating: low to high", value: "rating-asc" },
+    { label: "Most rated", value: "most-rated" },
   ];
 
   const SORTING_SERIES: { label: string; value: EbookSorting }[] = [
@@ -15,6 +18,9 @@
     { label: "Reverse Title", value: "reverse-title" },
     { label: "Series Index", value: "series-index" },
     { label: "Rev. Series Idx", value: "reverse-series-index" },
+    { label: "Rating: high to low", value: "rating-desc" },
+    { label: "Rating: low to high", value: "rating-asc" },
+    { label: "Most rated", value: "most-rated" },
   ];
 </script>
 
@@ -33,6 +39,7 @@
   import GenreField from "./fields/genre-field.svelte";
   import { superForm } from "sveltekit-superforms";
   import SortSelect from "$lib/components/fragments/sort-select.svelte";
+  import RatingWidget from "$lib/components/rating-widget.svelte";
   import { appSettings } from "$lib/settings.svelte";
 
   type Props = {
@@ -146,6 +153,12 @@
                     >{ebook.series?.title} #{ebook.series_index}</a>
                 </div>
               {/if}
+              <div class="mt-1">
+                <RatingWidget
+                  rating={ebook.rating}
+                  count={ebook.rating_count}
+                  mode="view" />
+              </div>
             </div>
           </Card.Content>
         </Card.Root>
@@ -161,6 +174,7 @@
           <Table.Head class="w-[20%]">Authors</Table.Head>
           <Table.Head>Title</Table.Head>
           <Table.Head class="hidden lg:table-cell">Series</Table.Head>
+          <Table.Head class="w-[6rem]">Rating</Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -177,6 +191,14 @@
               {#if ebook.series}
                 <a href="/series/{ebook.series.id}"
                   >{ebook.series.title} #{ebook.series_index}</a>
+              {/if}
+            </Table.Cell>
+            <Table.Cell class="truncate tabular-nums">
+              {ebook.rating != null
+                ? (ebook.rating / 20).toFixed(1)
+                : "—"}{#if ebook.rating_count}
+                <span class="text-muted-foreground"
+                  >&nbsp;({ebook.rating_count})</span>
               {/if}
             </Table.Cell>
           </Table.Row>

@@ -13,6 +13,7 @@ import type {
   CreateEbook,
   CreateSeries,
   Ebook,
+  EbookRating,
   EbookConversion,
   EbookCoverInfo,
   EbookFileInfo,
@@ -501,6 +502,31 @@ export class ApiClient {
       params: { path: { id } },
     });
     this.checkResponseCode(response);
+  }
+
+  async rateEbook(id: number, rating: number, description?: string): Promise<Ebook> {
+    const { data, response } = await this.client.POST("/api/ebook/{id}/rate", {
+      params: { path: { id } },
+      body: { rating, description },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async deleteEbookRating(id: number): Promise<Ebook> {
+    const { data, response } = await this.client.DELETE("/api/ebook/{id}/rate", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async getMyEbookRating(id: number): Promise<EbookRating | null> {
+    const { data, response } = await this.client.GET("/api/ebook/{id}/my-rating", {
+      params: { path: { id } },
+    });
+    if (response.status === 404) {
+      return null;
+    }
+    return this.checkResponse(response, data);
   }
 
   async mergeEbook(id: number, toId: number): Promise<void> {

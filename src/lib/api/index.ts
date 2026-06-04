@@ -14,6 +14,7 @@ export type EbookShort = components["schemas"]["EbookShort"];
 export type CreateEbook = components["schemas"]["CreateEbook"];
 export type UpdateEbook = components["schemas"]["UpdateEbook"];
 export type PagedEbookShort = components["schemas"]["Page_EbookShort"];
+export type EbookRating = components["schemas"]["EbookRating"];
 
 //Bookshelf
 export type Bookshelf = components["schemas"]["Bookshelf"];

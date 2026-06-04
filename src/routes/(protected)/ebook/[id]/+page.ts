@@ -5,11 +5,18 @@ export async function load({ params }) {
   const ebookPromise = apiClient.getEbook(ebookId);
   const sourcesPromise = apiClient.listEbookSources(ebookId);
   const conversionsPromise = apiClient.listEbookConversions(ebookId);
+  const myRatingPromise = apiClient.getMyEbookRating(ebookId).catch(() => null);
 
-  const [ebook, sources, conversions] = await Promise.all([ebookPromise, sourcesPromise, conversionsPromise]);
+  const [ebook, sources, conversions, myRating] = await Promise.all([
+    ebookPromise,
+    sourcesPromise,
+    conversionsPromise,
+    myRatingPromise,
+  ]);
   return {
     ebook,
     sources,
-    conversions
+    conversions,
+    myRating,
   };
 }
