@@ -153,12 +153,14 @@
                     >{ebook.series?.title} #{ebook.series_index}</a>
                 </div>
               {/if}
-              <div class="mt-1">
-                <RatingWidget
-                  rating={ebook.rating}
-                  count={ebook.rating_count}
-                  mode="view" />
-              </div>
+              {#if ebook.rating != null}
+                <div class="mt-1">
+                  <RatingWidget
+                    rating={ebook.rating}
+                    count={ebook.rating_count}
+                    mode="view" />
+                </div>
+              {/if}
             </div>
           </Card.Content>
         </Card.Root>

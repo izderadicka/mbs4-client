@@ -4,7 +4,23 @@
   import CoverImage from "$lib/components/fragments/cover-image.svelte";
   import * as Table from "$lib/components/ui/table";
   import { hasRole } from "$lib/globals.svelte";
-  let { ebook }: { ebook: Ebook } = $props();
+  import RatingWidget from "$lib/components/rating-widget.svelte";
+
+  let {
+    ebook,
+    rating,
+    ratingCount,
+    userRating,
+    onRate,
+    onDeleteRating,
+  }: {
+    ebook: Ebook;
+    rating: number | null;
+    ratingCount: number | null;
+    userRating: number | null;
+    onRate: (value: number) => Promise<void>;
+    onDeleteRating: () => Promise<void>;
+  } = $props();
 </script>
 
 <div class="flex flex-col lg:flex-row gap-2">
@@ -28,6 +44,22 @@
         <Table.Head>Genres</Table.Head>
         <Table.Cell
           >{ebook.genres?.map((g) => g.name).join(", ") || ""}</Table.Cell>
+      </Table.Row>
+      <Table.Row>
+        <Table.Head>Ratings</Table.Head>
+        <Table.Cell>
+          <RatingWidget {rating} count={ratingCount} mode="view" />
+        </Table.Cell>
+      </Table.Row>
+      <Table.Row>
+        <Table.Head>Your rating</Table.Head>
+        <Table.Cell>
+          <RatingWidget
+            mode="interactive"
+            {userRating}
+            {onRate}
+            onDelete={onDeleteRating} />
+        </Table.Cell>
       </Table.Row>
       <Table.Row>
         <Table.Head>Created on</Table.Head>

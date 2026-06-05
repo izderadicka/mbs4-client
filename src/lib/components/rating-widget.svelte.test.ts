@@ -46,7 +46,7 @@ describe("RatingWidget", () => {
 
   it("clicking right half of star i calls onRate with (i+1)*20", async () => {
     const onRate = vi.fn().mockResolvedValue(undefined);
-    render(RatingWidget, { rating: null, mode: "editable", userRating: null, onRate });
+    render(RatingWidget, { rating: null, mode: "interactive", userRating: null, onRate });
 
     const buttons = rateButtons();
     stubRect(buttons[2]);
@@ -57,7 +57,7 @@ describe("RatingWidget", () => {
 
   it("clicking left half of star i calls onRate with i*20+10", async () => {
     const onRate = vi.fn().mockResolvedValue(undefined);
-    render(RatingWidget, { rating: null, mode: "editable", userRating: null, onRate });
+    render(RatingWidget, { rating: null, mode: "interactive", userRating: null, onRate });
 
     const buttons = rateButtons();
     stubRect(buttons[2]);
@@ -68,7 +68,7 @@ describe("RatingWidget", () => {
 
   it("toasts and stays enabled when onRate rejects", async () => {
     const onRate = vi.fn().mockRejectedValue(new Error("boom"));
-    render(RatingWidget, { rating: null, mode: "editable", userRating: null, onRate });
+    render(RatingWidget, { rating: null, mode: "interactive", userRating: null, onRate });
 
     const buttons = rateButtons();
     stubRect(buttons[0]);
@@ -82,7 +82,7 @@ describe("RatingWidget", () => {
   it("hides the clear button when userRating is null", () => {
     render(RatingWidget, {
       rating: 40,
-      mode: "editable",
+      mode: "interactive",
       userRating: null,
       onRate: vi.fn(),
       onDelete: vi.fn(),
@@ -94,7 +94,7 @@ describe("RatingWidget", () => {
     const onDelete = vi.fn().mockResolvedValue(undefined);
     render(RatingWidget, {
       rating: 40,
-      mode: "editable",
+      mode: "interactive",
       userRating: 40,
       onRate: vi.fn(),
       onDelete,
@@ -108,7 +108,7 @@ describe("RatingWidget", () => {
     const onDelete = vi.fn().mockRejectedValue(new Error("boom"));
     render(RatingWidget, {
       rating: 40,
-      mode: "editable",
+      mode: "interactive",
       userRating: 40,
       onRate: vi.fn(),
       onDelete,

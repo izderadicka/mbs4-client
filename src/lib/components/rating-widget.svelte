@@ -17,10 +17,10 @@
   import { toast } from "svelte-sonner";
   import { cn } from "$lib/utils";
 
-  type Mode = "view" | "editable";
+  type Mode = "view" | "interactive";
 
   type Props = {
-    rating: number | null | undefined;
+    rating?: number | null;
     count?: number | null;
     mode?: Mode;
     userRating?: number | null;
@@ -30,7 +30,7 @@
   };
 
   let {
-    rating,
+    rating = null,
     count = null,
     mode = "view",
     userRating = null,
@@ -102,58 +102,54 @@
   </span>
 {/snippet}
 
+{#snippet interactiveRow()}
+  <div class={cn("flex items-center gap-2", className)}>
+    <div
+      class="inline-flex items-center gap-0.5"
+      onpointerleave={() => (hoverValue = null)}
+      role="group"
+      aria-label="Rate this ebook">
+      {#each STARS as i (i)}
+        {@const fill = starFill(interactiveValue, i)}
+        <button
+          type="button"
+          class="relative inline-block size-7 cursor-pointer p-0 bg-transparent border-0 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={busy}
+          aria-label={`Rate ${i + 1} stars`}
+          onpointermove={(e) => (hoverValue = valueFromEvent(e, i))}
+          onclick={(e) => handleClick(e, i)}>
+          <Star class="size-7 text-muted-foreground" />
+          {#if fill !== "empty"}
+            <span
+              class="absolute inset-0 overflow-hidden pointer-events-none"
+              style={fill === "half"
+                ? "clip-path: inset(0 50% 0 0)"
+                : undefined}>
+              <Star class="size-7 text-yellow-500 fill-yellow-500" />
+            </span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+    {#if userRating != null}
+      <button
+        type="button"
+        class="inline-flex items-center justify-center size-7 text-muted-foreground hover:text-destructive cursor-pointer bg-transparent border-0 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={busy}
+        aria-label="Clear my rating"
+        title="Clear my rating"
+        onclick={handleDelete}>
+        <XCircle class="size-5" />
+      </button>
+    {/if}
+  </div>
+{/snippet}
+
 {#if mode === "view"}
   <span class={cn("inline-flex items-center gap-1 text-sm", className)}>
     {@render starRow(rating, "size-4")}
     <span class="text-muted-foreground">({count ?? 0})</span>
   </span>
 {:else}
-  <div class={cn("flex flex-col gap-2", className)}>
-    <div class="flex items-center gap-1 text-sm">
-      <span class="text-muted-foreground">Average:</span>
-      {@render starRow(rating, "size-4")}
-      <span class="text-muted-foreground">({count ?? 0})</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="text-sm text-muted-foreground mr-1">Your rating:</span>
-      <div
-        class="inline-flex items-center gap-0.5"
-        onpointerleave={() => (hoverValue = null)}
-        role="group"
-        aria-label="Rate this ebook">
-        {#each STARS as i (i)}
-          {@const fill = starFill(interactiveValue, i)}
-          <button
-            type="button"
-            class="relative inline-block size-7 cursor-pointer p-0 bg-transparent border-0 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={busy}
-            aria-label={`Rate ${i + 1} stars`}
-            onpointermove={(e) => (hoverValue = valueFromEvent(e, i))}
-            onclick={(e) => handleClick(e, i)}>
-            <Star class="size-7 text-muted-foreground" />
-            {#if fill !== "empty"}
-              <span
-                class="absolute inset-0 overflow-hidden pointer-events-none"
-                style={fill === "half"
-                  ? "clip-path: inset(0 50% 0 0)"
-                  : undefined}>
-                <Star class="size-7 text-yellow-500 fill-yellow-500" />
-              </span>
-            {/if}
-          </button>
-        {/each}
-      </div>
-      {#if userRating != null}
-        <button
-          type="button"
-          class="inline-flex items-center justify-center size-7 text-muted-foreground hover:text-destructive cursor-pointer bg-transparent border-0 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={busy}
-          aria-label="Clear my rating"
-          title="Clear my rating"
-          onclick={handleDelete}>
-          <XCircle class="size-5" />
-        </button>
-      {/if}
-    </div>
-  </div>
+  {@render interactiveRow()}
 {/if}
