@@ -4,8 +4,11 @@ import type {
   Author,
   AuthorSearchItem,
   AuthorShort,
+  BatchConversionRequest,
+  BatchOperationTicket,
   Bookshelf,
   BookshelfItemMutationResponse,
+  ConversionBatch,
   ConversionRequest,
   CreateAuthor,
   CreateBookshelf,
@@ -19,10 +22,12 @@ import type {
   EbookFileInfo,
   EbookSearchItem,
   EbookSource,
+  FormatShort,
   GenreShort,
   LanguageShort,
   LibraryStats,
   ListParams,
+  PagedConversionBatch,
   Series,
   SeriesSearchItem,
   Source,
@@ -670,6 +675,37 @@ export class ApiClient {
 
   async listProviders(): Promise<string[]> {
     const { data, response } = await this.client.GET("/auth/providers");
+    return this.checkResponse(response, data);
+  }
+
+  async listFormats(): Promise<FormatShort[]> {
+    const { data, response } = await this.client.GET("/api/format/all");
+    return this.checkResponse(response, data);
+  }
+
+  async startBatchConversion(req: BatchConversionRequest): Promise<BatchOperationTicket> {
+    const { data, response } = await this.client.POST("/api/convert/batch", { body: req });
+    return this.checkResponse(response, data);
+  }
+
+  async listConversionBatches(queryParams?: ListParams): Promise<PagedConversionBatch> {
+    const { data, response } = await this.client.GET("/api/conversion-batch/", {
+      params: { query: queryParams },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async getConversionBatch(id: number): Promise<ConversionBatch> {
+    const { data, response } = await this.client.GET("/api/conversion-batch/{id}", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async listConversionBatchItems(id: number): Promise<EbookConversion[]> {
+    const { data, response } = await this.client.GET("/api/conversion-batch/{id}/items", {
+      params: { path: { id } },
+    });
     return this.checkResponse(response, data);
   }
 
