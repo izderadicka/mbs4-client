@@ -212,6 +212,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conversion-batch/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listConversionBatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversion-batch/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getConversionBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversion-batch/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listConversionBatchItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversion/all": {
         parameters: {
             query?: never;
@@ -255,6 +303,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["deleteConversion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/convert/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["convert_batch"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1065,6 +1129,23 @@ export interface components {
             id: number;
             name: string;
         };
+        BatchConversionRequest: {
+            for_entity: components["schemas"]["ConversionBatchEntity"];
+            /** Format: int64 */
+            entity_id: number;
+            to_format_extension: string;
+        };
+        BatchOperationTicket: {
+            operation_id: string;
+            /** Format: int64 */
+            batch_id: number;
+            /** @description Ebooks accepted into the batch (after the `BATCH_MAX_EBOOKS` cap). */
+            total: number;
+            /** @description Ebooks above the cap that were dropped. */
+            dropped: number;
+            /** Format: date-time */
+            created: string;
+        };
         Bookshelf: {
             /** Format: int64 */
             id: number;
@@ -1129,10 +1210,27 @@ export interface components {
             format_id: number;
             /** Format: int64 */
             batch_id?: number | null;
+            synthetic: boolean;
             created_by?: string | null;
             /** Format: date-time */
             created: string;
         };
+        ConversionBatch: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            for_entity?: null | components["schemas"]["ConversionBatchEntity"];
+            /** Format: int64 */
+            entity_id?: number | null;
+            /** Format: int64 */
+            format_id: number;
+            zip_location?: string | null;
+            created_by?: string | null;
+            /** Format: date-time */
+            created: string;
+        };
+        /** @enum {string} */
+        ConversionBatchEntity: "BOOKSHELF" | "SERIES" | "AUTHOR";
         ConversionRequest: {
             /** Format: int64 */
             source_id: number;
@@ -1148,6 +1246,7 @@ export interface components {
             format_id: number;
             /** Format: int64 */
             batch_id?: number | null;
+            synthetic: boolean;
         };
         CreateAuthor: {
             last_name: string;
@@ -1256,6 +1355,7 @@ export interface components {
             ebook_id: number;
             /** Format: int64 */
             batch_id?: number | null;
+            synthetic: boolean;
             source_format_name: string;
             source_format_extension: string;
             format_name: string;
@@ -1472,6 +1572,30 @@ export interface components {
                 modified: string;
             }[];
         };
+        Page_ConversionBatch: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
+            total: number;
+            rows: {
+                /** Format: int64 */
+                id: number;
+                name: string;
+                for_entity?: null | components["schemas"]["ConversionBatchEntity"];
+                /** Format: int64 */
+                entity_id?: number | null;
+                /** Format: int64 */
+                format_id: number;
+                zip_location?: string | null;
+                created_by?: string | null;
+                /** Format: date-time */
+                created: string;
+            }[];
+        };
         Page_ConversionShort: {
             /** Format: int32 */
             page: number;
@@ -1491,6 +1615,7 @@ export interface components {
                 format_id: number;
                 /** Format: int64 */
                 batch_id?: number | null;
+                synthetic: boolean;
             }[];
         };
         Page_EbookShort: {
@@ -2259,6 +2384,75 @@ export interface operations {
             };
         };
     };
+    listConversionBatches: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ConversionBatch"];
+                };
+            };
+        };
+    };
+    getConversionBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversion batch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionBatch"];
+                };
+            };
+        };
+    };
+    listConversionBatchItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conversion rows in batch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EbookConversion"][];
+                };
+            };
+        };
+    };
     listAllConversion: {
         parameters: {
             query?: never;
@@ -2332,6 +2526,30 @@ export interface operations {
         };
         requestBody?: never;
         responses: never;
+    };
+    convert_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchConversionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchOperationTicket"];
+                };
+            };
+        };
     };
     convert_source: {
         parameters: {
