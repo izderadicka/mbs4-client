@@ -22,10 +22,13 @@
   let submitting = $state(false);
   let loading = $state(false);
 
+  const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
+
   async function loadFormats() {
     loading = true;
     try {
-      formats = await apiClient.listFormats();
+      const all = await apiClient.listFormats();
+      formats = all.filter((f) => CONVERTIBLE_FORMATS.includes(f.extension));
     } catch {
       toast.error("Failed to load formats");
     } finally {
