@@ -87,13 +87,25 @@
     };
   });
 
+  function extractBatchId(e: EventItem): number | null {
+    const d = (e.data as any)?.data;
+    return d?.batch_progress?.batch_id ?? d?.batch_complete?.batch_id ?? null;
+  }
+
   function push(evt: Omit<EventItem, "receivedAt" | "read">) {
     const item: EventItem = {
       ...evt,
       receivedAt: new Date().toISOString(),
       read: open ? true : false,
     };
-    events.items = [...events.items.slice(-(maxItems - 1)), item];
+    const batchId = extractBatchId(item);
+    if (batchId !== null) {
+      // Replace the previous event for this batch (keep only latest) then append so it shows on top after reversal
+      const filtered = events.items.filter((e) => extractBatchId(e) !== batchId);
+      events.items = [...filtered.slice(-(maxItems - 1)), item];
+    } else {
+      events.items = [...events.items.slice(-(maxItems - 1)), item];
+    }
   }
 
   function markAllRead() {

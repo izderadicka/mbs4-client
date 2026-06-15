@@ -5,6 +5,7 @@
   import UploadIcon from "@lucide/svelte/icons/upload";
   import SearchIcon from "@lucide/svelte/icons/search";
   import BookshelfIcon from "@lucide/svelte/icons/book-check";
+  import ZapIcon from "@lucide/svelte/icons/zap";
   import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
 
   interface InnerMenuItem {
@@ -69,6 +70,13 @@
           url: "/bookshelf?public",
         },
       ],
+    },
+
+    {
+      title: "Batch Conversions",
+      url: "/conversion-batch",
+      icon: ZapIcon,
+      requiredRole: TRUSTED_ROLE,
     },
 
     {

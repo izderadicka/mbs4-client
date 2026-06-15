@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
-  type AuthorMenuActions = "edit" | "merge";
+  type AuthorMenuActions = "edit" | "merge" | "batch_convert";
   const AUTHOR_MENU: {
     name: string;
     action: AuthorMenuActions;
@@ -11,6 +11,11 @@
       name: "Merge with Other Author",
       action: "merge",
       requiredRole: ADMIN_ROLE,
+    },
+    {
+      name: "Convert All to Format…",
+      action: "batch_convert",
+      requiredRole: TRUSTED_ROLE,
     },
   ];
 </script>
@@ -23,12 +28,15 @@
   import { breadcrumb } from "$lib/globals.svelte";
 
   import AuthorMenu from "$lib/components/item-menu.svelte";
+  import BatchConvertDialog from "$lib/components/batch-convert-dialog.svelte";
   import { goto } from "$app/navigation";
   import { formatName } from "$lib/utils.js";
 
   let { data } = $props();
   let author = $derived(data.author);
   let authorName = $derived(formatName(author));
+  let batchConvertDialog: BatchConvertDialog | null = null;
+
   $effect(() => {
     breadcrumb.path = [
       { name: "Authors", path: "/author" },
@@ -41,6 +49,8 @@
       await goto(`/author/${author.id}/edit`);
     } else if (action === "merge") {
       await goto(`/author/${author.id}/merge`);
+    } else if (action === "batch_convert") {
+      await batchConvertDialog?.open();
     }
   }
 </script>
@@ -56,6 +66,12 @@
       title="Author Actions" />
   </div>
 </div>
+
+<BatchConvertDialog
+  bind:this={batchConvertDialog}
+  title={authorName}
+  forEntity="AUTHOR"
+  entityId={author.id} />
 
 <Subtitle>Ebooks</Subtitle>
 <EbookList ebooks={data.ebooks} sort={data.sort} genres={data.genres} />

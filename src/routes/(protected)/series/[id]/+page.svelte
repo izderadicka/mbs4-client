@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import { ADMIN_ROLE, TRUSTED_ROLE, type Role } from "$lib/api";
-  type SeriesMenuActions = "edit" | "merge" | "bookshelf";
+  type SeriesMenuActions = "edit" | "merge" | "bookshelf" | "batch_convert";
   const SERIES_MENU: {
     name: string;
     action: SeriesMenuActions;
@@ -17,6 +17,11 @@
       action: "bookshelf",
       requiredRole: TRUSTED_ROLE,
     },
+    {
+      name: "Convert All to Format…",
+      action: "batch_convert",
+      requiredRole: TRUSTED_ROLE,
+    },
   ];
 </script>
 
@@ -25,6 +30,7 @@
 
   import { type Series } from "$lib/api";
   import AddToBookshelfDialog from "$lib/components/add-to-bookshelf-dialog.svelte";
+  import BatchConvertDialog from "$lib/components/batch-convert-dialog.svelte";
   import EbookList from "$lib/components/ebook-list.svelte";
   import SeriesMenu from "$lib/components/item-menu.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
@@ -37,6 +43,7 @@
   let { data } = $props();
   let series = $derived(data.series);
   let addToBookshelfDialog: AddToBookshelfDialog | null = null;
+  let batchConvertDialog: BatchConvertDialog | null = null;
 
   $effect(() => {
     breadcrumb.path = [
@@ -52,6 +59,8 @@
       await goto("/series/" + series.id + "/merge");
     } else if (action === "bookshelf") {
       await onAddToBookshelf();
+    } else if (action === "batch_convert") {
+      await batchConvertDialog?.open();
     }
   }
 
@@ -95,3 +104,9 @@
   title={series.title}
   seriesId={series.id}
   itemType="SERIES" />
+
+<BatchConvertDialog
+  bind:this={batchConvertDialog}
+  title={series.title}
+  forEntity="SERIES"
+  entityId={series.id} />

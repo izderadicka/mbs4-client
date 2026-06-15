@@ -13,3 +13,6 @@ export const SCREEN_WIDTH_2XL = 1320;
 
 // potentionally configurable in app
 export const DEFAULT_PAGE_SIZE = 10;
+
+// target formats offered for ebook conversion (individual and batch)
+export const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];

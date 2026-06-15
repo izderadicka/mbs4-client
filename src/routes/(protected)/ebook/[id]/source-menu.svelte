@@ -1,7 +1,7 @@
 <script lang="ts" module>
+  import { CONVERTIBLE_FORMATS } from "$lib/config";
   export type SourceMenuActions = "delete" | "convert" | "move";
   type SourceType = "source" | "conversion";
-  const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
 </script>
 
 <script lang="ts">

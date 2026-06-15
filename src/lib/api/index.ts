@@ -37,6 +37,7 @@ export type Author = components["schemas"]["Author"];
 
 export type LanguageShort = components["schemas"]["LanguageShort"];
 export type GenreShort = components["schemas"]["GenreShort"];
+export type FormatShort = components["schemas"]["FormatShort"];
 
 export type EbookFileInfo = components["schemas"]["EbookFileInfo"];
 export type EbookCoverInfo = components["schemas"]["EbookCoverInfo"];
@@ -45,6 +46,30 @@ export type EbookSource = components["schemas"]["EbookSource"];
 
 export type EbookConversion = components["schemas"]["EbookConversion"];
 export type ConversionRequest = components["schemas"]["ConversionRequest"];
+
+// Batch Conversion
+export type BatchConversionRequest = components["schemas"]["BatchConversionRequest"];
+export type BatchOperationTicket = components["schemas"]["BatchOperationTicket"];
+export type ConversionBatch = components["schemas"]["ConversionBatch"];
+export type ConversionBatchEntity = components["schemas"]["ConversionBatchEntity"];
+export type PagedConversionBatch = components["schemas"]["Page_ConversionBatch"];
+
+export interface BatchProgressEvent {
+  operation_id: string;
+  batch_id: number;
+  done: number;
+}
+
+export interface BatchCompleteEvent {
+  batch_id: number;
+  total: number;
+  ok: number;
+  reused: number;
+  failed: number;
+  dropped: number;
+  zip_location?: string;
+  zip_error?: string;
+}
 
 export type EbookDoc = components["schemas"]["EbookDoc"];
 
