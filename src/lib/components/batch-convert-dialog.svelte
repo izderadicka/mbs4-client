@@ -4,6 +4,7 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as Select from "$lib/components/ui/select";
+  import { CONVERTIBLE_FORMATS } from "$lib/config";
   import { toast } from "svelte-sonner";
 
   let {
@@ -21,8 +22,6 @@
   let selectedExtension = $state("");
   let submitting = $state(false);
   let loading = $state(false);
-
-  const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
 
   async function loadFormats() {
     loading = true;
