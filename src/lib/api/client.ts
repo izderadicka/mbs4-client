@@ -689,7 +689,7 @@ export class ApiClient {
   }
 
   async listConversionBatches(queryParams?: ListParams): Promise<PagedConversionBatch> {
-    const { data, response } = await this.client.GET("/api/conversion-batch/", {
+    const { data, response } = await this.client.GET("/api/conversion-batch", {
       params: { query: queryParams },
     });
     return this.checkResponse(response, data);

@@ -212,7 +212,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/conversion-batch/": {
+    "/api/conversion-batch": {
         parameters: {
             query?: never;
             header?: never;
