@@ -21,7 +21,7 @@
       <Table.Head class="w-16 hidden lg:table-cell">Id</Table.Head>
       <Table.Head class="w-[55%]">Name</Table.Head>
       <Table.Head class="w-24 hidden lg:table-cell">Entity</Table.Head>
-      <Table.Head class="w-[20%]">Created</Table.Head>
+      <Table.Head class="w-[10%]">Created</Table.Head>
       <Table.Head>Download</Table.Head>
     </Table.Row>
   </Table.Header>

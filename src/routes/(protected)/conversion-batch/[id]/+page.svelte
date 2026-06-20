@@ -35,7 +35,7 @@
   <dt class="opacity-60">Created</dt>
   <dd>{new Date(batch.created).toLocaleString()}</dd>
   <dt class="opacity-60">Created by</dt>
-  <dd>{batch.created_by ?? "—"}</dd>
+  <dd class="truncate">{batch.created_by ?? "—"}</dd>
 </dl>
 
 <Table.Root class="table-fixed w-full">
