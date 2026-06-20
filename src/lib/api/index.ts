@@ -57,11 +57,19 @@ export type PagedConversionBatch = components["schemas"]["Page_ConversionBatch"]
 export interface BatchProgressEvent {
   operation_id: string;
   batch_id: number;
+  batch_name: string;
   done: number;
+  total: number;
+  ebook_id: number;
+  label: string;
+  outcome: string;
+  error?: string;
 }
 
 export interface BatchCompleteEvent {
+  operation_id: string;
   batch_id: number;
+  batch_name: string;
   total: number;
   ok: number;
   reused: number;

@@ -87,9 +87,13 @@
     };
   });
 
-  function extractBatchId(e: EventItem): number | null {
+  // Batch events are flat and always carry batch_id (and operation_id). All
+  // events of one batch share this key, so a new progress/complete event
+  // supersedes the previous one.
+  function batchKey(e: EventItem): string | null {
     const d = (e.data as any)?.data;
-    return d?.batch_progress?.batch_id ?? d?.batch_complete?.batch_id ?? null;
+    if (d?.batch_id == null) return null;
+    return `${d.operation_id}:${d.batch_id}`;
   }
 
   function push(evt: Omit<EventItem, "receivedAt" | "read">) {
@@ -98,10 +102,10 @@
       receivedAt: new Date().toISOString(),
       read: open ? true : false,
     };
-    const batchId = extractBatchId(item);
-    if (batchId !== null) {
-      // Replace the previous event for this batch (keep only latest) then append so it shows on top after reversal
-      const filtered = events.items.filter((e) => extractBatchId(e) !== batchId);
+    const key = batchKey(item);
+    if (key !== null) {
+      // Keep only the latest event for this batch, then append so it shows on top after reversal
+      const filtered = events.items.filter((e) => batchKey(e) !== key);
       events.items = [...filtered.slice(-(maxItems - 1)), item];
     } else {
       events.items = [...events.items.slice(-(maxItems - 1)), item];
@@ -159,7 +163,7 @@
 
     <ScrollArea class="flex-1 overflow-y-auto pr-2 pl-2">
       <ul class="space-y-2">
-        {#each [...events.items].reverse() as event (event.receivedAt)}
+        {#each [...events.items].reverse() as event (event.id ?? event.receivedAt)}
           <EventBlock {event} />
         {/each}
 

@@ -11,24 +11,27 @@
   let { event }: { event: EventItem } = $props();
 
   function qualifyEvent(event: EventItem): EventType {
-    const { data } = event.data as any;
+    const data = (event.data as any)?.data;
+    // Batch payloads are flat and always carry batch_id; check first because a
+    // failed batch_progress item also sets `error`.
+    if (data?.batch_id != null) {
+      return "ok" in data ? "batch_complete" : "batch_progress";
+    }
     if (data?.error) return "error";
     if (data?.metadata) return "metadata";
     if (data?.conversion) return "conversion";
-    if (data?.batch_progress) return "batch_progress";
-    if (data?.batch_complete) return "batch_complete";
     return "unknown";
   }
 
   let eventType = $derived(qualifyEvent(event));
   let batchProgress = $derived(
     eventType === "batch_progress"
-      ? ((event.data as any).data.batch_progress as BatchProgressEvent)
+      ? ((event.data as any).data as BatchProgressEvent)
       : null,
   );
   let batchComplete = $derived(
     eventType === "batch_complete"
-      ? ((event.data as any).data.batch_complete as BatchCompleteEvent)
+      ? ((event.data as any).data as BatchCompleteEvent)
       : null,
   );
 </script>
@@ -53,16 +56,16 @@
           <a href="/ebook/{event.data.data.conversion?.ebook_id}">this ebook</a>
         {/if}
         {#if eventType === "batch_progress" && batchProgress}
-          Batch conversion in progress: {batchProgress.done} done
+          Converting “{batchProgress.batch_name}”: {batchProgress.done}/{batchProgress.total}
           (<a href="/conversion-batch/{batchProgress.batch_id}">view</a>)
         {/if}
         {#if eventType === "batch_complete" && batchComplete}
           {#if batchComplete.zip_location}
-            Batch conversion complete: {batchComplete.ok + batchComplete.reused}/{batchComplete.total} succeeded
+            “{batchComplete.batch_name}” complete: {batchComplete.ok + batchComplete.reused}/{batchComplete.total} succeeded
             (<a href="/conversion-batch/{batchComplete.batch_id}">details</a>
             · <a href={apiClient.conversionUrl(batchComplete.zip_location)}>Download ZIP</a>)
           {:else}
-            Batch conversion finished: {batchComplete.ok + batchComplete.reused}/{batchComplete.total} succeeded
+            “{batchComplete.batch_name}” finished: {batchComplete.ok + batchComplete.reused}/{batchComplete.total} succeeded
             {#if batchComplete.failed > 0}<span class="text-red-500">({batchComplete.failed} failed)</span>{/if}
             (<a href="/conversion-batch/{batchComplete.batch_id}">details</a>)
           {/if}
