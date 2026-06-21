@@ -26,19 +26,22 @@ function parseWhat(value: string | null): SearchWhat {
 }
 
 export async function load({ url }) {
-  const query = url.searchParams.get("q");
+  const query = url.searchParams.get("q") ?? "";
   const what = parseWhat(url.searchParams.get("what"));
-  if (!query) {
-    return { initialQuery: "", what, results: [] };
-  }
+  const limit = getSearchLimit();
+
+  // Each branch returns a literal `what` correlated with its result type so the
+  // page can narrow `data.results` by `data.what` (discriminated union).
   try {
-    const limit = getSearchLimit();
-    const results =
-      what === "author"
-        ? await apiClient.searchAuthor(query, limit)
-        : what === "series"
-          ? await apiClient.searchSeries(query, limit)
-          : await apiClient.searchEbook(query, limit);
+    if (what === "author") {
+      const results = query ? await apiClient.searchAuthor(query, limit) : [];
+      return { initialQuery: query, what, results };
+    }
+    if (what === "series") {
+      const results = query ? await apiClient.searchSeries(query, limit) : [];
+      return { initialQuery: query, what, results };
+    }
+    const results = query ? await apiClient.searchEbook(query, limit) : [];
     return { initialQuery: query, what, results };
   } catch (e) {
     console.error(`Failed to search ${what}`, e);

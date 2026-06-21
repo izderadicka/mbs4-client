@@ -4,25 +4,26 @@
   import { Input } from "$lib/components/ui/input";
   import { ScrollArea, Scrollbar } from "$lib/components/ui/scroll-area";
   import Loader2 from "@lucide/svelte/icons/loader-circle";
-  import { on } from "svelte/events";
-  import type { EbookSearchItem } from "$lib/api";
+  import type { SearchResultItem } from "$lib/api";
   import { toast } from "svelte-sonner";
   import { apiClient } from "$lib/api/client";
   import { MAX_SEARCH_RESULTS } from "$lib/config";
 
-  // Any search result item ({ doc: { Ebook | Author | Series } }). Defaults below
-  // assume the ebook shape; non-ebook callers pass `load`/`getId`/`renderItem`.
-  type SearchItem = { score?: number; doc: Record<string, any> };
-  // `any` item on the public surface so callers can supply type-specific
-  // load/getId/renderItem for authors and series without variance friction.
-  type Loader = (q: string, signal: AbortSignal) => Promise<any[]>;
+  // A result is one of ebook/author/series, discriminated by the key under `doc`.
+  // The defaults below are ebook-only; non-ebook callers pass `load`/`renderItem`.
+  type Loader = (q: string, signal: AbortSignal) => Promise<SearchResultItem[]>;
   type SelectHandler = (i: number) => void;
   type SearchHandler = (q: string) => void;
 
+  function idOf(item: SearchResultItem): number {
+    if ("Ebook" in item.doc) return item.doc.Ebook.id;
+    if ("Author" in item.doc) return item.doc.Author.id;
+    return item.doc.Series.id;
+  }
+
   // ---- Props (Svelte 5 runes) ----
   let {
-    load = doSearch, // required (q) => Promise<SearchItem[]>
-    getId = (item: any) => item.doc.Ebook.id,
+    load = doSearch, // (q, signal) => Promise<SearchResultItem[]>
     maxResults = 1000, // as safety limit
     placeholder = "Search books…",
     debounceMs = 600,
@@ -38,7 +39,6 @@
     query = $bindable(initialValue),
   }: {
     load?: Loader;
-    getId?: (item: any) => number;
     maxResults?: number;
     placeholder?: string;
     debounceMs?: number;
@@ -46,7 +46,7 @@
     emptyText?: string;
     errorText?: string;
     autoSelectFirst?: boolean;
-    renderItem?: Snippet<[{ book: any }]>;
+    renderItem?: Snippet<[{ book: SearchResultItem }]>;
     onSelect?: SelectHandler | null;
     onSearch?: SearchHandler | null;
     skip_ids?: number[];
@@ -56,7 +56,7 @@
 
   // ---- State ----
   let open = $state(false);
-  let results = $state<SearchItem[]>([]);
+  let results = $state<SearchResultItem[]>([]);
   let loading = $state(false);
   let highlight = $state(-1);
 
@@ -99,7 +99,7 @@
       if (seq !== requestSequence) return; // stale response
       results = (data ?? []).slice(0, maxResults);
       if (skip_ids) {
-        results = results.filter((r) => !skip_ids.includes(getId(r)));
+        results = results.filter((r) => !skip_ids.includes(idOf(r)));
       }
       if (shouldOpen) {
         open = results.length > 0;
@@ -127,10 +127,11 @@
     }
   });
 
+  // Default loader: ebook search.
   async function doSearch(
     q: string,
     signal: AbortSignal,
-  ): Promise<EbookSearchItem[]> {
+  ): Promise<SearchResultItem[]> {
     if (!q.trim()) return [];
 
     const ebooks = await apiClient.searchEbook(q, MAX_SEARCH_RESULTS, signal);
@@ -143,7 +144,7 @@
     if (!book || !onSelect) return;
     open = false;
     highlight = -1;
-    onSelect(getId(book));
+    onSelect(idOf(book));
   }
   function submitSearch() {
     if (!query || !onSearch) return;
@@ -299,15 +300,16 @@
                 }}>
                 {#if renderItem}
                   {@render renderItem({ book })}
-                {:else}
+                {:else if "Ebook" in book.doc}
+                  {@const ebook = book.doc.Ebook}
                   <div class="flex min-w-0 flex-col">
                     <span class="truncate min-w-0 font-medium"
-                      >{book.doc.Ebook.title}</span>
+                      >{ebook.title}</span>
                     <span
                       class="truncate min-w-0 text-xs text-muted-foreground">
-                      {fmtAuthors(book.doc.Ebook.authors)}
-                      {#if book.doc.Ebook.series}
-                        · {fmtSeries(book.doc.Ebook)}
+                      {fmtAuthors(ebook.authors)}
+                      {#if ebook.series}
+                        · {fmtSeries(ebook)}
                       {/if}
                     </span>
                   </div>

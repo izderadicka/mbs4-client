@@ -102,6 +102,11 @@ export interface AuthorSearchItem {
   };
 }
 
+export type SearchResultItem =
+  | EbookSearchItem
+  | AuthorSearchItem
+  | SeriesSearchItem;
+
 export interface TokenPayload {
   sub: string;
   exp: number;

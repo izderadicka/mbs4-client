@@ -10,11 +10,7 @@
   import { apiClient } from "$lib/api/client";
   import { MAX_SEARCH_RESULTS } from "$lib/config";
   import { formatName } from "$lib/utils";
-  import type {
-    EbookSearchItem,
-    AuthorSearchItem,
-    SeriesSearchItem,
-  } from "$lib/api";
+  import type { SearchResultItem } from "$lib/api";
 
   let { data } = $props();
   breadcrumb.path = [{ name: "Search", path: "/search" }];
@@ -36,7 +32,6 @@
       ? {
           load: (q: string, signal: AbortSignal) =>
             apiClient.searchAuthor(q, MAX_SEARCH_RESULTS, signal),
-          getId: (item: AuthorSearchItem) => item.doc.Author.id,
           onSelect: (id: number) => goto(`/author/${id}`),
           placeholder: "Search authors…",
           errorText: "Failed to search authors",
@@ -45,14 +40,12 @@
         ? {
             load: (q: string, signal: AbortSignal) =>
               apiClient.searchSeries(q, MAX_SEARCH_RESULTS, signal),
-            getId: (item: SeriesSearchItem) => item.doc.Series.id,
             onSelect: (id: number) => goto(`/series/${id}`),
             placeholder: "Search series…",
             errorText: "Failed to search series",
           }
         : {
             load: undefined,
-            getId: undefined,
             onSelect: (id: number) => goto(`/ebook/${id}`),
             placeholder: "Search by title, author, or series…",
             errorText: undefined,
@@ -69,12 +62,17 @@
   }
 </script>
 
-{#snippet authorItem({ book }: { book: AuthorSearchItem })}
-  <span class="truncate min-w-0 font-medium">{formatName(book.doc.Author)}</span>
+{#snippet authorItem({ book }: { book: SearchResultItem })}
+  {#if "Author" in book.doc}
+    <span class="truncate min-w-0 font-medium"
+      >{formatName(book.doc.Author)}</span>
+  {/if}
 {/snippet}
 
-{#snippet seriesItem({ book }: { book: SeriesSearchItem })}
-  <span class="truncate min-w-0 font-medium">{book.doc.Series.title}</span>
+{#snippet seriesItem({ book }: { book: SearchResultItem })}
+  {#if "Series" in book.doc}
+    <span class="truncate min-w-0 font-medium">{book.doc.Series.title}</span>
+  {/if}
 {/snippet}
 
 <div class="flex gap-2 items-start">
@@ -97,7 +95,6 @@
         placeholder={cfg.placeholder}
         errorText={cfg.errorText}
         load={cfg.load}
-        getId={cfg.getId}
         renderItem={data.what === "author"
           ? authorItem
           : data.what === "series"
@@ -116,7 +113,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
       {#if data.what === "ebook"}
         {#each data.results as result}
-          {@const ebook = (result as EbookSearchItem).doc.Ebook}
+          {@const ebook = result.doc.Ebook}
           <Card.Root class="p-3 overflow-hidden">
             <Card.Content class="flex gap-4 flex-row">
               <div class="w-[100px] h-[138px] mr-4 shrink-0">
@@ -154,7 +151,7 @@
         {/each}
       {:else if data.what === "author"}
         {#each data.results as result}
-          {@const author = (result as AuthorSearchItem).doc.Author}
+          {@const author = result.doc.Author}
           <a href="/author/{author.id}">
             <Card.Root class="p-3 overflow-hidden hover:bg-accent/40">
               <Card.Content class="flex gap-3 flex-row items-center">
@@ -168,7 +165,7 @@
         {/each}
       {:else}
         {#each data.results as result}
-          {@const series = (result as SeriesSearchItem).doc.Series}
+          {@const series = result.doc.Series}
           <a href="/series/{series.id}">
             <Card.Root class="p-3 overflow-hidden hover:bg-accent/40">
               <Card.Content class="flex gap-3 flex-row items-center">
