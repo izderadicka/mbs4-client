@@ -5,6 +5,9 @@ const SETTINGS_KEY = "mbs4.settings";
 const VALID_SEARCH_LIMITS = [10, 20, 50, 100, 200, 500];
 const DEFAULT_SEARCH_LIMIT = 20;
 
+const SEARCH_WHATS = ["ebook", "author", "series"] as const;
+export type SearchWhat = (typeof SEARCH_WHATS)[number];
+
 function getSearchLimit(): number {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -16,15 +19,29 @@ function getSearchLimit(): number {
   }
 }
 
+function parseWhat(value: string | null): SearchWhat {
+  return SEARCH_WHATS.includes(value as SearchWhat)
+    ? (value as SearchWhat)
+    : "ebook";
+}
+
 export async function load({ url }) {
   const query = url.searchParams.get("q");
+  const what = parseWhat(url.searchParams.get("what"));
   if (!query) {
-    return { initialQuery: "", ebooks: [] };
+    return { initialQuery: "", what, results: [] };
   }
   try {
-    const ebooks = await apiClient.searchEbook(query, getSearchLimit());
-    return { initialQuery: query, ebooks };
+    const limit = getSearchLimit();
+    const results =
+      what === "author"
+        ? await apiClient.searchAuthor(query, limit)
+        : what === "series"
+          ? await apiClient.searchSeries(query, limit)
+          : await apiClient.searchEbook(query, limit);
+    return { initialQuery: query, what, results };
   } catch (e) {
-    console.error("Failed to search ebooks", e);
+    console.error(`Failed to search ${what}`, e);
+    return { initialQuery: query, what, results: [] };
   }
 }

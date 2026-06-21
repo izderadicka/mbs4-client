@@ -10,44 +10,53 @@
   import { apiClient } from "$lib/api/client";
   import { MAX_SEARCH_RESULTS } from "$lib/config";
 
-  type Loader = (q: string, signal: AbortSignal) => Promise<EbookSearchItem[]>;
+  // Any search result item ({ doc: { Ebook | Author | Series } }). Defaults below
+  // assume the ebook shape; non-ebook callers pass `load`/`getId`/`renderItem`.
+  type SearchItem = { score?: number; doc: Record<string, any> };
+  // `any` item on the public surface so callers can supply type-specific
+  // load/getId/renderItem for authors and series without variance friction.
+  type Loader = (q: string, signal: AbortSignal) => Promise<any[]>;
   type SelectHandler = (i: number) => void;
   type SearchHandler = (q: string) => void;
 
   // ---- Props (Svelte 5 runes) ----
-  const {
-    load = doSearch, // required (q) => Promise<BookItem[]>
+  let {
+    load = doSearch, // required (q) => Promise<SearchItem[]>
+    getId = (item: any) => item.doc.Ebook.id,
     maxResults = 1000, // as safety limit
     placeholder = "Search books…",
     debounceMs = 600,
     minChars = 2,
     emptyText = "No matches",
+    errorText = "Failed to search ebooks",
     autoSelectFirst = false,
     onSelect = null,
     onSearch = null,
     renderItem,
     skip_ids = undefined,
     initialValue = "",
+    query = $bindable(initialValue),
   }: {
     load?: Loader;
+    getId?: (item: any) => number;
     maxResults?: number;
     placeholder?: string;
     debounceMs?: number;
     minChars?: number;
     emptyText?: string;
+    errorText?: string;
     autoSelectFirst?: boolean;
-    renderItem?: Snippet<[{ book: EbookSearchItem }]>;
+    renderItem?: Snippet<[{ book: any }]>;
     onSelect?: SelectHandler | null;
     onSearch?: SearchHandler | null;
     skip_ids?: number[];
     initialValue?: string;
+    query?: string;
   } = $props();
 
   // ---- State ----
   let open = $state(false);
-  // svelte-ignore state_referenced_locally
-  let query = $state(initialValue);
-  let results = $state<EbookSearchItem[]>([]);
+  let results = $state<SearchItem[]>([]);
   let loading = $state(false);
   let highlight = $state(-1);
 
@@ -90,7 +99,7 @@
       if (seq !== requestSequence) return; // stale response
       results = (data ?? []).slice(0, maxResults);
       if (skip_ids) {
-        results = results.filter((r) => !skip_ids.includes(r.doc.Ebook.id));
+        results = results.filter((r) => !skip_ids.includes(getId(r)));
       }
       if (shouldOpen) {
         open = results.length > 0;
@@ -101,7 +110,7 @@
         console.log("Search aborted");
       } else {
         console.error("Search error", e);
-        toast.error("Failed to search ebooks");
+        toast.error(errorText);
         results = [];
         open = false;
         highlight = -1;
@@ -134,7 +143,7 @@
     if (!book || !onSelect) return;
     open = false;
     highlight = -1;
-    onSelect(book.doc.Ebook.id);
+    onSelect(getId(book));
   }
   function submitSearch() {
     if (!query || !onSearch) return;
