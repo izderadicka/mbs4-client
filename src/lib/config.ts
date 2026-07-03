@@ -16,3 +16,6 @@ export const DEFAULT_PAGE_SIZE = 10;
 
 // target formats offered for ebook conversion (individual and batch)
 export const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
+
+// formats readable online with the embedded foliate-js reader
+export const READER_FORMATS = ["epub", "mobi", "azw", "azw3", "fb2", "cbz"];

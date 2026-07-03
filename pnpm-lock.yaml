@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      foliate-js:
+        specifier: github:johnfactotum/foliate-js#78914aef4466eb960965702401634c2cb348e9b1
+        version: git+https://git@github.com:johnfactotum/foliate-js.git#78914aef4466eb960965702401634c2cb348e9b1
       openapi-fetch:
         specifier: ^0.15.0
         version: 0.15.2
@@ -1156,6 +1159,10 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  foliate-js@git+https://git@github.com:johnfactotum/foliate-js.git#78914aef4466eb960965702401634c2cb348e9b1:
+    resolution: {commit: 78914aef4466eb960965702401634c2cb348e9b1, repo: git@github.com:johnfactotum/foliate-js.git, type: git}
+    version: 0.0.0
 
   formsnap@2.0.1:
     resolution: {integrity: sha512-iJSe4YKd/W6WhLwKDVJU9FQeaJRpEFuolhju7ZXlRpUVyDdqFdMP8AUBICgnVvQPyP41IPAlBa/v0Eo35iE6wQ==}
@@ -2774,6 +2781,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
+  foliate-js@git+https://git@github.com:johnfactotum/foliate-js.git#78914aef4466eb960965702401634c2cb348e9b1: {}
 
   formsnap@2.0.1(svelte@5.55.9)(sveltekit-superforms@2.30.1(@sveltejs/kit@2.61.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.9)(vite@7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(sass@1.100.0)))(svelte@5.55.9)(typescript@5.9.3)(vite@7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(sass@1.100.0)))(svelte@5.55.9)(typescript@5.9.3)):
     dependencies:

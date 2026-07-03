@@ -59,12 +59,20 @@
 
   async function handleRate(value: number) {
     const updated = await apiClient.rateEbook(ebook.id, value);
-    rating = { average: updated.rating ?? null, count: updated.rating_count ?? null, mine: value };
+    rating = {
+      average: updated.rating ?? null,
+      count: updated.rating_count ?? null,
+      mine: value,
+    };
   }
 
   async function handleDeleteRating() {
     const updated = await apiClient.deleteEbookRating(ebook.id);
-    rating = { average: updated.rating ?? null, count: updated.rating_count ?? null, mine: null };
+    rating = {
+      average: updated.rating ?? null,
+      count: updated.rating_count ?? null,
+      mine: null,
+    };
   }
 
   let menu = $derived([
@@ -116,10 +124,10 @@
       </Button>
     {/if}
     <div class="w-7">
-    <EbookMenu
-      onMenuSelected={onMainMenuSelected}
-      {menu}
-      title="Ebook Actions" />
+      <EbookMenu
+        onMenuSelected={onMainMenuSelected}
+        {menu}
+        title="Ebook Actions" />
     </div>
   </div>
 </div>
@@ -135,7 +143,8 @@
   <SourcesList
     sources={data.sources}
     conversions={data.conversions}
-    ebookId={ebook.id} />
+    ebookId={ebook.id}
+    ebookTitle={ebook.title} />
 </div>
 
 <AddToBookshelfDialog

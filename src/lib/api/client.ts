@@ -172,7 +172,6 @@ export class ApiClient {
   }
 
   private checkResponseCode(response: Response) {
-
     if (response.status === 401) {
       appUser.user = null;
       goto("/login");
@@ -181,7 +180,6 @@ export class ApiClient {
     if (!response.ok) {
       error(response.status, `Request failed with status ${response.status}`);
     }
-
   }
   private checkResponse<T>(response: Response, data?: T): T {
     this.checkResponseCode(response);
@@ -198,8 +196,8 @@ export class ApiClient {
     const headers: Record<string, string> = raw
       ? {}
       : {
-        "Content-Type": "application/json",
-      };
+          "Content-Type": "application/json",
+        };
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
@@ -222,7 +220,11 @@ export class ApiClient {
     try {
       return this.checkResponse(response, data);
     } catch (e) {
-      if (e instanceof Error && e.cause instanceof Response && e.cause.status === 409) {
+      if (
+        e instanceof Error &&
+        e.cause instanceof Response &&
+        e.cause.status === 409
+      ) {
         throw new Error("File with same hash already exists");
       }
       throw e;
@@ -236,16 +238,22 @@ export class ApiClient {
   }
 
   async listAuthorEbooks(authorId: number, queryParams?: ListParams) {
-    const { data, response } = await this.client.GET("/api/author/{id}/ebooks", {
-      params: { path: { id: authorId }, query: queryParams },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/author/{id}/ebooks",
+      {
+        params: { path: { id: authorId }, query: queryParams },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
   async listSeriesEbooks(seriesId: number, queryParams?: ListParams) {
-    const { data, response } = await this.client.GET("/api/series/{id}/ebooks", {
-      params: { path: { id: seriesId }, query: queryParams },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/series/{id}/ebooks",
+      {
+        params: { path: { id: seriesId }, query: queryParams },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
@@ -269,7 +277,9 @@ export class ApiClient {
       params: { path: { id } },
     });
     if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+      throw new Error(`Request failed with status ${response.status}`, {
+        cause: response,
+      });
     }
   }
 
@@ -278,7 +288,9 @@ export class ApiClient {
       params: { path: { id } },
     });
     if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+      throw new Error(`Request failed with status ${response.status}`, {
+        cause: response,
+      });
     }
   }
 
@@ -335,7 +347,9 @@ export class ApiClient {
   }
 
   async listAuthors(queryParams?: ListParams) {
-    const { data, response } = await this.client.GET("/api/author", { params: { query: queryParams } });
+    const { data, response } = await this.client.GET("/api/author", {
+      params: { query: queryParams },
+    });
     return this.checkResponse(response, data);
   }
 
@@ -347,7 +361,9 @@ export class ApiClient {
   }
 
   async listSeries(queryParams?: ListParams) {
-    const { data, response } = await this.client.GET("/api/series", { params: { query: queryParams } });
+    const { data, response } = await this.client.GET("/api/series", {
+      params: { query: queryParams },
+    });
     return this.checkResponse(response, data);
   }
 
@@ -390,13 +406,15 @@ export class ApiClient {
       params: { path: { id: ebookId } },
     });
     return this.checkResponse(response, data);
-
   }
 
   async listEbookConversions(ebookId: number): Promise<EbookConversion[]> {
-    const { data, response } = await this.client.GET("/api/ebook/{id}/conversion", {
-      params: { path: { id: ebookId } },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/ebook/{id}/conversion",
+      {
+        params: { path: { id: ebookId } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
@@ -420,14 +438,16 @@ export class ApiClient {
       params: { path: { id } },
     });
     if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`, { cause: response });
+      throw new Error(`Request failed with status ${response.status}`, {
+        cause: response,
+      });
     }
   }
 
   async mergeSeries(id: number, toId: number): Promise<void> {
     const { response } = await this.client.PUT("/api/series/{id}/merge", {
       params: { path: { id: toId } },
-      body: { series_id: id }
+      body: { series_id: id },
     });
     this.checkResponseCode(response);
   }
@@ -482,7 +502,7 @@ export class ApiClient {
   async mergeAuthor(id: number, toId: number): Promise<void> {
     const { response } = await this.client.PUT("/api/author/{id}/merge", {
       params: { path: { id: toId } },
-      body: { author_id: id }
+      body: { author_id: id },
     });
     this.checkResponseCode(response);
   }
@@ -509,7 +529,11 @@ export class ApiClient {
     this.checkResponseCode(response);
   }
 
-  async rateEbook(id: number, rating: number, description?: string): Promise<Ebook> {
+  async rateEbook(
+    id: number,
+    rating: number,
+    description?: string,
+  ): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook/{id}/rate", {
       params: { path: { id } },
       body: { rating, description },
@@ -518,16 +542,22 @@ export class ApiClient {
   }
 
   async deleteEbookRating(id: number): Promise<Ebook> {
-    const { data, response } = await this.client.DELETE("/api/ebook/{id}/rate", {
-      params: { path: { id } },
-    });
+    const { data, response } = await this.client.DELETE(
+      "/api/ebook/{id}/rate",
+      {
+        params: { path: { id } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
   async getMyEbookRating(id: number): Promise<EbookRating | null> {
-    const { data, response } = await this.client.GET("/api/ebook/{id}/my-rating", {
-      params: { path: { id } },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/ebook/{id}/my-rating",
+      {
+        params: { path: { id } },
+      },
+    );
     if (response.status === 404) {
       return null;
     }
@@ -537,20 +567,29 @@ export class ApiClient {
   async mergeEbook(id: number, toId: number): Promise<void> {
     const { response } = await this.client.PUT("/api/ebook/{id}/merge", {
       params: { path: { id: toId } },
-      body: { ebook_id: id }
+      body: { ebook_id: id },
     });
     return this.checkResponseCode(response);
   }
 
-  async addSourceToEbook(ebookId: number, fileInfo: EbookFileInfo): Promise<Source> {
-    const { data, response } = await this.client.POST("/api/ebook/{id}/source", {
-      body: fileInfo,
-      params: { path: { id: ebookId } },
-    });
+  async addSourceToEbook(
+    ebookId: number,
+    fileInfo: EbookFileInfo,
+  ): Promise<Source> {
+    const { data, response } = await this.client.POST(
+      "/api/ebook/{id}/source",
+      {
+        body: fileInfo,
+        params: { path: { id: ebookId } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
-  async changeEbookCover(ebookId: number, coverInfo: EbookCoverInfo): Promise<Ebook> {
+  async changeEbookCover(
+    ebookId: number,
+    coverInfo: EbookCoverInfo,
+  ): Promise<Ebook> {
     const { data, response } = await this.client.PUT("/api/ebook/{id}/cover", {
       body: coverInfo,
       params: { path: { id: ebookId } },
@@ -589,14 +628,19 @@ export class ApiClient {
 
   async listBookshelves(publicOnly: boolean, queryParams?: ListParams) {
     const url = publicOnly ? "/api/bookshelf/public" : "/api/bookshelf/mine";
-    const { data, response } = await this.client.GET(url, { params: { query: queryParams } });
+    const { data, response } = await this.client.GET(url, {
+      params: { query: queryParams },
+    });
     return this.checkResponse(response, data);
   }
 
   async listBookshelfItems(bookshelfId: number, queryParams?: ListParams) {
-    const { data, response } = await this.client.GET(`/api/bookshelf/{id}/items`, {
-      params: { path: { id: bookshelfId }, query: queryParams },
-    });
+    const { data, response } = await this.client.GET(
+      `/api/bookshelf/{id}/items`,
+      {
+        params: { path: { id: bookshelfId }, query: queryParams },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
@@ -604,10 +648,13 @@ export class ApiClient {
     bookshelfId: number,
     item: CreateBookshelfItem,
   ): Promise<BookshelfItemMutationResponse> {
-    const { data, response } = await this.client.POST("/api/bookshelf/{id}/items", {
-      body: item,
-      params: { path: { id: bookshelfId } },
-    });
+    const { data, response } = await this.client.POST(
+      "/api/bookshelf/{id}/items",
+      {
+        body: item,
+        params: { path: { id: bookshelfId } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
@@ -615,46 +662,70 @@ export class ApiClient {
     bookshelfId: number,
     item: UpdateBookshelfItem,
   ): Promise<BookshelfItemMutationResponse> {
-    const { data, response } = await this.client.PUT("/api/bookshelf/{id}/items/{item_id}", {
-      body: item,
-      params: { path: { id: bookshelfId, item_id: item.id } },
-    });
+    const { data, response } = await this.client.PUT(
+      "/api/bookshelf/{id}/items/{item_id}",
+      {
+        body: item,
+        params: { path: { id: bookshelfId, item_id: item.id } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
   async deleteBookshelfItem(bookshelfId: number, itemId: number) {
-    const { response } = await this.client.DELETE("/api/bookshelf/{id}/items/{item_id}", {
-      params: { path: { id: bookshelfId, item_id: itemId } },
-    });
+    const { response } = await this.client.DELETE(
+      "/api/bookshelf/{id}/items/{item_id}",
+      {
+        params: { path: { id: bookshelfId, item_id: itemId } },
+      },
+    );
     this.checkResponseCode(response);
+  }
+
+  async loadBookFile(
+    kind: "source" | "conversion",
+    path: string,
+  ): Promise<Blob> {
+    const url =
+      kind === "conversion" ? this.conversionUrl(path) : this.downloadUrl(path);
+    const response = await this.fetch(url, { credentials: "include" });
+    if (response.status === 401) {
+      appUser.user = null;
+      goto("/login");
+      throw new Error("Unauthorized");
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to load ebook file (status ${response.status})`);
+    }
+    return await response.blob();
   }
 
   async loadIcon(ebookId: number, signal?: AbortSignal): Promise<Blob | null> {
     const { data } = await this.client.GET("/files/icon/{id}", {
       params: { path: { id: ebookId } },
       parseAs: "blob",
-      signal
+      signal,
     });
     return data || null;
   }
 
   async loadCover(path: string, signal?: AbortSignal): Promise<Blob | null> {
-
     const { data } = await this.client.GET("/files/download/{path}", {
       params: { path: { path } },
       parseAs: "blob",
-      signal
+      signal,
     });
     return data || null;
-
   }
 
-  async loadExtractedCover(path: string, signal?: AbortSignal): Promise<Blob | null> {
-
+  async loadExtractedCover(
+    path: string,
+    signal?: AbortSignal,
+  ): Promise<Blob | null> {
     const { data } = await this.client.GET("/files/download/uploaded/{path}", {
       params: { path: { path } },
       parseAs: "blob",
-      signal
+      signal,
     });
     return data || null;
   }
@@ -665,7 +736,9 @@ export class ApiClient {
       this.client.GET("/api/series/count"),
       this.client.GET("/api/author/count"),
     ]);
-    const [totalEbooks, totalSeries, totalAuthors] = (await res).map((r) => this.checkResponse(r.response, r.data));
+    const [totalEbooks, totalSeries, totalAuthors] = (await res).map((r) =>
+      this.checkResponse(r.response, r.data),
+    );
     return {
       totalEbooks,
       totalSeries,
@@ -683,12 +756,18 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
-  async startBatchConversion(req: BatchConversionRequest): Promise<BatchOperationTicket> {
-    const { data, response } = await this.client.POST("/api/convert/batch", { body: req });
+  async startBatchConversion(
+    req: BatchConversionRequest,
+  ): Promise<BatchOperationTicket> {
+    const { data, response } = await this.client.POST("/api/convert/batch", {
+      body: req,
+    });
     return this.checkResponse(response, data);
   }
 
-  async listConversionBatches(queryParams?: ListParams): Promise<PagedConversionBatch> {
+  async listConversionBatches(
+    queryParams?: ListParams,
+  ): Promise<PagedConversionBatch> {
     const { data, response } = await this.client.GET("/api/conversion-batch", {
       params: { query: queryParams },
     });
@@ -696,16 +775,22 @@ export class ApiClient {
   }
 
   async getConversionBatch(id: number): Promise<ConversionBatch> {
-    const { data, response } = await this.client.GET("/api/conversion-batch/{id}", {
-      params: { path: { id } },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/conversion-batch/{id}",
+      {
+        params: { path: { id } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
   async listConversionBatchItems(id: number): Promise<EbookConversion[]> {
-    const { data, response } = await this.client.GET("/api/conversion-batch/{id}/items", {
-      params: { path: { id } },
-    });
+    const { data, response } = await this.client.GET(
+      "/api/conversion-batch/{id}/items",
+      {
+        params: { path: { id } },
+      },
+    );
     return this.checkResponse(response, data);
   }
 
