@@ -24,6 +24,8 @@ This project uses pnpm (pinned via `packageManager` in `package.json`). Use `pnp
 ## Coding Style & Naming Conventions
 Follow the existing TypeScript and Svelte style: 2-space indentation, double quotes, and Prettier formatting from `.prettierrc`. Name Svelte components in lowercase kebab-case such as `ebook-form.svelte`; keep route files on SvelteKit defaults like `+page.svelte` and `+page.ts`. Export shared helpers from `src/lib` when reused across routes. Do not hand-edit generated API types in `src/lib/api/types.ts`.
 
+Never reformat existing files as part of a functional change: do not run Prettier or `pnpm fmt` over files you did not create, and format only the lines you actually add or change, matching the file's current style. Whole-file reformatting is acceptable only as a dedicated formatting-only commit.
+
 ## Testing Guidelines
 Tests use Vitest with browser-oriented Svelte helpers. Keep tests next to the code they cover when practical, using `*.test.ts` or `*.spec.ts`; examples already exist in `src/routes/page.svelte.test.ts` and `src/demo.spec.ts`. Run `pnpm test` before opening a PR, and run `pnpm check` for type and Svelte diagnostics.
 
