@@ -52,6 +52,11 @@
   // two columns (foliate's default 720px switches to 2 columns too early)
   const MAX_COLUMN_WIDTH = "1024px";
 
+  // paginator defaults reserve 48px top/bottom (for running heads we don't
+  // show) and 7% horizontal gap - use tighter margins around the book page
+  const PAGE_MARGIN = "16px";
+  const PAGE_GAP = "4%";
+
   // book text size in percent, user preference shared by all books
   const FONT_SIZE_KEY = "mbs4.reader.fontSize";
   const FONT_SIZE_STEP = 10;
@@ -226,6 +231,8 @@
         await v.open(file);
         if (disposed) return;
         v.renderer?.setAttribute("max-inline-size", MAX_COLUMN_WIDTH);
+        v.renderer?.setAttribute("margin", PAGE_MARGIN);
+        v.renderer?.setAttribute("gap", PAGE_GAP);
         v.renderer?.setStyles?.(
           contentCSS(mode.current === "dark" ? "dark" : "light", fontSize),
         );
