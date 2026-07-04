@@ -8,8 +8,10 @@
   import * as Table from "$lib/components/ui/table";
   import prettyBytes from "pretty-bytes";
   import DownloadIcon from "@lucide/svelte/icons/download";
+  import BookOpenIcon from "@lucide/svelte/icons/book-open";
   import { Button } from "$lib/components/ui/button";
   import { apiClient } from "$lib/api/client";
+  import { READER_FORMATS } from "$lib/config";
   import SourceMenu from "./source-menu.svelte";
   import Spinner from "$lib/components/ui/spinner/spinner.svelte";
   import { lastEvent } from "$lib/globals.svelte";
@@ -26,6 +28,14 @@
     conversions: EbookConversion[];
     ebookId: number;
   } = $props();
+
+  function isReadable(formatExtension: string): boolean {
+    return READER_FORMATS.includes(formatExtension.toLowerCase());
+  }
+
+  function readerUrl(kind: "source" | "conversion", id: number): string {
+    return `/read?ebook=${ebookId}&${kind}=${id}`;
+  }
 
   let conversionTicketId: string | null = $state(null);
 
@@ -128,6 +138,7 @@
       <Table.Head class="w-[4rem]">Format</Table.Head>
       <Table.Head>Size/Conversion</Table.Head>
       <Table.Head>Download</Table.Head>
+      <Table.Head>Read</Table.Head>
       <Table.Head>More ...</Table.Head>
     </Table.Row>
   </Table.Header>
@@ -150,6 +161,15 @@
             variant="link"><DownloadIcon /></Button
           ></Table.Cell>
         <Table.Cell class="w-3">
+          {#if isReadable(conversion.format_extension)}
+            <Button
+              href={readerUrl("conversion", conversion.id)}
+              target="_blank"
+              title="Read online"
+              variant="link"><BookOpenIcon /></Button>
+          {/if}
+        </Table.Cell>
+        <Table.Cell class="w-3">
           <SourceMenu source={conversion} {onConversionMenuSelected} />
         </Table.Cell>
       </Table.Row>
@@ -162,6 +182,15 @@
           ><Button href={apiClient.downloadUrl(source.location)} variant="link"
             ><DownloadIcon /></Button
           ></Table.Cell>
+        <Table.Cell class="w-3">
+          {#if isReadable(source.format_extension)}
+            <Button
+              href={readerUrl("source", source.id)}
+              target="_blank"
+              title="Read online"
+              variant="link"><BookOpenIcon /></Button>
+          {/if}
+        </Table.Cell>
         <Table.Cell class="w-3">
           <SourceMenu {source} {onSourceMenuSelected} />
         </Table.Cell>

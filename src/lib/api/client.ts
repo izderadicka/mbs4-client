@@ -629,6 +629,20 @@ export class ApiClient {
     this.checkResponseCode(response);
   }
 
+  async loadBookFile(kind: "source" | "conversion", path: string): Promise<Blob> {
+    const url = kind === "conversion" ? this.conversionUrl(path) : this.downloadUrl(path);
+    const response = await this.fetch(url, { credentials: "include" });
+    if (response.status === 401) {
+      appUser.user = null;
+      goto("/login");
+      throw new Error("Unauthorized");
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to load ebook file (status ${response.status})`);
+    }
+    return await response.blob();
+  }
+
   async loadIcon(ebookId: number, signal?: AbortSignal): Promise<Blob | null> {
     const { data } = await this.client.GET("/files/icon/{id}", {
       params: { path: { id: ebookId } },
