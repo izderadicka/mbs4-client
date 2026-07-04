@@ -116,8 +116,15 @@
   function handleKeydown(event: KeyboardEvent) {
     if (!view) return;
     const k = event.key;
-    if (k === "ArrowLeft" || k === "h") view.goLeft();
-    else if (k === "ArrowRight" || k === "l") view.goRight();
+    if (k === "ArrowLeft" || k === "h") {
+      // preventDefault stops native stepping of the focused progress slider
+      // (default step of 1 would slam it to min/max on the 0-1 range)
+      event.preventDefault();
+      view.goLeft();
+    } else if (k === "ArrowRight" || k === "l") {
+      event.preventDefault();
+      view.goRight();
+    }
   }
 
   // forward key presses from inside the book's iframe
