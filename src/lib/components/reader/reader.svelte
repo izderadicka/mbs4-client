@@ -94,7 +94,10 @@
 
   function onRelocate(event: Event) {
     const detail = (event as CustomEvent<RelocateDetail>).detail;
-    fraction = detail.fraction ?? 0;
+    // paging beyond the last page emits a bogus relocate with NaN fraction
+    // (paginator computes (page-1)/(pages-2)) - ignore it entirely
+    if (!Number.isFinite(detail.fraction)) return;
+    fraction = Math.min(1, Math.max(0, detail.fraction));
     locationLabel = detail.pageItem
       ? `Page ${detail.pageItem.label}`
       : detail.location
