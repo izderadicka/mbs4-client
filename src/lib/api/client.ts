@@ -8,6 +8,7 @@ import type {
   BatchOperationTicket,
   Bookshelf,
   BookshelfItemMutationResponse,
+  Conversion,
   ConversionBatch,
   ConversionRequest,
   CreateAuthor,
@@ -60,6 +61,9 @@ function getApiBaseUrl(): string {
   // Otherwise return the base URL of the current window
   return origin;
 }
+
+// how long cached list results (languages, genres, formats) stay valid
+const CACHE_VALIDITY_MS = 1000 * 60 * 60; // 1 hour
 
 export class ApiClient {
   token: string | null = null;
@@ -273,6 +277,20 @@ export class ApiClient {
     }
   }
 
+  async getSource(id: number): Promise<Source> {
+    const { data, response } = await this.client.GET("/api/source/{id}", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async getConversion(id: number): Promise<Conversion> {
+    const { data, response } = await this.client.GET("/api/conversion/{id}", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
   async deleteSource(id: number) {
     const { response } = await this.client.DELETE("/api/source/{id}", {
       params: { path: { id } },
@@ -361,7 +379,7 @@ export class ApiClient {
   async listLanguages(): Promise<readonly LanguageShort[]> {
     if (
       this.langCache &&
-      this.langCache.date > new Date(Date.now() - 1000 * 60 * 60)
+      this.langCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
     ) {
       return this.langCache.data;
     }
@@ -375,7 +393,7 @@ export class ApiClient {
   async listGenres(): Promise<readonly GenreShort[]> {
     if (
       this.genreCache &&
-      this.genreCache.date > new Date(Date.now() - 1000 * 60 * 60)
+      this.genreCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
     ) {
       return this.genreCache.data;
     }
@@ -692,9 +710,18 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
-  async listFormats(): Promise<FormatShort[]> {
+  private formatCache: { date: Date; data: FormatShort[] } | null = null;
+  async listFormats(): Promise<readonly FormatShort[]> {
+    if (
+      this.formatCache &&
+      this.formatCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
+    ) {
+      return this.formatCache.data;
+    }
     const { data, response } = await this.client.GET("/api/format/all");
-    return this.checkResponse(response, data);
+    const formats = this.checkResponse(response, data);
+    this.formatCache = { date: new Date(), data: formats };
+    return formats;
   }
 
   async startBatchConversion(req: BatchConversionRequest): Promise<BatchOperationTicket> {

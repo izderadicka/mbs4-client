@@ -1,13 +1,19 @@
 import { apiClient } from "$lib/api/client";
-import type { Ebook, EbookConversion, EbookSource } from "$lib/api";
+import type { Ebook } from "$lib/api";
 import type { PageLoad } from "./$types";
 
 export type BookFileKind = "source" | "conversion";
 
+export interface ReaderItem {
+  id: number;
+  location: string;
+  extension: string;
+}
+
 export interface ReaderData {
   ebook: Ebook | null;
   kind: BookFileKind;
-  item: EbookSource | EbookConversion | null;
+  item: ReaderItem | null;
   error: string | null;
 }
 
@@ -23,18 +29,26 @@ export const load: PageLoad = async ({ url }): Promise<ReaderData> => {
   }
 
   try {
-    const [ebook, items] = await Promise.all([
+    const [ebook, item, formats] = await Promise.all([
       apiClient.getEbook(ebookId),
       kind === "conversion"
-        ? apiClient.listEbookConversions(ebookId)
-        : apiClient.listEbookSources(ebookId),
+        ? apiClient.getConversion(itemId)
+        : apiClient.getSource(itemId),
+      apiClient.listFormats(),
     ]);
-    const item = items.find((i) => i.id === itemId) ?? null;
+    // Conversion does not carry ebook_id, can be checked only for source
+    if ("ebook_id" in item && item.ebook_id !== ebookId) {
+      return { ebook, kind, item: null, error: `Ebook ${kind} not found` };
+    }
     return {
       ebook,
       kind,
-      item,
-      error: item ? null : `Ebook ${kind} not found`,
+      item: {
+        id: item.id,
+        location: item.location,
+        extension: formats.find((f) => f.id === item.format_id)?.extension ?? "",
+      },
+      error: null,
     };
   } catch (e) {
     console.error("Failed to load ebook info", e);
