@@ -39,6 +39,10 @@
   let tocOpen = $state(false);
   let currentTocHref: string | null = $state(null);
 
+  // single text column may grow up to this width; wider views split into
+  // two columns (foliate's default 720px switches to 2 columns too early)
+  const MAX_COLUMN_WIDTH = "1024px";
+
   const percentFormat = new Intl.NumberFormat("en", { style: "percent" });
   let percent = $derived(percentFormat.format(fraction));
 
@@ -170,6 +174,7 @@
         v.addEventListener("load", onDocumentLoad);
         await v.open(file);
         if (disposed) return;
+        v.renderer?.setAttribute("max-inline-size", MAX_COLUMN_WIDTH);
         v.renderer?.setStyles?.(
           contentCSS(mode.current === "dark" ? "dark" : "light"),
         );
