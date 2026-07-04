@@ -41,7 +41,7 @@
       const blob = await apiClient.loadBookFile(data.kind, data.item.location);
       file = new File(
         [blob],
-        bookFileName(data.item.location, data.item.format_extension),
+        bookFileName(data.item.location, data.item.extension),
       );
     } catch (e) {
       console.error("Failed to load ebook file", e);

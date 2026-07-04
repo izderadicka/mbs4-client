@@ -8,6 +8,7 @@ import type {
   BatchOperationTicket,
   Bookshelf,
   BookshelfItemMutationResponse,
+  Conversion,
   ConversionBatch,
   ConversionRequest,
   CreateAuthor,
@@ -271,6 +272,20 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`, { cause: response });
     }
+  }
+
+  async getSource(id: number): Promise<Source> {
+    const { data, response } = await this.client.GET("/api/source/{id}", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
+  }
+
+  async getConversion(id: number): Promise<Conversion> {
+    const { data, response } = await this.client.GET("/api/conversion/{id}", {
+      params: { path: { id } },
+    });
+    return this.checkResponse(response, data);
   }
 
   async deleteSource(id: number) {
@@ -692,9 +707,18 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
-  async listFormats(): Promise<FormatShort[]> {
+  private formatCache: { date: Date; data: FormatShort[] } | null = null;
+  async listFormats(): Promise<readonly FormatShort[]> {
+    if (
+      this.formatCache &&
+      this.formatCache.date > new Date(Date.now() - 1000 * 60 * 60)
+    ) {
+      return this.formatCache.data;
+    }
     const { data, response } = await this.client.GET("/api/format/all");
-    return this.checkResponse(response, data);
+    const formats = this.checkResponse(response, data);
+    this.formatCache = { date: new Date(), data: formats };
+    return formats;
   }
 
   async startBatchConversion(req: BatchConversionRequest): Promise<BatchOperationTicket> {

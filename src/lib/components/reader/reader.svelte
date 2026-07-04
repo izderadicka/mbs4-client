@@ -1,12 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { mode } from "mode-watcher";
+  import { mode, toggleMode } from "mode-watcher";
   import { Button } from "$lib/components/ui/button";
   import * as Sheet from "$lib/components/ui/sheet";
   import Spinner from "$lib/components/ui/spinner/spinner.svelte";
   import MenuIcon from "@lucide/svelte/icons/menu";
   import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+  import SunIcon from "@lucide/svelte/icons/sun";
+  import MoonIcon from "@lucide/svelte/icons/moon";
+  import AArrowUpIcon from "@lucide/svelte/icons/a-arrow-up";
+  import AArrowDownIcon from "@lucide/svelte/icons/a-arrow-down";
   import type {
     FoliateView,
     RelocateDetail,
@@ -43,6 +47,31 @@
   // two columns (foliate's default 720px switches to 2 columns too early)
   const MAX_COLUMN_WIDTH = "1024px";
 
+  // book text size in percent, user preference shared by all books
+  const FONT_SIZE_KEY = "mbs4.reader.fontSize";
+  const FONT_SIZE_STEP = 10;
+  const FONT_SIZE_MIN = 60;
+  const FONT_SIZE_MAX = 200;
+
+  function loadFontSize(): number {
+    const stored = parseInt(localStorage.getItem(FONT_SIZE_KEY) ?? "");
+    return stored >= FONT_SIZE_MIN && stored <= FONT_SIZE_MAX ? stored : 100;
+  }
+
+  let fontSize = $state(loadFontSize());
+
+  function changeFontSize(delta: number) {
+    fontSize = Math.min(
+      FONT_SIZE_MAX,
+      Math.max(FONT_SIZE_MIN, fontSize + delta),
+    );
+    try {
+      localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
+    } catch {
+      // best effort only
+    }
+  }
+
   const percentFormat = new Intl.NumberFormat("en", { style: "percent" });
   let percent = $derived(percentFormat.format(fraction));
 
@@ -64,11 +93,12 @@
 
   // Styles injected into the book's iframe; color-scheme follows the app
   // theme instead of the OS preference
-  function contentCSS(scheme: "light" | "dark"): string {
+  function contentCSS(scheme: "light" | "dark", sizePct: number): string {
     return `
       @namespace epub "http://www.idpf.org/2007/ops";
       html {
         color-scheme: ${scheme};
+        font-size: ${sizePct}%;
       }
       ${scheme === "dark" ? "a:link { color: lightblue; }" : ""}
       p, li, blockquote, dd {
@@ -128,6 +158,10 @@
     } else if (k === "ArrowRight" || k === "l") {
       event.preventDefault();
       view.goRight();
+    } else if (k === " ") {
+      // reading-order forward regardless of book direction
+      event.preventDefault();
+      view.next();
     }
   }
 
@@ -150,8 +184,9 @@
 
   $effect(() => {
     const scheme = mode.current === "dark" ? "dark" : "light";
+    const size = fontSize;
     if (!loading && view) {
-      view.renderer?.setStyles?.(contentCSS(scheme));
+      view.renderer?.setStyles?.(contentCSS(scheme, size));
     }
   });
 
@@ -176,7 +211,7 @@
         if (disposed) return;
         v.renderer?.setAttribute("max-inline-size", MAX_COLUMN_WIDTH);
         v.renderer?.setStyles?.(
-          contentCSS(mode.current === "dark" ? "dark" : "light"),
+          contentCSS(mode.current === "dark" ? "dark" : "light", fontSize),
         );
         bookTitle =
           title ||
@@ -244,6 +279,25 @@
           >{bookAuthor}</span>
       {/if}
     </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      title="Decrease font size"
+      disabled={fontSize <= FONT_SIZE_MIN}
+      onclick={() => changeFontSize(-FONT_SIZE_STEP)}
+      ><AArrowDownIcon /></Button>
+    <Button
+      variant="ghost"
+      size="icon"
+      title="Increase font size"
+      disabled={fontSize >= FONT_SIZE_MAX}
+      onclick={() => changeFontSize(FONT_SIZE_STEP)}><AArrowUpIcon /></Button>
+    <Button variant="ghost" size="icon" title="Toggle theme" onclick={toggleMode}>
+      <SunIcon
+        class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <MoonIcon
+        class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </Button>
     <span class="text-muted-foreground w-16 text-right text-xs"
       >{loading || error ? "" : `${percent}`}</span>
   </header>
