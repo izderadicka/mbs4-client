@@ -196,8 +196,8 @@ export class ApiClient {
     const headers: Record<string, string> = raw
       ? {}
       : {
-          "Content-Type": "application/json",
-        };
+        "Content-Type": "application/json",
+      };
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
