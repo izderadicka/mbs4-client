@@ -135,8 +135,7 @@
   <SourcesList
     sources={data.sources}
     conversions={data.conversions}
-    ebookId={ebook.id}
-    ebookTitle={ebook.title} />
+    ebookId={ebook.id} />
 </div>
 
 <AddToBookshelfDialog

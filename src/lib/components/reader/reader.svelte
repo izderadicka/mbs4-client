@@ -16,11 +16,15 @@
   let {
     file,
     storageKey,
-    fallbackTitle,
+    title,
+    author,
   }: {
     file: File;
     storageKey: string;
-    fallbackTitle?: string;
+    // metadata from the application; when missing, metadata embedded in the
+    // book file is used as backup
+    title?: string;
+    author?: string;
   } = $props();
 
   let container: HTMLDivElement;
@@ -160,10 +164,10 @@
           contentCSS(mode.current === "dark" ? "dark" : "light"),
         );
         bookTitle =
+          title ||
           formatMetadataText(v.book.metadata?.title) ||
-          fallbackTitle ||
           file.name;
-        bookAuthor = formatMetadataText(v.book.metadata?.author);
+        bookAuthor = author || formatMetadataText(v.book.metadata?.author);
         toc = v.book.toc ?? [];
         const lastLocation = localStorage.getItem(storageKey) ?? undefined;
         loading = false;

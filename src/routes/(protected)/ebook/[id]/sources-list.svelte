@@ -23,26 +23,18 @@
     sources,
     conversions,
     ebookId,
-    ebookTitle,
   }: {
     sources: EbookSource[];
     conversions: EbookConversion[];
     ebookId: number;
-    ebookTitle?: string;
   } = $props();
 
   function isReadable(formatExtension: string): boolean {
     return READER_FORMATS.includes(formatExtension.toLowerCase());
   }
 
-  function readerUrl(
-    kind: "source" | "conversion",
-    location: string,
-    ext: string,
-  ): string {
-    const params = new URLSearchParams({ kind, path: location, ext });
-    if (ebookTitle) params.set("title", ebookTitle);
-    return `/read?${params.toString()}`;
+  function readerUrl(kind: "source" | "conversion", id: number): string {
+    return `/read?ebook=${ebookId}&${kind}=${id}`;
   }
 
   let conversionTicketId: string | null = $state(null);
@@ -171,11 +163,7 @@
         <Table.Cell class="w-3">
           {#if isReadable(conversion.format_extension)}
             <Button
-              href={readerUrl(
-                "conversion",
-                conversion.location,
-                conversion.format_extension,
-              )}
+              href={readerUrl("conversion", conversion.id)}
               target="_blank"
               title="Read online"
               variant="link"><BookOpenIcon /></Button>
@@ -197,11 +185,7 @@
         <Table.Cell class="w-3">
           {#if isReadable(source.format_extension)}
             <Button
-              href={readerUrl(
-                "source",
-                source.location,
-                source.format_extension,
-              )}
+              href={readerUrl("source", source.id)}
               target="_blank"
               title="Read online"
               variant="link"><BookOpenIcon /></Button>
