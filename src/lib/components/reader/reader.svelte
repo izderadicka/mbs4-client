@@ -172,6 +172,10 @@
       // reading-order forward regardless of book direction
       event.preventDefault();
       view.next();
+    } else if (k === "m" || k === "M") {
+      // toggle header/footer, same as clicking the book page
+      event.preventDefault();
+      chromeVisible = !chromeVisible;
     }
   }
 
@@ -342,6 +346,11 @@
       </div>
     {/if}
     <div bind:this={container} class="h-full w-full"></div>
+    {#if !chromeVisible && !loading && !error}
+      <span
+        class="text-muted-foreground pointer-events-none absolute top-0 right-1 text-[10px] leading-none tabular-nums"
+        >{percent}</span>
+    {/if}
   </div>
 
   {#if chromeVisible}
