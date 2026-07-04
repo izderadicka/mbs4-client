@@ -62,6 +62,9 @@ function getApiBaseUrl(): string {
   return origin;
 }
 
+// how long cached list results (languages, genres, formats) stay valid
+const CACHE_VALIDITY_MS = 1000 * 60 * 60; // 1 hour
+
 export class ApiClient {
   token: string | null = null;
   baseUrl: string;
@@ -376,7 +379,7 @@ export class ApiClient {
   async listLanguages(): Promise<readonly LanguageShort[]> {
     if (
       this.langCache &&
-      this.langCache.date > new Date(Date.now() - 1000 * 60 * 60)
+      this.langCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
     ) {
       return this.langCache.data;
     }
@@ -390,7 +393,7 @@ export class ApiClient {
   async listGenres(): Promise<readonly GenreShort[]> {
     if (
       this.genreCache &&
-      this.genreCache.date > new Date(Date.now() - 1000 * 60 * 60)
+      this.genreCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
     ) {
       return this.genreCache.data;
     }
@@ -711,7 +714,7 @@ export class ApiClient {
   async listFormats(): Promise<readonly FormatShort[]> {
     if (
       this.formatCache &&
-      this.formatCache.date > new Date(Date.now() - 1000 * 60 * 60)
+      this.formatCache.date > new Date(Date.now() - CACHE_VALIDITY_MS)
     ) {
       return this.formatCache.data;
     }
