@@ -110,7 +110,21 @@
         color-scheme: ${scheme};
         font-size: ${sizePct}%;
       }
-      ${scheme === "dark" ? "a:link { color: lightblue; }" : ""}
+      ${
+        scheme === "dark"
+          ? `
+      /* color-scheme only sets the default text color; books that hardcode
+         their own color/background (common in EPUB and MOBI) would keep black
+         text on the dark page. Force a light color and let the dark canvas
+         show through. a:link keeps its blue via higher specificity. */
+      html, body, body * {
+        color: #cfcfcf !important;
+        background-color: transparent !important;
+      }
+      a:link { color: lightblue !important; }
+      `
+          : ""
+      }
       p, li, blockquote, dd {
         line-height: 1.4;
         text-align: justify;
