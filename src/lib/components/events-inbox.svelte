@@ -28,27 +28,18 @@
 
   const unread = $derived(events.items.filter((e) => !e.read).length);
 
-  let lastEventId: string | null = null;
+  const LAST_EVENT_ID_KEY = "sse:lastEventId";
+  const RECONNECT_DELAY = 5_000;
 
-  //   // ---- Load persisted state (client only)
-  //   if (typeof window !== "undefined") {
-  //     const saved = localStorage.getItem("sse:events");
-  //     if (saved) {
-  //       try {
-  //         events = JSON.parse(saved) as EventItem[];
-  //       } catch {}
-  //     }
-  //     lastEventId = localStorage.getItem("sse:lastEventId");
-  //   }
-
-  //   // ---- Persist changes
-  //   $effect(() => {
-  //     if (typeof window === "undefined") return;
-  //     localStorage.setItem("sse:events", JSON.stringify(events.slice(-maxItems)));
-  //     if (lastEventId) localStorage.setItem("sse:lastEventId", lastEventId);
-  //   });
+  let lastEventId: string | null =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem(LAST_EVENT_ID_KEY)
+      : null;
+  // Ids already received this session - drops duplicates from server replay
+  const seenIds = new Set<string>();
 
   let es: EventSource | null = null;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   // if appUser changes restart events
   $effect(() => {
@@ -62,19 +53,45 @@
     console.log("Staring events");
     es = apiClient.createEventSource(lastEventId);
 
-    es.onopen = () => (connected = true);
+    es.onopen = () => {
+      connected = true;
+      clearReconnectTimer();
+    };
     es.onerror = (e) => {
       connected = false;
       console.error(e);
+      // Browser retries CONNECTING streams itself, but never a CLOSED one
+      if (es?.readyState === EventSource.CLOSED && !reconnectTimer) {
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          stopEvents();
+          startEvents();
+        }, RECONNECT_DELAY);
+      }
     };
 
     es.onmessage = (e: MessageEvent) => {
       console.log(e);
-      push({ id: e.lastEventId || null, data: JSON.parse(e.data) });
+      const id = e.lastEventId || null;
+      if (id) {
+        lastEventId = id;
+        sessionStorage.setItem(LAST_EVENT_ID_KEY, id);
+        if (seenIds.has(id)) return;
+        seenIds.add(id);
+      }
+      push({ id, data: JSON.parse(e.data) });
     };
   }
 
+  function clearReconnectTimer() {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  }
+
   function stopEvents() {
+    clearReconnectTimer();
     if (es) {
       es.close();
       es = null;
@@ -123,7 +140,6 @@
 
   function clearAll() {
     events.items = [];
-    // if (typeof window !== "undefined") localStorage.removeItem("sse:events");
   }
 </script>
 

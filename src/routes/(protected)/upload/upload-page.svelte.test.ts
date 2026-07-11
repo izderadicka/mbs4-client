@@ -122,6 +122,37 @@ describe("upload/+page.svelte", () => {
     });
   });
 
+  it("finds the metadata event even when it is not the newest event", async () => {
+    render(UploadPage);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Trigger Upload" }));
+
+    events.items = [
+      {
+        id: "evt-other-1",
+        data: { data: { operation_id: 11, batch_id: 1, progress: 0.5 } },
+      },
+      {
+        id: "evt-match",
+        data: {
+          data: {
+            operation_id: 77,
+            metadata,
+          },
+        },
+      },
+      {
+        id: "evt-other-2",
+        data: { data: { operation_id: 11, batch_id: 1, progress: 0.9 } },
+      },
+    ] as any;
+
+    await waitFor(() => {
+      expect(screen.getByText("3. Search existing ebooks")).toBeTruthy();
+      expect(screen.getByText("Metadata: The Tombs of Atuan")).toBeTruthy();
+    });
+  });
+
   it("assigns the uploaded file to an existing ebook from the search step", async () => {
     addFileToEbook.mockResolvedValue({ id: 10 });
 

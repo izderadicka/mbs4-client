@@ -14,7 +14,7 @@
   import { READER_FORMATS } from "$lib/config";
   import SourceMenu from "./source-menu.svelte";
   import Spinner from "$lib/components/ui/spinner/spinner.svelte";
-  import { lastEvent } from "$lib/globals.svelte";
+  import { events } from "$lib/globals.svelte";
   import { toast } from "svelte-sonner";
   import DeleteDialog from "$lib/components/delete-dialog.svelte";
   import MoveSourceDialog from "$lib/components/move-source-dialog.svelte";
@@ -51,30 +51,29 @@
 
   $effect(() => {
     if (!conversionTicketId) return;
-    const event = lastEvent();
-    if (event && event.data) {
-      const result = (event.data as any).data as ConversionResult;
-      if (result.operation_id === conversionTicketId) {
-        conversionTicketId = null;
-        if (result.error) {
-          console.error("Conversion failed", result.error);
-          toast.error("Conversion failed: " + result.error);
-          return;
-        }
-        console.log("conversion done", result);
-        if (result.conversion) {
-          apiClient
-            .listEbookConversions(ebookId)
-            .then((res) => {
-              conversions = res;
-            })
-            .catch((error) => {
-              console.error("Failed to list conversions", error);
-            });
-          // TODO: update
-          // conversions = [result.conversion, ...conversions];
-        }
-      }
+    const event = events.items.find(
+      (e) =>
+        ((e.data as any)?.data as ConversionResult)?.operation_id ===
+        conversionTicketId,
+    );
+    if (!event) return;
+    const result = (event.data as any).data as ConversionResult;
+    conversionTicketId = null;
+    if (result.error) {
+      console.error("Conversion failed", result.error);
+      toast.error("Conversion failed: " + result.error);
+      return;
+    }
+    console.log("conversion done", result);
+    if (result.conversion) {
+      apiClient
+        .listEbookConversions(ebookId)
+        .then((res) => {
+          conversions = res;
+        })
+        .catch((error) => {
+          console.error("Failed to list conversions", error);
+        });
     }
   });
 

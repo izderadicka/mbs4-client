@@ -7,12 +7,6 @@ export const appUser: { user: User | null; failedLogin: boolean } = $state({
 });
 export const breadcrumb: { path: BreadcrumbItem[] } = $state({ path: [] });
 export const events = $state<{ items: EventItem[] }>({ items: [] });
-const _lastEvent = $derived.by(() =>
-  events.items.length > 0 ? events.items[events.items.length - 1] : null,
-);
-export function lastEvent() {
-  return _lastEvent;
-}
 
 export function hasRole(role: Role): boolean {
   return !!appUser.user?.roles.includes(role);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import UploadForm from "./upload-form.svelte";
-  import { breadcrumb, lastEvent } from "$lib/globals.svelte";
+  import { breadcrumb, events } from "$lib/globals.svelte";
   import type {
     Ebook,
     EbookDoc,
@@ -47,20 +47,22 @@
 
   $effect(() => {
     if (stage === "metadata" && metaTicket) {
-      const event = lastEvent();
+      const event = events.items.find(
+        (e) =>
+          ((e.data as any)?.data as MetaResult)?.operation_id ===
+          metaTicket?.id,
+      );
       if (event && event.data) {
         const result = (event.data as any).data as MetaResult;
-        if (result.operation_id === metaTicket.id) {
-          if (!result.error && result.metadata) {
-            metadata = result.metadata;
-            stage = "select";
-          } else {
-            console.error("Failed to retrieve metadata", result);
-            error = result.error || "Unknown error while retrieving metadata";
-            stage = "select";
-          }
-          metaTicket = null;
+        if (!result.error && result.metadata) {
+          metadata = result.metadata;
+          stage = "select";
+        } else {
+          console.error("Failed to retrieve metadata", result);
+          error = result.error || "Unknown error while retrieving metadata";
+          stage = "select";
         }
+        metaTicket = null;
       }
     }
   });
