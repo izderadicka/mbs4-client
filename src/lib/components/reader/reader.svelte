@@ -11,11 +11,14 @@
   import MoonIcon from "@lucide/svelte/icons/moon";
   import AArrowUpIcon from "@lucide/svelte/icons/a-arrow-up";
   import AArrowDownIcon from "@lucide/svelte/icons/a-arrow-down";
+  import HeadphonesIcon from "@lucide/svelte/icons/headphones";
   import type {
     FoliateView,
     RelocateDetail,
     TOCItem,
   } from "foliate-js/view.js";
+  import SpeechControls from "./speech-controls.svelte";
+  import { TtsController } from "$lib/reader/tts/controller.svelte";
 
   let {
     file,
@@ -47,6 +50,20 @@
   let currentTocHref: string | null = $state(null);
   // svelte-ignore state_referenced_locally
   let chromeVisible = $state(showBars);
+
+  // read aloud (TTS): control bar visibility + orchestration
+  const tts = new TtsController(() => view);
+  let ttsEnabled = $state(false);
+
+  async function toggleTts() {
+    if (ttsEnabled) {
+      ttsEnabled = false;
+      await tts.disable();
+    } else {
+      ttsEnabled = true;
+      await tts.enable();
+    }
+  }
 
   // single text column may grow up to this width; wider views split into
   // two columns (foliate's default 720px switches to 2 columns too early)
@@ -190,6 +207,14 @@
       // toggle header/footer, same as clicking the book page
       event.preventDefault();
       chromeVisible = !chromeVisible;
+    } else if ((k === "p" || k === "P") && ttsEnabled) {
+      // play/pause read aloud
+      event.preventDefault();
+      if (tts.status === "playing" || tts.status === "buffering") {
+        tts.pause();
+      } else {
+        void tts.play();
+      }
     }
   }
 
@@ -272,6 +297,7 @@
     return () => {
       disposed = true;
       window.removeEventListener("keydown", handleKeydown);
+      void tts.dispose();
       view?.close();
       view?.remove();
       view = null;
@@ -335,6 +361,13 @@
       <Button
         variant="ghost"
         size="icon"
+        title="Read aloud"
+        class={ttsEnabled ? "text-primary" : ""}
+        disabled={loading || !!error}
+        onclick={toggleTts}><HeadphonesIcon /></Button>
+      <Button
+        variant="ghost"
+        size="icon"
         title="Toggle theme"
         onclick={toggleMode}>
         <SunIcon
@@ -366,6 +399,10 @@
         >{percent}</span>
     {/if}
   </div>
+
+  {#if ttsEnabled}
+    <SpeechControls controller={tts} />
+  {/if}
 
   {#if chromeVisible}
     <footer class="flex h-12 shrink-0 items-center gap-2 border-t px-2">

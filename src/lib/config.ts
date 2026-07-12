@@ -19,3 +19,22 @@ export const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
 
 // formats readable online with the embedded foliate-js reader
 export const READER_FORMATS = ["epub", "mobi", "azw", "azw3", "fb2", "cbz"];
+
+// TTS (read aloud) - REST service path, relative to API base URL
+export const TTS_API_PATH = "/api/tts";
+// keep at least this much synthesized audio queued ahead of playback so
+// short TTS service outages don't interrupt speech
+export const TTS_TARGET_BUFFER_S = 30;
+// ... but always at least this many sentences (short sentences => short audio)
+export const TTS_MIN_LOOKAHEAD_SENTENCES = 5;
+// hard cap on sentences buffered ahead (bounds memory for decoded audio)
+export const TTS_MAX_LOOKAHEAD_SENTENCES = 20;
+// concurrent synthesis requests to the TTS service
+export const TTS_MAX_CONCURRENT_SYNTH = 2;
+// silence inserted between sentences during playback
+export const TTS_SENTENCE_GAP_S = 0.3;
+// retry backoff for transient TTS service failures
+export const TTS_RETRY_INITIAL_MS = 1000;
+export const TTS_RETRY_MAX_MS = 15000;
+// give up (terminal error) when a sentence cannot be synthesized this long
+export const TTS_RETRY_WINDOW_MS = 90000;
