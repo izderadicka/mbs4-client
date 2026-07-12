@@ -53,6 +53,10 @@ export class TtsController {
   #highlighted: string | null = null;
   #selfNav = 0;
   #disposed = false;
+  // bumped whenever playback intent changes (stop, new play, navigation) so
+  // still-awaiting async operations from an older intent abort instead of
+  // restarting the pipeline after the user stopped it
+  #op = 0;
 
   #onDrawAnnotation = (event: Event) => {
     const { draw } = (event as CustomEvent<DrawAnnotationDetail>).detail;
@@ -181,8 +185,10 @@ export class TtsController {
 
   async playFrom(cfi: string | null): Promise<void> {
     if (!this.#pipeline || !this.#source) return;
+    const op = ++this.#op;
     this.errorMessage = null;
     const cursor = await this.#source.sentenceAt(cfi ?? "");
+    if (op !== this.#op) return; // superseded by stop/another play
     if (!cursor) {
       this.status = "idle";
       toast.info("No readable text at this location");
@@ -199,6 +205,7 @@ export class TtsController {
 
   stop(): void {
     if (this.status === "off") return;
+    this.#op++;
     this.#pipeline?.stop();
     this.#removeHighlight();
     this.currentSentence = null;
@@ -215,12 +222,13 @@ export class TtsController {
 
   async #jump(dir: 1 | -1): Promise<void> {
     if (!this.#pipeline || !this.#source) return;
+    const op = ++this.#op;
     const from = this.currentSentence?.cfi ?? this.#currentLocation();
     if (!from) return;
     const cursor = await this.#source.sentenceAt(from);
     if (!cursor) return;
     const target = dir === 1 ? await cursor.next() : await cursor.prev();
-    if (!target) return;
+    if (!target || op !== this.#op) return;
     this.#pipeline.stop();
     await this.playFrom(target.cfi);
   }
@@ -360,6 +368,7 @@ export class TtsController {
     } else {
       // paused/error: forget the interrupted position, next play starts
       // from the new location
+      this.#op++;
       this.currentSentence = null;
       this.status = "idle";
     }

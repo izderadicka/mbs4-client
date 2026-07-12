@@ -32,6 +32,8 @@ export class SpeechPlayer {
   // next item is due (gap elapsed / enqueued) but playback is paused
   #startOnResume = false;
   #destroyed = false;
+  // bumped on flush so in-flight decodes cannot re-queue dropped audio
+  #flushGeneration = 0;
 
   constructor(onEvent?: (e: PlayerEvent) => void) {
     this.onEvent = onEvent ?? (() => {});
@@ -59,16 +61,19 @@ export class SpeechPlayer {
 
   async enqueue(id: number, audio: SynthesisResult): Promise<void> {
     if (this.#destroyed) return;
+    const generation = this.#flushGeneration;
     const ctx = this.#ensureContext();
     let buffer: AudioBuffer;
     try {
       // copy: decodeAudioData detaches the buffer, callers may retain theirs
       buffer = await ctx.decodeAudioData(audio.data.slice(0));
     } catch (error) {
-      this.onEvent({ type: "item-error", id, error });
+      if (generation === this.#flushGeneration && !this.#destroyed) {
+        this.onEvent({ type: "item-error", id, error });
+      }
       return;
     }
-    if (this.#destroyed) return;
+    if (this.#destroyed || generation !== this.#flushGeneration) return;
     this.#queue.push({ id, buffer });
     if (this.#playing && !this.#current && !this.#gapTimer) {
       this.#startNext();
@@ -97,6 +102,7 @@ export class SpeechPlayer {
 
   // stop current playback and drop everything queued
   flush(): void {
+    this.#flushGeneration++;
     if (this.#gapTimer) {
       clearTimeout(this.#gapTimer);
       this.#gapTimer = null;

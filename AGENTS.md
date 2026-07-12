@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`src/routes` contains SvelteKit route modules, including authenticated pages under `src/routes/(protected)`. Shared code lives in `src/lib`: reusable UI components in `src/lib/components`, API helpers in `src/lib/api`, app config and globals in `src/lib/config.ts` and `src/lib/globals.svelte.ts`, and shared types/schemas in `src/lib/types` and `src/lib/schemas.ts`. Static assets live in `static/`. OpenAPI input is stored in `openapi/openapi.json`; generated client types are written to `src/lib/api/types.ts`.
+`src/routes` contains SvelteKit route modules, including authenticated pages under `src/routes/(protected)`. Shared code lives in `src/lib`: reusable UI components in `src/lib/components`, API helpers in `src/lib/api`, app config and globals in `src/lib/config.ts` and `src/lib/globals.svelte.ts`, and shared types/schemas in `src/lib/types` and `src/lib/schemas.ts`. The reader's read-aloud (TTS) modules live in `src/lib/reader/tts` (provider-agnostic service interface, sentence iterator, WebAudio playback pipeline, controller). Static assets live in `static/`. OpenAPI input is stored in `openapi/openapi.json`; generated client types are written to `src/lib/api/types.ts`.
 
 ## Svelte guidelines
 This is Svelte 5 project Use runes ($state, $derived, $effect, $props), snippets instead of slots,no export let, 
