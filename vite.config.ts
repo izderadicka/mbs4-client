@@ -41,7 +41,8 @@ export default defineConfig({
     environment: "happy-dom",
     pool: "threads",
     include: ["src/**/*.{test,spec}.{js,ts}"],
-    exclude: ["src/lib/server/**"],
+    // *.browser.* suites need a real browser - see vitest.browser.config.ts
+    exclude: ["src/lib/server/**", "src/**/*.browser.{test,spec}.{js,ts}"],
     setupFiles: ["./vitest-setup.ts"],
   },
 });
