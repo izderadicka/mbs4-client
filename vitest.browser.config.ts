@@ -9,7 +9,18 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: playwright(),
+      // headless by default (CI, containers); override locally with
+      // --browser.headless=false to watch the tests run
+      headless: true,
+      provider: playwright({
+        launchOptions: {
+          // override when the Playwright-managed download is unavailable
+          // (e.g. sandboxed environments with a preinstalled browser)
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+          // WebAudio tests must start playback without a user gesture
+          args: ["--autoplay-policy=no-user-gesture-required"],
+        },
+      }),
       instances: [{ browser: "chromium" }],
     },
     include: ["src/**/*.browser.{test,spec}.{js,ts}"],
