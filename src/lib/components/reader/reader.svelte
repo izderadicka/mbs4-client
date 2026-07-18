@@ -19,6 +19,7 @@
   } from "foliate-js/view.js";
   import SpeechControls from "./speech-controls.svelte";
   import { TtsController } from "$lib/reader/tts/controller.svelte";
+  import { LongPressRecognizer } from "$lib/gestures";
 
   let {
     file,
@@ -221,14 +222,10 @@
   // read-aloud jump gesture: while TTS is enabled, ctrl+click (or a long
   // press on touch screens) starts speaking from the clicked sentence;
   // with TTS off the gestures keep their default behavior
-  const LONG_PRESS_MS = 500;
-  const LONG_PRESS_MOVE_PX = 10;
-  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
-  let longPressX = 0;
-  let longPressY = 0;
-  // swallow the click/contextmenu the browser may synthesize after a
-  // handled long press
-  let suppressClicksUntil = 0;
+  const longPress = new LongPressRecognizer<{ doc: Document; index: number }>({
+    enabled: () => ttsEnabled,
+    onLongPress: ({ x, y }, { doc, index }) => jumpTtsToPoint(doc, index, x, y),
+  });
 
   // caret range at viewport coordinates of the book's iframe document;
   // caretPositionFromPoint is the standard API, WebKit only has the older
@@ -270,53 +267,10 @@
     }
   }
 
-  function cancelLongPress() {
-    if (longPressTimer !== null) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-  }
-
-  function onContentTouchStart(event: TouchEvent, doc: Document, index: number) {
-    cancelLongPress();
-    if (!ttsEnabled || event.touches.length !== 1) return;
-    const touch = event.touches[0];
-    longPressX = touch.clientX;
-    longPressY = touch.clientY;
-    longPressTimer = setTimeout(() => {
-      longPressTimer = null;
-      suppressClicksUntil = Date.now() + 700;
-      // a long press also starts native text selection - drop it
-      doc.getSelection()?.removeAllRanges();
-      jumpTtsToPoint(doc, index, longPressX, longPressY);
-    }, LONG_PRESS_MS);
-  }
-
-  function onContentTouchMove(event: TouchEvent) {
-    if (longPressTimer === null) return;
-    const touch = event.touches[0];
-    if (
-      !touch ||
-      Math.hypot(touch.clientX - longPressX, touch.clientY - longPressY) >
-        LONG_PRESS_MOVE_PX
-    ) {
-      cancelLongPress();
-    }
-  }
-
-  // suppress the context menu of a pending or just-handled long press;
-  // with no jump gesture in flight (e.g. TTS off) it opens as usual
-  function onContentContextMenu(event: Event) {
-    if (longPressTimer !== null || Date.now() < suppressClicksUntil) {
-      event.preventDefault();
-    }
-  }
-
   // click on the book page toggles header/footer, except clicks that
   // follow a link or finish a text selection; in read-aloud mode
   // ctrl+click instead jumps speech to the clicked sentence
   function onContentClick(event: MouseEvent, doc: Document, index: number) {
-    if (Date.now() < suppressClicksUntil) return;
     if (
       ttsEnabled &&
       event.ctrlKey &&
@@ -342,19 +296,7 @@
     doc.addEventListener("click", (e) =>
       onContentClick(e as MouseEvent, doc, index),
     );
-    doc.addEventListener(
-      "touchstart",
-      (e) => onContentTouchStart(e as TouchEvent, doc, index),
-      { passive: true },
-    );
-    doc.addEventListener(
-      "touchmove",
-      (e) => onContentTouchMove(e as TouchEvent),
-      { passive: true },
-    );
-    doc.addEventListener("touchend", cancelLongPress);
-    doc.addEventListener("touchcancel", cancelLongPress);
-    doc.addEventListener("contextmenu", onContentContextMenu);
+    longPress.observe(doc, { doc, index });
   }
 
   function onSliderInput(event: Event) {
@@ -419,7 +361,7 @@
     return () => {
       disposed = true;
       window.removeEventListener("keydown", handleKeydown);
-      cancelLongPress();
+      longPress.cancel();
       void tts.dispose();
       view?.close();
       view?.remove();
