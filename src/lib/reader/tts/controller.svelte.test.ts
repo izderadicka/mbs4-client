@@ -266,6 +266,22 @@ describe("TtsController", () => {
     expect(fakes.service.requests.length).toBe(requestsBefore);
   });
 
+  it("jumpTo restarts speech from the sentence at the given position", async () => {
+    const { controller, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.currentSentence?.text).toBe("First one.");
+    // point inside the third sentence (fake CFI scheme: /6 for its start)
+    await controller.jumpTo("epubcfi(/6/2!/4/6/1:0)");
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.currentSentence?.text).toBe("Third one.");
+    expect(controller.status).toBe("playing");
+  });
+
   it("voice change mid-playback re-synthesizes from the current sentence", async () => {
     const { controller, player } = await setup();
     await controller.play();

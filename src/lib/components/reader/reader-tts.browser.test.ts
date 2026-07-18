@@ -4,6 +4,7 @@
 // controls. Audio really plays (autoplay is enabled in the test launcher).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
+import type { FoliateView } from "foliate-js/view.js";
 import Reader from "./reader.svelte";
 
 const FB2 = `<?xml version="1.0" encoding="utf-8"?>
@@ -113,5 +114,165 @@ describe("reader read-aloud (browser)", () => {
     await vi.waitFor(() =>
       expect(root.querySelector('button[title="Play"]')).toBeNull(),
     );
+  }, 90000);
+
+  // renders the book, enables TTS, and returns the pieces needed to
+  // simulate jump gestures on the text "A third one" of the first section
+  async function setupForJump(storageKey: string) {
+    const { container } = render(Reader, {
+      file: bookFile(),
+      storageKey,
+      showBars: true,
+    });
+    const root = container as HTMLElement;
+    await vi.waitFor(
+      () => expect(button(root, "Read aloud").disabled).toBe(false),
+      { timeout: 20000 },
+    );
+    await vi.waitFor(
+      () => expect(localStorage.getItem(storageKey)).toBeTruthy(),
+      { timeout: 10000 },
+    );
+
+    const view = root.querySelector("foliate-view") as unknown as FoliateView;
+    const drawn: string[] = [];
+    (view as unknown as HTMLElement).addEventListener(
+      "draw-annotation",
+      (e) => {
+        drawn.push(
+          (e as CustomEvent<{ annotation: { value: string } }>).detail
+            .annotation.value,
+        );
+      },
+    );
+
+    button(root, "Read aloud").click();
+    await vi.waitFor(() => expect(button(root, "Play").disabled).toBe(false), {
+      timeout: 10000,
+    });
+
+    const { doc, index } = view.renderer.getContents()[0];
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+    let textNode: Text | null = null;
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      if (node.textContent?.includes("A third one")) {
+        textNode = node as Text;
+        break;
+      }
+    }
+    if (!textNode) throw new Error('text "A third one" not rendered');
+    const probe = doc.createRange();
+    const offset = textNode.data.indexOf("A third one") + 2;
+    probe.setStart(textNode, offset);
+    probe.setEnd(textNode, offset + 1);
+    const rect = probe.getBoundingClientRect();
+    return {
+      root,
+      view,
+      doc,
+      index,
+      drawn,
+      target: textNode.parentElement!,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  }
+
+  // the highlight overlay CFI resolved back to the text it covers
+  function highlightedText(
+    view: FoliateView,
+    doc: Document,
+    drawn: string[],
+  ): string {
+    const cfi = drawn.at(-1);
+    if (!cfi) return "";
+    return String(view.resolveCFI(cfi).anchor(doc));
+  }
+
+  it("ctrl+click in TTS mode starts speaking from the clicked sentence", async () => {
+    const { root, view, doc, drawn, target, x, y } =
+      await setupForJump("mbs4.reading.test.2");
+
+    target.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: true,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+
+    // playback started from the clicked (third) sentence, skipping the
+    // first two - its highlight is the first one drawn
+    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await vi.waitFor(
+      () =>
+        expect(highlightedText(view, doc, drawn)).toContain(
+          "A third one ends the page.",
+        ),
+      { timeout: 10000 },
+    );
+    // the gesture did not toggle the header away
+    expect(root.querySelector('button[title="Read aloud"]')).not.toBeNull();
+  }, 90000);
+
+  it("long press in TTS mode starts speaking from the pressed sentence", async () => {
+    const { root, view, doc, drawn, target, x, y } =
+      await setupForJump("mbs4.reading.test.3");
+
+    const touch = new Touch({
+      identifier: 1,
+      target,
+      clientX: x,
+      clientY: y,
+    });
+    target.dispatchEvent(
+      new TouchEvent("touchstart", { bubbles: true, touches: [touch] }),
+    );
+    // hold still past the long-press threshold, then release
+    await new Promise((r) => setTimeout(r, 700));
+    target.dispatchEvent(new TouchEvent("touchend", { bubbles: true }));
+
+    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await vi.waitFor(
+      () =>
+        expect(highlightedText(view, doc, drawn)).toContain(
+          "A third one ends the page.",
+        ),
+      { timeout: 10000 },
+    );
+    // foliate's paginator also saw the synthetic touch - let its async snap
+    // finish before the component is torn down
+    await new Promise((r) => setTimeout(r, 500));
+  }, 90000);
+
+  it("a quick tap in TTS mode keeps its default action (toggles the bars)", async () => {
+    const { root, target, x, y } = await setupForJump("mbs4.reading.test.4");
+
+    const touch = new Touch({
+      identifier: 1,
+      target,
+      clientX: x,
+      clientY: y,
+    });
+    target.dispatchEvent(
+      new TouchEvent("touchstart", { bubbles: true, touches: [touch] }),
+    );
+    target.dispatchEvent(new TouchEvent("touchend", { bubbles: true }));
+    // the browser-synthesized click after a short tap
+    target.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, clientX: x, clientY: y }),
+    );
+
+    // header toggled away, no playback started
+    await vi.waitFor(() =>
+      expect(root.querySelector('button[title="Read aloud"]')).toBeNull(),
+    );
+    expect(root.querySelector('button[title="Pause"]')).toBeNull();
+    // foliate's paginator also saw the synthetic touch - let its async snap
+    // finish before the component is torn down
+    await new Promise((r) => setTimeout(r, 500));
   }, 90000);
 });

@@ -19,6 +19,7 @@
   } from "foliate-js/view.js";
   import SpeechControls from "./speech-controls.svelte";
   import { TtsController } from "$lib/reader/tts/controller.svelte";
+  import { LongPressRecognizer } from "$lib/gestures";
 
   let {
     file,
@@ -218,21 +219,78 @@
     }
   }
 
+  // read-aloud jump gesture: while TTS is enabled, ctrl+click (or a long
+  // press on touch screens) starts speaking from the clicked sentence;
+  // with TTS off the gestures keep their default behavior
+  const longPress = new LongPressRecognizer<{ doc: Document; index: number }>({
+    enabled: () => ttsEnabled,
+    onLongPress: ({ x, y }, { doc, index }) => jumpTtsToPoint(doc, index, x, y),
+  });
+
+  // caret under viewport coordinates of the book's iframe document, as a
+  // collapsed Range. caretPositionFromPoint is Baseline, but Safari only
+  // since 26.2 (Dec 2025) - keep the legacy caretRangeFromPoint fallback
+  // until older WebKit fades out
+  function caretRangeAtPoint(doc: Document, x: number, y: number): Range | null {
+    if (typeof doc.caretPositionFromPoint === "function") {
+      const pos = doc.caretPositionFromPoint(x, y);
+      if (!pos) return null;
+      const range = doc.createRange();
+      range.setStart(pos.offsetNode, pos.offset);
+      range.collapse(true);
+      return range;
+    }
+    return doc.caretRangeFromPoint(x, y);
+  }
+
+  function jumpTtsToPoint(
+    doc: Document,
+    index: number,
+    x: number,
+    y: number,
+  ): boolean {
+    if (!view || !ttsEnabled) return false;
+    const range = caretRangeAtPoint(doc, x, y);
+    if (!range) return false;
+    try {
+      const cfi = view.getCFI(index, range);
+      void tts.jumpTo(cfi);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // click on the book page toggles header/footer, except clicks that
-  // follow a link or finish a text selection
-  function onContentClick(event: Event) {
+  // follow a link or finish a text selection; in read-aloud mode
+  // ctrl+click instead jumps speech to the clicked sentence
+  function onContentClick(event: MouseEvent, doc: Document, index: number) {
+    if (
+      ttsEnabled &&
+      event.ctrlKey &&
+      jumpTtsToPoint(doc, index, event.clientX, event.clientY)
+    ) {
+      event.preventDefault();
+      return;
+    }
     const target = event.target as Element | null;
     if (target?.closest("a[href]")) return;
-    const selection = (target?.ownerDocument ?? document).getSelection();
+    const selection = doc.getSelection();
     if (selection && !selection.isCollapsed) return;
     chromeVisible = !chromeVisible;
   }
 
-  // forward key presses and clicks from inside the book's iframe
+  // forward key presses, clicks and TTS jump gestures from inside the
+  // book's iframe
   function onDocumentLoad(event: Event) {
-    const { doc } = (event as CustomEvent<{ doc: Document }>).detail;
+    const { doc, index } = (
+      event as CustomEvent<{ doc: Document; index: number }>
+    ).detail;
     doc.addEventListener("keydown", handleKeydown);
-    doc.addEventListener("click", onContentClick);
+    doc.addEventListener("click", (e) =>
+      onContentClick(e as MouseEvent, doc, index),
+    );
+    longPress.observe(doc, { doc, index });
   }
 
   function onSliderInput(event: Event) {
@@ -297,6 +355,7 @@
     return () => {
       disposed = true;
       window.removeEventListener("keydown", handleKeydown);
+      longPress.cancel();
       void tts.dispose();
       view?.close();
       view?.remove();

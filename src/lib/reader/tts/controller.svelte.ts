@@ -212,6 +212,14 @@ export class TtsController {
     this.status = "idle";
   }
 
+  // jump speech to an arbitrary position (sentence containing the CFI),
+  // e.g. from a ctrl+click / long press on the book page
+  async jumpTo(cfi: string): Promise<void> {
+    if (this.status === "off") return;
+    this.#pipeline?.stop();
+    await this.playFrom(cfi);
+  }
+
   async nextSentence(): Promise<void> {
     await this.#jump(1);
   }
