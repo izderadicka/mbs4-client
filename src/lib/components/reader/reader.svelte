@@ -227,26 +227,20 @@
     onLongPress: ({ x, y }, { doc, index }) => jumpTtsToPoint(doc, index, x, y),
   });
 
-  // caret range at viewport coordinates of the book's iframe document;
-  // caretPositionFromPoint is the standard API, WebKit only has the older
-  // caretRangeFromPoint
+  // caret under viewport coordinates of the book's iframe document, as a
+  // collapsed Range. caretPositionFromPoint is Baseline, but Safari only
+  // since 26.2 (Dec 2025) - keep the legacy caretRangeFromPoint fallback
+  // until older WebKit fades out
   function caretRangeAtPoint(doc: Document, x: number, y: number): Range | null {
-    const d = doc as Document & {
-      caretPositionFromPoint?(
-        x: number,
-        y: number,
-      ): { offsetNode: Node; offset: number } | null;
-      caretRangeFromPoint?(x: number, y: number): Range | null;
-    };
-    if (typeof d.caretPositionFromPoint === "function") {
-      const pos = d.caretPositionFromPoint(x, y);
+    if (typeof doc.caretPositionFromPoint === "function") {
+      const pos = doc.caretPositionFromPoint(x, y);
       if (!pos) return null;
       const range = doc.createRange();
       range.setStart(pos.offsetNode, pos.offset);
       range.collapse(true);
       return range;
     }
-    return d.caretRangeFromPoint?.(x, y) ?? null;
+    return doc.caretRangeFromPoint(x, y);
   }
 
   function jumpTtsToPoint(
