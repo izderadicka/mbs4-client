@@ -40,13 +40,20 @@
   let conversionTicketId: string | null = $state(null);
 
   async function startConversion(source: EbookSource, format: string) {
-    const conversion_ticket = await apiClient.convertSource({
-      source_id: source.id,
-      to_format_extension: format,
-    });
+    try {
+      const conversion_ticket = await apiClient.convertSource({
+        source_id: source.id,
+        to_format_extension: format,
+      });
 
-    conversionTicketId = conversion_ticket.id;
-    console.log("conversion started", conversion_ticket);
+      conversionTicketId = conversion_ticket.id;
+      console.log("conversion started", conversion_ticket);
+    } catch (error: any) {
+      console.error("Failed to start conversion", error);
+      toast.error(
+        `Failed to start conversion: ${error.message ? error.message : error}`,
+      );
+    }
   }
 
   $effect(() => {
