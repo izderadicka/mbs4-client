@@ -2,7 +2,7 @@
 // No concrete provider is chosen yet; implementations must satisfy this
 // contract so the rest of the read-aloud pipeline never depends on one.
 
-import { TTS_PROVIDER } from "$lib/dev";
+import { TTS_PROVIDER, TTS_URL } from "$lib/dev";
 
 export interface Voice {
   // unique identifier of the voice
@@ -53,6 +53,10 @@ export async function createTtsService(): Promise<TtsService> {
   if (TTS_PROVIDER === "mock") {
     const { MockTtsService } = await import("./mock-tts-service");
     return new MockTtsService();
+  }
+  if (TTS_PROVIDER === "edge") {
+    const { EdgeTtsService } = await import("./edge-tts-service");
+    return new EdgeTtsService({ baseUrl: TTS_URL });
   }
   const { RestTtsService } = await import("./rest-tts-service");
   return new RestTtsService();
