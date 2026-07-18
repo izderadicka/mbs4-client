@@ -218,21 +218,143 @@
     }
   }
 
+  // read-aloud jump gesture: while TTS is enabled, ctrl+click (or a long
+  // press on touch screens) starts speaking from the clicked sentence;
+  // with TTS off the gestures keep their default behavior
+  const LONG_PRESS_MS = 500;
+  const LONG_PRESS_MOVE_PX = 10;
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let longPressX = 0;
+  let longPressY = 0;
+  // swallow the click/contextmenu the browser may synthesize after a
+  // handled long press
+  let suppressClicksUntil = 0;
+
+  // caret range at viewport coordinates of the book's iframe document;
+  // caretPositionFromPoint is the standard API, WebKit only has the older
+  // caretRangeFromPoint
+  function caretRangeAtPoint(doc: Document, x: number, y: number): Range | null {
+    const d = doc as Document & {
+      caretPositionFromPoint?(
+        x: number,
+        y: number,
+      ): { offsetNode: Node; offset: number } | null;
+      caretRangeFromPoint?(x: number, y: number): Range | null;
+    };
+    if (typeof d.caretPositionFromPoint === "function") {
+      const pos = d.caretPositionFromPoint(x, y);
+      if (!pos) return null;
+      const range = doc.createRange();
+      range.setStart(pos.offsetNode, pos.offset);
+      range.collapse(true);
+      return range;
+    }
+    return d.caretRangeFromPoint?.(x, y) ?? null;
+  }
+
+  function jumpTtsToPoint(
+    doc: Document,
+    index: number,
+    x: number,
+    y: number,
+  ): boolean {
+    if (!view || !ttsEnabled) return false;
+    const range = caretRangeAtPoint(doc, x, y);
+    if (!range) return false;
+    try {
+      const cfi = view.getCFI(index, range);
+      void tts.jumpTo(cfi);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function cancelLongPress() {
+    if (longPressTimer !== null) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  function onContentTouchStart(event: TouchEvent, doc: Document, index: number) {
+    cancelLongPress();
+    if (!ttsEnabled || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    longPressX = touch.clientX;
+    longPressY = touch.clientY;
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      suppressClicksUntil = Date.now() + 700;
+      // a long press also starts native text selection - drop it
+      doc.getSelection()?.removeAllRanges();
+      jumpTtsToPoint(doc, index, longPressX, longPressY);
+    }, LONG_PRESS_MS);
+  }
+
+  function onContentTouchMove(event: TouchEvent) {
+    if (longPressTimer === null) return;
+    const touch = event.touches[0];
+    if (
+      !touch ||
+      Math.hypot(touch.clientX - longPressX, touch.clientY - longPressY) >
+        LONG_PRESS_MOVE_PX
+    ) {
+      cancelLongPress();
+    }
+  }
+
+  // suppress the context menu of a pending or just-handled long press;
+  // with no jump gesture in flight (e.g. TTS off) it opens as usual
+  function onContentContextMenu(event: Event) {
+    if (longPressTimer !== null || Date.now() < suppressClicksUntil) {
+      event.preventDefault();
+    }
+  }
+
   // click on the book page toggles header/footer, except clicks that
-  // follow a link or finish a text selection
-  function onContentClick(event: Event) {
+  // follow a link or finish a text selection; in read-aloud mode
+  // ctrl+click instead jumps speech to the clicked sentence
+  function onContentClick(event: MouseEvent, doc: Document, index: number) {
+    if (Date.now() < suppressClicksUntil) return;
+    if (
+      ttsEnabled &&
+      event.ctrlKey &&
+      jumpTtsToPoint(doc, index, event.clientX, event.clientY)
+    ) {
+      event.preventDefault();
+      return;
+    }
     const target = event.target as Element | null;
     if (target?.closest("a[href]")) return;
-    const selection = (target?.ownerDocument ?? document).getSelection();
+    const selection = doc.getSelection();
     if (selection && !selection.isCollapsed) return;
     chromeVisible = !chromeVisible;
   }
 
-  // forward key presses and clicks from inside the book's iframe
+  // forward key presses, clicks and TTS jump gestures from inside the
+  // book's iframe
   function onDocumentLoad(event: Event) {
-    const { doc } = (event as CustomEvent<{ doc: Document }>).detail;
+    const { doc, index } = (
+      event as CustomEvent<{ doc: Document; index: number }>
+    ).detail;
     doc.addEventListener("keydown", handleKeydown);
-    doc.addEventListener("click", onContentClick);
+    doc.addEventListener("click", (e) =>
+      onContentClick(e as MouseEvent, doc, index),
+    );
+    doc.addEventListener(
+      "touchstart",
+      (e) => onContentTouchStart(e as TouchEvent, doc, index),
+      { passive: true },
+    );
+    doc.addEventListener(
+      "touchmove",
+      (e) => onContentTouchMove(e as TouchEvent),
+      { passive: true },
+    );
+    doc.addEventListener("touchend", cancelLongPress);
+    doc.addEventListener("touchcancel", cancelLongPress);
+    doc.addEventListener("contextmenu", onContentContextMenu);
   }
 
   function onSliderInput(event: Event) {
@@ -297,6 +419,7 @@
     return () => {
       disposed = true;
       window.removeEventListener("keydown", handleKeydown);
+      cancelLongPress();
       void tts.dispose();
       view?.close();
       view?.remove();
