@@ -35,6 +35,7 @@ export type TtsStatus =
 
 const HIGHLIGHT_COLOR = "rgba(59, 130, 246, 0.4)";
 const SELF_NAV_TIMEOUT_MS = 2000;
+const HIGHLIGHT_CLEAR_REPEAT_MS = 600;
 
 export class TtsController {
   status: TtsStatus = $state("off");
@@ -50,6 +51,11 @@ export class TtsController {
   #source: SentenceSource | null = null;
   #pipeline: SpeechPipeline | null = null;
   #highlighted: string | null = null;
+  // Annotation add/delete calls are async (foliate resolves the CFI first)
+  // and must run strictly in order: a stop right after a sentence started
+  // would otherwise delete the highlight before its add has drawn it,
+  // leaving an orphaned highlight on the page.
+  #highlightChain: Promise<void> = Promise.resolve();
   #selfNav = 0;
   #disposed = false;
   // bumped whenever playback intent changes (stop, new play, navigation) so
@@ -67,7 +73,12 @@ export class TtsController {
     // change) - re-add the highlight if it belongs to that section
     const { index } = (event as CustomEvent<CreateOverlayDetail>).detail;
     if (this.#highlighted && this.currentSentence?.sectionIndex === index) {
-      void this.#view?.addAnnotation({ value: this.#highlighted });
+      this.#highlightChain = this.#highlightChain.then(async () => {
+        if (!this.#highlighted) return; // removed meanwhile
+        await this.#view
+          ?.addAnnotation({ value: this.#highlighted })
+          .catch(() => {});
+      });
     }
   };
 
@@ -288,23 +299,61 @@ export class TtsController {
     }
   }
 
+  // hide/show the overlay SVGs with a forced reflow in between, so the
+  // compositor cannot keep stale pixels of removed highlights
+  #forceOverlayRepaint(): void {
+    const contents = this.#view?.renderer.getContents() ?? [];
+    for (const c of contents) {
+      const el = c.overlayer?.element;
+      if (!el) continue;
+      const display = el.style.display;
+      el.style.display = "none";
+      void el.getBoundingClientRect();
+      el.style.display = display;
+    }
+  }
+
   #moveHighlight(sentence: SentenceRef): void {
-    const view = this.#view;
-    if (!view) return;
-    this.#removeHighlight();
-    this.#highlighted = sentence.cfi;
-    void view.addAnnotation({ value: sentence.cfi }).catch((e) => {
-      console.error("Failed to highlight sentence", e);
-    });
+    this.#setHighlight(sentence.cfi);
   }
 
   #removeHighlight(): void {
-    const view = this.#view;
-    if (this.#highlighted && view) {
-      const annotation: Annotation = { value: this.#highlighted };
-      void view.deleteAnnotation(annotation).catch(() => {});
-    }
-    this.#highlighted = null;
+    this.#setHighlight(null);
+  }
+
+  #setHighlight(cfi: string | null): void {
+    const prev = this.#highlighted;
+    if (prev === cfi) return;
+    this.#highlighted = cfi;
+    this.#highlightChain = this.#highlightChain.then(async () => {
+      const view = this.#view;
+      if (!view) return;
+      if (prev) {
+        const annotation: Annotation = { value: prev };
+        await view.deleteAnnotation(annotation).catch(() => {});
+        if (cfi === null) {
+          // The DOM removal alone left the highlight visible on Android:
+          // the overlay SVG in the book iframe is GPU-composited and Chrome
+          // may keep its stale pixels until the layer is invalidated, so
+          // force a repaint - and repeat once after the layout settles
+          // (deleting again is idempotent)
+          this.#forceOverlayRepaint();
+          setTimeout(() => {
+            if (this.#highlighted !== prev) {
+              void this.#view
+                ?.deleteAnnotation(annotation)
+                .then(() => this.#forceOverlayRepaint())
+                .catch(() => {});
+            }
+          }, HIGHLIGHT_CLEAR_REPEAT_MS);
+        }
+      }
+      if (cfi) {
+        await view.addAnnotation({ value: cfi }).catch((e) => {
+          console.error("Failed to highlight sentence", e);
+        });
+      }
+    });
   }
 
   // keep the spoken sentence visible: scroll within the rendered section or
