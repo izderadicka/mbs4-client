@@ -65,12 +65,10 @@ export class BrowserTtsService implements TtsService {
     const seen = new Set<string>();
     for (const v of native) {
       if (language !== undefined && !matchesLanguage(v.lang, language)) continue;
-      // voice names are readable and normally unique (the voice Select is
-      // keyed by name); fall back to voiceURI on a clash, drop full dupes
-      const name = seen.has(v.name) ? v.voiceURI : v.name;
-      if (seen.has(name)) continue;
-      seen.add(name);
-      voices.push({ name, lang: v.lang });
+      // voiceURI is the unique voice identifier; names may repeat
+      if (seen.has(v.voiceURI)) continue;
+      seen.add(v.voiceURI);
+      voices.push({ id: v.voiceURI, name: v.name, lang: v.lang });
     }
     return voices;
   }
@@ -86,7 +84,8 @@ export class BrowserTtsService implements TtsService {
 export class BrowserSpeechPipeline implements SpeechPipeline {
   #onEvent: (e: PipelineEvent) => void;
   #rate = 1;
-  #voiceName: string | undefined;
+  // Voice.id of the selected voice (= voiceURI for this service)
+  #voiceId: string | undefined;
   #nativeVoices: SpeechSynthesisVoice[] = [];
   #cursor: SentenceCursor | null = null;
   #currentSentence: SentenceRef | null = null;
@@ -125,7 +124,7 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     }
     this.#active = true;
     this.#cursor = cursor;
-    this.#voiceName = voice;
+    this.#voiceId = voice;
     this.#currentSentence = cursor.current;
     this.#stalled = true;
     this.#onEvent({ type: "buffering" });
@@ -173,11 +172,9 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
   }
 
   #resolveVoice(): SpeechSynthesisVoice | null {
-    if (!this.#voiceName) return null;
+    if (!this.#voiceId) return null;
     return (
-      this.#nativeVoices.find((v) => v.voiceURI === this.#voiceName) ??
-      this.#nativeVoices.find((v) => v.name === this.#voiceName) ??
-      null
+      this.#nativeVoices.find((v) => v.voiceURI === this.#voiceId) ?? null
     );
   }
 

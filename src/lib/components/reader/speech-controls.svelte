@@ -16,6 +16,9 @@
     controller.status === "playing" || controller.status === "buffering",
   );
   let rateStr = $derived(`${controller.rate}×`);
+  let voiceName = $derived(
+    controller.voices.find((v) => v.id === controller.voice)?.name ?? "Voice",
+  );
 </script>
 
 <div
@@ -91,12 +94,12 @@
         class="w-36 max-[520px]:w-auto max-[520px]:flex-1"
         title="Voice"
         disabled={controller.voices.length === 0}
-        ><span class="truncate">{controller.voice ?? "Voice"}</span
+        ><span class="truncate">{voiceName}</span
         ></Select.Trigger>
       <Select.Content>
         <Select.Group>
-          {#each controller.voices as v (v.name)}
-            <Select.Item value={v.name}
+          {#each controller.voices as v (v.id)}
+            <Select.Item value={v.id}
               >{v.name}{v.lang ? ` (${v.lang})` : ""}</Select.Item>
           {/each}
         </Select.Group>

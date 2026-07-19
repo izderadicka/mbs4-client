@@ -7,7 +7,10 @@ import { appSettings } from "$lib/settings.svelte";
 import type { PipelineEvent, SpeechPipeline } from "./pipeline";
 
 export interface Voice {
-  // unique identifier of the voice
+  // service-specific unique identifier of the voice, opaque to the rest of
+  // the app; services whose names are unique just duplicate the name
+  id: string;
+  // human-readable name shown in the voice picker
   name: string;
   // BCP-47 language tag of the voice, e.g. "en-US", "cs"
   lang?: string;
@@ -16,7 +19,7 @@ export interface Voice {
 
 export interface SynthesisRequest {
   text: string;
-  // Voice.name; undefined lets the service pick its default. The voice
+  // Voice.id; undefined lets the service pick its default. The voice
   // implies the language, so no separate language field is needed.
   voice?: string;
   // 1.0 = normal; implementations may ignore it (playback applies its own

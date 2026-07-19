@@ -36,6 +36,7 @@ export type PipelineEvent =
 export interface SpeechPipeline {
   readonly currentSentence: SentenceRef | null;
   readonly active: boolean;
+  // voice is a Voice.id; undefined = service default
   start(cursor: SentenceCursor, voice?: string): Promise<void>;
   pause(): Promise<void>;
   resume(): Promise<void>;

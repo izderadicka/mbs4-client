@@ -84,6 +84,7 @@ export class EdgeTtsService implements TtsService {
         (v) => language === undefined || matchesLanguage(v.Locale, language),
       )
       .map((v) => ({
+        id: v.ShortName!,
         name: v.ShortName!,
         lang: v.Locale,
         description: v.FriendlyName ?? v.Gender,

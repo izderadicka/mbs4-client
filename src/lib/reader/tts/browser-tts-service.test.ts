@@ -113,12 +113,12 @@ afterEach(() => {
 });
 
 describe("BrowserTtsService.listVoices", () => {
-  it("maps native voices and filters by language", async () => {
+  it("maps native voices (id = voiceURI) and filters by language", async () => {
     const svc = new BrowserTtsService();
     expect(await svc.listVoices()).toEqual([
-      { name: "Czech A", lang: "cs-CZ" },
-      { name: "English A", lang: "en-US" },
-      { name: "English B", lang: "en-GB" },
+      { id: "urn:voice:cs-a", name: "Czech A", lang: "cs-CZ" },
+      { id: "urn:voice:en-a", name: "English A", lang: "en-US" },
+      { id: "urn:voice:en-b", name: "English B", lang: "en-GB" },
     ]);
     expect((await svc.listVoices("en")).map((v) => v.name)).toEqual([
       "English A",
@@ -127,14 +127,17 @@ describe("BrowserTtsService.listVoices", () => {
     expect(await svc.listVoices("fr")).toEqual([]);
   });
 
-  it("falls back to voiceURI on duplicate names and drops full duplicates", async () => {
+  it("keeps same-named voices apart by id and drops duplicate voiceURIs", async () => {
     synth.voices = [
       { name: "Voice", voiceURI: "urn:1", lang: "en-US" },
       { name: "Voice", voiceURI: "urn:2", lang: "en-GB" },
       { name: "Voice", voiceURI: "urn:2", lang: "en-GB" },
     ];
     const voices = await new BrowserTtsService().listVoices();
-    expect(voices.map((v) => v.name)).toEqual(["Voice", "urn:2"]);
+    expect(voices).toEqual([
+      { id: "urn:1", name: "Voice", lang: "en-US" },
+      { id: "urn:2", name: "Voice", lang: "en-GB" },
+    ]);
   });
 
   it("waits for voiceschanged when the list is initially empty", async () => {
@@ -211,11 +214,11 @@ describe("BrowserSpeechPipeline", () => {
     expect(pipeline.active).toBe(false);
   });
 
-  it("resolves the voice by plain name too", async () => {
+  it("resolves the voice by its id (voiceURI)", async () => {
     const { pipeline, cursor } = setup(["Hello."]);
-    await pipeline.start(cursor, "English B");
+    await pipeline.start(cursor, "urn:voice:en-b");
     await flush();
-    expect(synth.queue[0].voice?.voiceURI).toBe("urn:voice:en-b");
+    expect(synth.queue[0].voice?.name).toBe("English B");
   });
 
   it("stop cancels utterances and keeps the current sentence", async () => {

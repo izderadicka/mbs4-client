@@ -4,7 +4,6 @@
 
 import { TtsServicePipeline, type PipelineEvent, type SpeechPipeline } from "./pipeline";
 import {
-  matchesLanguage,
   TtsServiceError,
   type SynthesisRequest,
   type SynthesisResult,
@@ -18,9 +17,9 @@ const MIN_DURATION_S = 0.5;
 const MAX_DURATION_S = 15;
 
 const VOICES: Voice[] = [
-  { name: "Mock Low", lang: "en", description: "Low mock tone" },
-  { name: "Mock High", lang: "en", description: "High mock tone" },
-  { name: "Mock Bell", lang: "cs", description: "Bell-like mock tone" },
+  { id: "Mock Low", name: "Mock Low", lang: "en", description: "Low mock tone" },
+  { id: "Mock High", name: "Mock High", lang: "en", description: "High mock tone" },
+  { id: "Mock Bell", name: "Mock Bell", lang: "cs", description: "Bell-like mock tone" },
 ];
 
 // deterministic small hash for per-voice/per-text variation
@@ -99,9 +98,9 @@ export class MockTtsService implements TtsService {
 
   async listVoices(language?: string): Promise<Voice[]> {
     await delay(this.#latencyMs);
-    return VOICES.filter(
-      (v) => language === undefined || matchesLanguage(v.lang, language),
-    ).map((v) => ({ ...v }));
+    // the dummy service "speaks" any language: same voices, tagged with the
+    // requested language
+    return VOICES.map((v) => ({ ...v, lang: language ?? v.lang }));
   }
 
   async synthesize(

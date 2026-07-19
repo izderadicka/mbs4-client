@@ -55,7 +55,7 @@ class FakeService implements TtsService {
     return new TtsServicePipeline(this, onEvent);
   }
   async listVoices() {
-    return [{ name: "V1" }];
+    return [{ id: "V1", name: "V1" }];
   }
   synthesize(req: SynthesisRequest, signal?: AbortSignal): Promise<SynthesisResult> {
     return new Promise((resolve, reject) => {

@@ -41,6 +41,7 @@ describe("EdgeTtsService", () => {
     const voices = await svc.listVoices();
     expect(voices).toEqual([
       {
+        id: "cs-CZ-AntoninNeural",
         name: "cs-CZ-AntoninNeural",
         lang: "cs-CZ",
         description: "Microsoft Antonin Online (Natural) - Czech (Czechia)",

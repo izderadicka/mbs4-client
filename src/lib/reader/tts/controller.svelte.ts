@@ -40,6 +40,7 @@ export class TtsController {
   status: TtsStatus = $state("off");
   currentSentence: SentenceRef | null = $state(null);
   voices: Voice[] = $state([]);
+  // selected Voice.id
   voice: string | null = $state(null);
   rate: TtsRate = $state(1);
   errorMessage: string | null = $state(null);
@@ -148,14 +149,14 @@ export class TtsController {
     return Array.isArray(bookLang) ? bookLang[0] : bookLang;
   }
 
-  // preferred voice: persisted pref if available in the (language-filtered)
-  // list, else the first one
+  // preferred voice (Voice.id): persisted pref if available in the
+  // (language-filtered) list, else the first one
   #pickVoice(): string | null {
     if (this.voices.length === 0) return null;
-    if (ttsPrefs.voice && this.voices.some((v) => v.name === ttsPrefs.voice)) {
+    if (ttsPrefs.voice && this.voices.some((v) => v.id === ttsPrefs.voice)) {
       return ttsPrefs.voice;
     }
-    return this.voices[0].name;
+    return this.voices[0].id;
   }
 
   // start speaking at the given position (or resume when paused)
@@ -232,9 +233,9 @@ export class TtsController {
     await this.playFrom(target.cfi);
   }
 
-  setVoice(name: string): void {
-    this.voice = name;
-    setTtsVoice(name);
+  setVoice(id: string): void {
+    this.voice = id;
+    setTtsVoice(id);
     if (this.#pipeline?.active) {
       // re-synthesize from the current sentence with the new voice
       const current = this.#pipeline.currentSentence;

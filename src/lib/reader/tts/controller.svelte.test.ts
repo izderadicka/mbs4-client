@@ -61,9 +61,9 @@ const fakes = vi.hoisted(() => {
     async listVoices(language?: string) {
       this.voicesRequestedFor.push(language);
       const voices = [
-        { name: "Czech Voice", lang: "cs" },
-        { name: "Other Czech Voice", lang: "cs" },
-        { name: "English Voice", lang: "en" },
+        { id: "Czech Voice", name: "Czech Voice", lang: "cs" },
+        { id: "Other Czech Voice", name: "Other Czech Voice", lang: "cs" },
+        { id: "English Voice", name: "English Voice", lang: "en" },
       ];
       return language === undefined
         ? voices
