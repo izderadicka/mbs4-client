@@ -299,6 +299,20 @@ export class TtsController {
     }
   }
 
+  // hide/show the overlay SVGs with a forced reflow in between, so the
+  // compositor cannot keep stale pixels of removed highlights
+  #forceOverlayRepaint(): void {
+    const contents = this.#view?.renderer.getContents() ?? [];
+    for (const c of contents) {
+      const el = c.overlayer?.element;
+      if (!el) continue;
+      const display = el.style.display;
+      el.style.display = "none";
+      void el.getBoundingClientRect();
+      el.style.display = display;
+    }
+  }
+
   #moveHighlight(sentence: SentenceRef): void {
     this.#setHighlight(sentence.cfi);
   }
@@ -318,13 +332,18 @@ export class TtsController {
         const annotation: Annotation = { value: prev };
         await view.deleteAnnotation(annotation).catch(() => {});
         if (cfi === null) {
-          // Defensive repeat: on Android the highlight was observed to
-          // survive the delete (mechanism not reproducible elsewhere);
-          // deleting is idempotent, so re-issue once after the engine and
-          // layout settle
+          // The DOM removal alone left the highlight visible on Android:
+          // the overlay SVG in the book iframe is GPU-composited and Chrome
+          // may keep its stale pixels until the layer is invalidated, so
+          // force a repaint - and repeat once after the layout settles
+          // (deleting again is idempotent)
+          this.#forceOverlayRepaint();
           setTimeout(() => {
             if (this.#highlighted !== prev) {
-              void this.#view?.deleteAnnotation(annotation).catch(() => {});
+              void this.#view
+                ?.deleteAnnotation(annotation)
+                .then(() => this.#forceOverlayRepaint())
+                .catch(() => {});
             }
           }, HIGHLIGHT_CLEAR_REPEAT_MS);
         }
