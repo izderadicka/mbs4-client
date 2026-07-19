@@ -57,7 +57,9 @@ export function matchesLanguage(
   language: string,
 ): boolean {
   if (!voiceLang) return false;
-  const primary = (tag: string) => tag.toLowerCase().split("-")[0];
+  // Android reports voice languages in Java Locale form ("cs_CZ"), so
+  // treat "_" like the BCP-47 "-" separator
+  const primary = (tag: string) => tag.toLowerCase().split(/[-_]/)[0];
   return primary(voiceLang) === primary(language);
 }
 

@@ -149,6 +149,42 @@ describe("BrowserTtsService.listVoices", () => {
     expect((await promise).length).toBe(3);
   });
 
+  it("ignores voiceschanged firings that still deliver an empty list", async () => {
+    const loaded = synth.voices;
+    synth.voices = [];
+    const promise = new BrowserTtsService().listVoices();
+    // Android: the engine announces itself before any voices are ready
+    synth.fireVoicesChanged();
+    await new Promise((r) => setTimeout(r, 0));
+    synth.voices = loaded;
+    synth.fireVoicesChanged();
+    expect((await promise).length).toBe(3);
+  });
+
+  it("picks up voices by polling when voiceschanged never fires", async () => {
+    vi.useFakeTimers();
+    try {
+      const loaded = synth.voices;
+      synth.voices = [];
+      const promise = new BrowserTtsService().listVoices();
+      await vi.advanceTimersByTimeAsync(300);
+      synth.voices = loaded;
+      await vi.advanceTimersByTimeAsync(300);
+      expect((await promise).length).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("matches Android underscore locales when filtering", async () => {
+    synth.voices = [
+      { name: "Czech Android", voiceURI: "urn:and:cs", lang: "cs_CZ" },
+      { name: "German Android", voiceURI: "urn:and:de", lang: "de_DE" },
+    ];
+    const voices = await new BrowserTtsService().listVoices("cs");
+    expect(voices.map((v) => v.name)).toEqual(["Czech Android"]);
+  });
+
   it("throws when speech synthesis is unavailable", async () => {
     vi.stubGlobal("speechSynthesis", undefined);
     const err = await new BrowserTtsService().listVoices().catch((e) => e);

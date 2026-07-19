@@ -14,9 +14,12 @@ import {
   type Voice,
 } from "./tts-service";
 
-// some browsers populate getVoices() asynchronously; give voiceschanged
-// this long before settling for whatever is there
-const VOICES_LOAD_TIMEOUT_MS = 1500;
+// Some browsers populate getVoices() asynchronously; wait up to this long
+// for a non-empty list. Android binds its TTS engine slowly and may fire
+// voiceschanged several times (first with an empty list) or, in some
+// WebViews, not at all - hence the deadline and the poll below.
+const VOICES_LOAD_TIMEOUT_MS = 4000;
+const VOICES_POLL_INTERVAL_MS = 250;
 // utterances handed to speechSynthesis ahead of playback; keeps sentence
 // transitions seamless while sentence segmentation stays lazy
 const UTTERANCE_LOOKAHEAD = 2;
@@ -44,11 +47,18 @@ async function loadNativeVoices(): Promise<SpeechSynthesisVoice[]> {
     const finish = () => {
       if (done) return;
       done = true;
-      s.removeEventListener("voiceschanged", finish);
+      s.removeEventListener("voiceschanged", check);
+      clearInterval(poll);
+      clearTimeout(deadline);
       resolve(s.getVoices());
     };
-    s.addEventListener("voiceschanged", finish);
-    setTimeout(finish, VOICES_LOAD_TIMEOUT_MS);
+    // settle only on a non-empty list (or the deadline)
+    const check = () => {
+      if (s.getVoices().length > 0) finish();
+    };
+    s.addEventListener("voiceschanged", check);
+    const poll = setInterval(check, VOICES_POLL_INTERVAL_MS);
+    const deadline = setTimeout(finish, VOICES_LOAD_TIMEOUT_MS);
   });
 }
 
