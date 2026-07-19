@@ -4,7 +4,7 @@ export const TTS_RATES = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 export type TtsRate = (typeof TTS_RATES)[number];
 
 export interface TtsPrefs {
-  // voice name is the unique voice identifier; null = service default
+  // Voice.id (service-specific voice identifier); null = service default
   voice: string | null;
   rate: TtsRate;
 }

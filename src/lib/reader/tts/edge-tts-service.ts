@@ -10,7 +10,9 @@
 // against the proxy's wildcard CORS origin).
 
 import { EDGE_TTS_DEFAULT_URL } from "$lib/config";
+import { TtsServicePipeline, type PipelineEvent, type SpeechPipeline } from "./pipeline";
 import {
+  matchesLanguage,
   TtsServiceError,
   type SynthesisRequest,
   type SynthesisResult,
@@ -66,7 +68,11 @@ export class EdgeTtsService implements TtsService {
     return response;
   }
 
-  async listVoices(): Promise<Voice[]> {
+  createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
+    return new TtsServicePipeline(this, onEvent);
+  }
+
+  async listVoices(language?: string): Promise<Voice[]> {
     const response = await this.#request("/voices", { method: "GET" });
     const data = (await response.json()) as unknown;
     if (!Array.isArray(data)) {
@@ -74,7 +80,11 @@ export class EdgeTtsService implements TtsService {
     }
     return (data as EdgeVoice[])
       .filter((v) => v != null && typeof v.ShortName === "string")
+      .filter(
+        (v) => language === undefined || matchesLanguage(v.Locale, language),
+      )
       .map((v) => ({
+        id: v.ShortName!,
         name: v.ShortName!,
         lang: v.Locale,
         description: v.FriendlyName ?? v.Gender,

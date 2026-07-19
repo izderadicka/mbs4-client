@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlayerEvent, SpeechPlayerLike } from "./player";
-import { SpeechPipeline, type PipelineEvent } from "./pipeline";
+import {
+  TtsServicePipeline,
+  type PipelineEvent,
+  type SpeechPipeline,
+} from "./pipeline";
 import type { SentenceCursor, SentenceRef } from "./sentences";
 import {
   TtsServiceError,
@@ -47,8 +51,11 @@ interface PendingRequest {
 class FakeService implements TtsService {
   readonly id = "fake";
   requests: PendingRequest[] = [];
+  createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
+    return new TtsServicePipeline(this, onEvent);
+  }
   async listVoices() {
-    return [{ name: "V1" }];
+    return [{ id: "V1", name: "V1" }];
   }
   synthesize(req: SynthesisRequest, signal?: AbortSignal): Promise<SynthesisResult> {
     return new Promise((resolve, reject) => {
@@ -133,9 +140,8 @@ function setup(sentenceCount: number, opts?: Record<string, number>) {
   const service = new FakeService();
   const player = new FakePlayer();
   const events: PipelineEvent[] = [];
-  const pipeline = new SpeechPipeline(
+  const pipeline = new TtsServicePipeline(
     service,
-    player,
     (e) => events.push(e),
     {
       targetBufferSeconds: 30,
@@ -146,6 +152,7 @@ function setup(sentenceCount: number, opts?: Record<string, number>) {
       retryMaxMs: 400,
       retryWindowMs: 1000,
       ...opts,
+      player,
     },
   );
   const sentences = makeSentences(sentenceCount);
@@ -155,7 +162,7 @@ function setup(sentenceCount: number, opts?: Record<string, number>) {
 
 const types = (events: PipelineEvent[]) => events.map((e) => e.type);
 
-describe("SpeechPipeline", () => {
+describe("TtsServicePipeline", () => {
   afterEach(() => {
     vi.useRealTimers();
   });

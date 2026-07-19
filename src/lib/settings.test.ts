@@ -172,6 +172,56 @@ describe("settings", () => {
     });
   });
 
+  describe("tts settings", () => {
+    it("defaults to the browser provider with no extra params", async () => {
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.ttsProvider).toBe("browser");
+      expect(appSettings.ttsServiceParams).toBe("");
+    });
+
+    it("round-trips valid stored values", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ ttsProvider: "edge", ttsServiceParams: '{"baseUrl":"http://x:1"}' }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.ttsProvider).toBe("edge");
+      expect(appSettings.ttsServiceParams).toBe('{"baseUrl":"http://x:1"}');
+    });
+
+    it("falls back invalid provider and params to defaults", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ ttsProvider: "rest", ttsServiceParams: "not-json{{{" }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.ttsProvider).toBe("browser");
+      expect(appSettings.ttsServiceParams).toBe("");
+    });
+
+    it("rejects params that are valid JSON but not an object", async () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ ttsServiceParams: "[1,2]" }),
+      );
+      const { appSettings } = await import("$lib/settings.svelte");
+      expect(appSettings.ttsServiceParams).toBe("");
+    });
+
+    it("setTtsProvider and setTtsServiceParams update and persist", async () => {
+      const { appSettings, setTtsProvider, setTtsServiceParams } = await import(
+        "$lib/settings.svelte"
+      );
+      setTtsProvider("mock");
+      setTtsServiceParams('{"latencyMs": 5}');
+      expect(appSettings.ttsProvider).toBe("mock");
+      expect(appSettings.ttsServiceParams).toBe('{"latencyMs": 5}');
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+      expect(stored.ttsProvider).toBe("mock");
+      expect(stored.ttsServiceParams).toBe('{"latencyMs": 5}');
+    });
+  });
+
   describe("setters", () => {
     it("setPageSize updates appSettings and persists to localStorage", async () => {
       const { appSettings, setPageSize } = await import("$lib/settings.svelte");

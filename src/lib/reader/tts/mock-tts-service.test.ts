@@ -35,6 +35,17 @@ describe("MockTtsService", () => {
     expect(voices[0].name).toBeTruthy();
   });
 
+  it("returns the same voices for any language, tagged with it", async () => {
+    const svc = new MockTtsService({ latencyMs: 0 });
+    const all = await svc.listVoices();
+    const czech = await svc.listVoices("cs");
+    expect(czech.map((v) => v.name)).toEqual(all.map((v) => v.name));
+    expect(czech.every((v) => v.lang === "cs")).toBe(true);
+    expect((await svc.listVoices("fr")).every((v) => v.lang === "fr")).toBe(true);
+    // without a language the voices keep their own tags
+    expect(new Set(all.map((v) => v.lang)).size).toBeGreaterThan(1);
+  });
+
   it("synthesizes WAV with duration proportional to text length", async () => {
     const svc = new MockTtsService({ latencyMs: 0 });
     const short = await svc.synthesize({ text: "Hi there." });

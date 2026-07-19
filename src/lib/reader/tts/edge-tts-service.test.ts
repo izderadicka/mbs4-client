@@ -41,6 +41,7 @@ describe("EdgeTtsService", () => {
     const voices = await svc.listVoices();
     expect(voices).toEqual([
       {
+        id: "cs-CZ-AntoninNeural",
         name: "cs-CZ-AntoninNeural",
         lang: "cs-CZ",
         description: "Microsoft Antonin Online (Natural) - Czech (Czechia)",
@@ -50,6 +51,30 @@ describe("EdgeTtsService", () => {
     expect(mockFetch.mock.calls[0][0]).toBe("http://proxy.test:8899/voices");
     // no credentials against the wildcard-CORS proxy
     expect(mockFetch.mock.calls[0][1].credentials).toBeUndefined();
+  });
+
+  it("filters voices by language", async () => {
+    const body = JSON.stringify([
+      { ShortName: "cs-CZ-AntoninNeural", Locale: "cs-CZ" },
+      { ShortName: "en-GB-SoniaNeural", Locale: "en-GB" },
+      { ShortName: "en-US-AriaNeural", Locale: "en-US" },
+    ]);
+    mockFetch.mockImplementation(async () =>
+      new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const svc = new EdgeTtsService();
+    expect((await svc.listVoices("en")).map((v) => v.name)).toEqual([
+      "en-GB-SoniaNeural",
+      "en-US-AriaNeural",
+    ]);
+    expect((await svc.listVoices("cs-CZ")).map((v) => v.name)).toEqual([
+      "cs-CZ-AntoninNeural",
+    ]);
+    expect(await svc.listVoices("de")).toEqual([]);
+    expect((await svc.listVoices()).length).toBe(3);
   });
 
   it("POSTs text and voice and returns MP3 bytes", async () => {

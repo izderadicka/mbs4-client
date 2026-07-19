@@ -7,21 +7,27 @@
   import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import Button from "$lib/components/ui/button/button.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
+  import { Textarea } from "$lib/components/ui/textarea/index.js";
   import GridIcon from "@lucide/svelte/icons/layout-grid";
   import TableIcon from "@lucide/svelte/icons/rows-3";
   import TrashIcon from "@lucide/svelte/icons/trash-2";
   import PlusIcon from "@lucide/svelte/icons/plus";
+  import { IS_DEV } from "$lib/dev";
   import {
     appSettings,
     setPageSize,
     setEbookLayout,
     setSearchResultsLimit,
     setOnlineSearches,
+    setTtsProvider,
+    setTtsServiceParams,
     PAGE_SIZES,
     SEARCH_RESULT_LIMITS,
+    TTS_PROVIDERS,
     type PageSize,
     type SearchResultLimit,
     type OnlineSearch,
+    type TtsProvider,
   } from "$lib/settings.svelte";
 
   breadcrumb.path = [{ name: "Settings", path: "/settings" }];
@@ -44,6 +50,35 @@
   function removeSearch(index: number) {
     searches.splice(index, 1);
     persistSearches();
+  }
+
+  const TTS_PROVIDER_LABELS: Record<TtsProvider, string> = {
+    browser: "Browser (built-in voices)",
+    mock: "Dummy (dev)",
+    edge: "Edge TTS (proxy)",
+  };
+  // mock and edge are dev-only options
+  const ttsProviders = TTS_PROVIDERS.filter((p) => p === "browser" || IS_DEV);
+
+  let ttsProvider = $state(appSettings.ttsProvider);
+  let ttsParams = $state(appSettings.ttsServiceParams);
+  let ttsParamsError = $state<string | null>(null);
+
+  function persistTtsParams() {
+    const trimmed = ttsParams.trim();
+    if (trimmed !== "") {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          throw new Error("not an object");
+        }
+      } catch {
+        ttsParamsError = "Must be a valid JSON object";
+        return;
+      }
+    }
+    ttsParamsError = null;
+    setTtsServiceParams(trimmed);
   }
 </script>
 
@@ -118,6 +153,53 @@
           </Select.Content>
         </Select.Root>
       </div>
+    </Card.Content>
+  </Card.Root>
+
+  <Card.Root>
+    <Card.Header>
+      <Card.Title>Read Aloud</Card.Title>
+      <Card.Description>Speech service used by the reader's read aloud feature.</Card.Description>
+    </Card.Header>
+    <Card.Content class="flex flex-col gap-4">
+
+      <div class="flex items-center gap-4">
+        <Label class="w-44 shrink-0">TTS service</Label>
+        <Select.Root
+          type="single"
+          bind:value={ttsProvider}
+          onValueChange={(v) => setTtsProvider(v as TtsProvider)}
+        >
+          <Select.Trigger class="w-56">{TTS_PROVIDER_LABELS[ttsProvider]}</Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              {#each ttsProviders as provider (provider)}
+                <Select.Item value={provider}>{TTS_PROVIDER_LABELS[provider]}</Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
+      </div>
+
+      <div class="flex items-start gap-4">
+        <Label class="w-44 shrink-0 pt-2">Service parameters</Label>
+        <div class="flex flex-col gap-1 flex-1 min-w-0">
+          <Textarea
+            placeholder={'Optional JSON object, e.g. {"baseUrl": "http://127.0.0.1:8899"}'}
+            bind:value={ttsParams}
+            onblur={persistTtsParams}
+            class="font-mono text-xs"
+            rows={3} />
+          {#if ttsParamsError}
+            <span class="text-destructive text-xs">{ttsParamsError}</span>
+          {/if}
+          <span class="text-muted-foreground text-xs">
+            Additional parameters passed to the selected service as a JSON
+            object. Takes effect the next time read aloud is enabled.
+          </span>
+        </div>
+      </div>
+
     </Card.Content>
   </Card.Root>
 

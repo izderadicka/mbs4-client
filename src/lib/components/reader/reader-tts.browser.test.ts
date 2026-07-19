@@ -1,10 +1,12 @@
 // End-to-end smoke test of read-aloud in the real reader: opens a small FB2
-// book in <foliate-view> (chromium), enables TTS (mock service - the
-// provider defaults to mock outside production), plays, and exercises the
-// controls. Audio really plays (autoplay is enabled in the test launcher).
+// book in <foliate-view> (chromium), enables TTS (mock service - selected
+// via settings; headless chromium has no speech synthesis voices), plays,
+// and exercises the controls. Audio really plays (autoplay is enabled in
+// the test launcher).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-svelte";
 import type { FoliateView } from "foliate-js/view.js";
+import { appSettings } from "$lib/settings.svelte";
 import Reader from "./reader.svelte";
 
 const FB2 = `<?xml version="1.0" encoding="utf-8"?>
@@ -44,6 +46,9 @@ function button(container: HTMLElement, title: string): HTMLButtonElement {
 describe("reader read-aloud (browser)", () => {
   beforeEach(() => {
     localStorage.clear();
+    // appSettings was loaded before localStorage was cleared - set the
+    // provider directly
+    appSettings.ttsProvider = "mock";
   });
 
   it("opens a book, plays speech with highlight, and responds to controls", async () => {
