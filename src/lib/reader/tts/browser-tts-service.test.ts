@@ -284,13 +284,73 @@ describe("BrowserSpeechPipeline", () => {
     expect(pipeline.active).toBe(true);
   });
 
-  it("pause and resume delegate to speechSynthesis", async () => {
-    const { pipeline, cursor } = setup(["One."]);
+  it("pause cancels speech and resume re-speaks from the current sentence", async () => {
+    const { events, pipeline, cursor } = setup(["One.", "Two.", "Three."]);
     await pipeline.start(cursor);
+    await flush();
+    synth.startHead();
+    await flush();
+    const interrupted = synth.queue[0];
+
     await pipeline.pause();
+    // speech is silenced via cancel(), not the unreliable pause()
+    expect(synth.pauseCalls).toBe(0);
+    expect(synth.cancelCalls).toBeGreaterThan(0);
+    expect(synth.queue).toEqual([]);
+    expect(pipeline.active).toBe(true);
+    // stale events from the cancelled utterance are ignored
+    const eventsBefore = types(events);
+    interrupted.onstart?.();
+    interrupted.onend?.();
+    expect(types(events)).toEqual(eventsBefore);
+
     await pipeline.resume();
-    expect(synth.pauseCalls).toBe(1);
-    expect(synth.resumeCalls).toBe(1);
+    await flush();
+    // the interrupted sentence restarts, followed by its lookahead
+    expect(synth.queue.map((u) => u.text)).toEqual(["One.", "Two."]);
+    synth.startHead();
+    expect(pipeline.currentSentence?.text).toBe("One.");
+  });
+
+  it("pause during buffering re-speaks the current sentence on resume", async () => {
+    const { pipeline, cursor } = setup(["One.", "Two."]);
+    // pause while start() is still awaiting the voice list - nothing has
+    // been handed to the engine yet
+    const started = pipeline.start(cursor);
+    await pipeline.pause();
+    await started;
+    expect(synth.queue).toEqual([]);
+    await pipeline.resume();
+    await flush();
+    expect(synth.queue.map((u) => u.text)[0]).toBe("One.");
+  });
+
+  it("rate changed while paused applies to the re-spoken utterances", async () => {
+    const { pipeline, cursor } = setup(["One.", "Two."]);
+    await pipeline.start(cursor);
+    await flush();
+    synth.startHead();
+    await pipeline.pause();
+    pipeline.setRate(1.75);
+    await pipeline.resume();
+    await flush();
+    expect(synth.queue.length).toBeGreaterThan(0);
+    expect(synth.queue.every((u) => u.rate === 1.75)).toBe(true);
+  });
+
+  it("stop while paused clears the pending resume", async () => {
+    const { events, pipeline, cursor } = setup(["One.", "Two."]);
+    await pipeline.start(cursor);
+    await flush();
+    synth.startHead();
+    await pipeline.pause();
+    pipeline.stop();
+    const eventsBefore = types(events);
+    await pipeline.resume();
+    await flush();
+    expect(synth.queue).toEqual([]);
+    expect(types(events)).toEqual(eventsBefore);
+    expect(pipeline.active).toBe(false);
   });
 
   it("maps utterance errors to a pipeline error and ignores interruptions", async () => {

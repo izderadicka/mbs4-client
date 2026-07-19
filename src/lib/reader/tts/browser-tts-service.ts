@@ -110,6 +110,13 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
   // one speaking); holding the utterances also protects them from GC, which
   // would silently drop their events in Chrome
   #queue: { sentence: SentenceRef; utterance: SpeechSynthesisUtterance }[] = [];
+  #paused = false;
+  // sentences to re-speak on resume (pause is emulated with cancel():
+  // speechSynthesis.pause() is a no-op on Android and unreliable elsewhere)
+  #pending: SentenceRef[] = [];
+  // whether #currentSentence already finished playing (pause during a
+  // between-utterances gap must not replay it on resume)
+  #currentEnded = false;
 
   constructor(onEvent: (e: PipelineEvent) => void) {
     this.#onEvent = onEvent;
@@ -144,12 +151,37 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     void this.#fill(generation);
   }
 
+  // Emulated pause: cancel the queued utterances and remember the not-yet-
+  // finished sentences; resume re-speaks them (the current sentence restarts
+  // from its beginning). speechSynthesis.pause() cannot be used - it does
+  // nothing on Android, and speech paused for long is dropped by desktop
+  // Chrome and never resumes.
   async pause(): Promise<void> {
-    synth()?.pause();
+    if (!this.#active || this.#paused) return;
+    this.#paused = true;
+    this.#generation++;
+    this.#pending = this.#queue.map((q) => q.sentence);
+    if (
+      this.#pending.length === 0 &&
+      this.#currentSentence !== null &&
+      !this.#currentEnded
+    ) {
+      // paused while buffering: the current sentence was not spoken yet
+      this.#pending = [this.#currentSentence];
+    }
+    this.#queue = [];
+    synth()?.cancel();
   }
 
   async resume(): Promise<void> {
-    synth()?.resume();
+    if (!this.#paused) return;
+    this.#paused = false;
+    const generation = ++this.#generation;
+    const pending = this.#pending;
+    this.#pending = [];
+    for (const sentence of pending) this.#speak(sentence, generation);
+    // continues from the cursor even when nothing was pending
+    void this.#fill(generation);
   }
 
   // Flush everything: cancel queued utterances, forget the cursor.
@@ -161,6 +193,8 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     this.#endOfInput = false;
     this.#stalled = false;
     this.#active = false;
+    this.#paused = false;
+    this.#pending = [];
     synth()?.cancel();
   }
 
@@ -196,6 +230,7 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     utterance.onstart = () => {
       if (generation !== this.#generation) return;
       this.#currentSentence = sentence;
+      this.#currentEnded = false;
       this.#onEvent({ type: "sentence-started", sentence });
       if (this.#stalled) {
         this.#stalled = false;
@@ -206,6 +241,7 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     utterance.onend = () => {
       if (generation !== this.#generation) return;
       this.#queue = this.#queue.filter((q) => q.sentence !== sentence);
+      if (this.#currentSentence === sentence) this.#currentEnded = true;
       this.#onEvent({ type: "sentence-ended", sentence });
       this.#maybeEnded();
       void this.#fill(generation);
@@ -264,6 +300,8 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     this.#endOfInput = false;
     this.#stalled = false;
     this.#active = false;
+    this.#paused = false;
+    this.#pending = [];
     synth()?.cancel();
     this.#onEvent({ type: "error", error });
   }
