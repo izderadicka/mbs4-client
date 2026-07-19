@@ -35,6 +35,7 @@ export type TtsStatus =
 
 const HIGHLIGHT_COLOR = "rgba(59, 130, 246, 0.4)";
 const SELF_NAV_TIMEOUT_MS = 2000;
+const HIGHLIGHT_CLEAR_REPEAT_MS = 600;
 
 export class TtsController {
   status: TtsStatus = $state("off");
@@ -316,6 +317,17 @@ export class TtsController {
       if (prev) {
         const annotation: Annotation = { value: prev };
         await view.deleteAnnotation(annotation).catch(() => {});
+        if (cfi === null) {
+          // Defensive repeat: on Android the highlight was observed to
+          // survive the delete (mechanism not reproducible elsewhere);
+          // deleting is idempotent, so re-issue once after the engine and
+          // layout settle
+          setTimeout(() => {
+            if (this.#highlighted !== prev) {
+              void this.#view?.deleteAnnotation(annotation).catch(() => {});
+            }
+          }, HIGHLIGHT_CLEAR_REPEAT_MS);
+        }
       }
       if (cfi) {
         await view.addAnnotation({ value: cfi }).catch((e) => {

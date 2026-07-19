@@ -250,6 +250,22 @@ describe("TtsController", () => {
     expect(annotationLog.at(-1)).toBe("del");
   });
 
+  it("stop repeats the highlight delete once as a safety net", async () => {
+    const { controller, view, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    controller.stop();
+    await flush();
+    const deletes = () =>
+      (view.deleteAnnotation as ReturnType<typeof vi.fn>).mock.calls.length;
+    const initial = deletes();
+    await vi.waitFor(() => expect(deletes()).toBe(initial + 1), {
+      timeout: 2000,
+    });
+  });
+
   it("pause keeps the highlight; stop while paused clears it", async () => {
     const { controller, view, player } = await setup();
     await controller.play();
