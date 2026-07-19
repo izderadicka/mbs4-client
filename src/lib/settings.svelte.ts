@@ -14,11 +14,21 @@ export interface OnlineSearch {
   urlTemplate: string;
 }
 
+// TTS (read aloud) service implementations selectable on the settings page:
+// browser (Web Speech API), mock (dummy audio for dev) and edge (stopgap
+// Edge TTS proxy); mock and edge are offered in dev builds only
+export const TTS_PROVIDERS = ["browser", "mock", "edge"] as const;
+export type TtsProvider = (typeof TTS_PROVIDERS)[number];
+
 export interface AppSettings {
   pageSize: PageSize;
   ebookLayout: EbookLayout;
   searchResultsLimit: SearchResultLimit;
   onlineSearches: OnlineSearch[];
+  ttsProvider: TtsProvider;
+  // extra provider-specific parameters as JSON object text ("" = none),
+  // e.g. {"baseUrl": "http://127.0.0.1:8899"} for the edge provider
+  ttsServiceParams: string;
 }
 
 const DEFAULT_ONLINE_SEARCHES: OnlineSearch[] = [
@@ -34,7 +44,23 @@ const DEFAULTS: AppSettings = {
   ebookLayout: "grid",
   searchResultsLimit: 20,
   onlineSearches: DEFAULT_ONLINE_SEARCHES,
+  ttsProvider: "browser",
+  ttsServiceParams: "",
 };
+
+// valid = text of a JSON object (or ""); anything else falls back to ""
+function sanitizeTtsServiceParams(value: unknown): string {
+  if (typeof value !== "string" || value.trim() === "") return "";
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return value;
+    }
+  } catch {
+    // fall through
+  }
+  return "";
+}
 
 function sanitizeOnlineSearches(value: unknown): OnlineSearch[] {
   if (!Array.isArray(value)) return [...DEFAULT_ONLINE_SEARCHES];
@@ -71,6 +97,12 @@ function loadSettings(): AppSettings {
         parsed.onlineSearches === undefined
           ? [...DEFAULT_ONLINE_SEARCHES]
           : sanitizeOnlineSearches(parsed.onlineSearches),
+      ttsProvider: (TTS_PROVIDERS as readonly string[]).includes(
+        parsed.ttsProvider,
+      )
+        ? parsed.ttsProvider
+        : DEFAULTS.ttsProvider,
+      ttsServiceParams: sanitizeTtsServiceParams(parsed.ttsServiceParams),
     };
   } catch {
     return { ...DEFAULTS };
@@ -100,5 +132,15 @@ export function setSearchResultsLimit(v: SearchResultLimit) {
 
 export function setOnlineSearches(v: OnlineSearch[]) {
   appSettings.onlineSearches = sanitizeOnlineSearches(v);
+  persist();
+}
+
+export function setTtsProvider(v: TtsProvider) {
+  appSettings.ttsProvider = v;
+  persist();
+}
+
+export function setTtsServiceParams(v: string) {
+  appSettings.ttsServiceParams = sanitizeTtsServiceParams(v);
   persist();
 }

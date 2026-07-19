@@ -20,10 +20,8 @@ export const CONVERTIBLE_FORMATS = ["epub", "mobi", "txt", "pdf"];
 // formats readable online with the embedded foliate-js reader
 export const READER_FORMATS = ["epub", "mobi", "azw", "azw3", "fb2", "cbz"];
 
-// TTS (read aloud) - REST service path, relative to API base URL
-export const TTS_API_PATH = "/api/tts";
 // default base URL of the stopgap Edge TTS proxy (tts-cz-data repo);
-// override with PUBLIC_TTS_URL
+// override with PUBLIC_TTS_URL or the "baseUrl" TTS settings parameter
 export const EDGE_TTS_DEFAULT_URL = "http://127.0.0.1:8899";
 // keep at least this much synthesized audio queued ahead of playback so
 // short TTS service outages don't interrupt speech

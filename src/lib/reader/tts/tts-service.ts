@@ -2,7 +2,9 @@
 // No concrete provider is chosen yet; implementations must satisfy this
 // contract so the rest of the read-aloud pipeline never depends on one.
 
-import { TTS_PROVIDER, TTS_URL } from "$lib/dev";
+import { TTS_URL } from "$lib/dev";
+import { appSettings } from "$lib/settings.svelte";
+import type { PipelineEvent, SpeechPipeline } from "./pipeline";
 
 export interface Voice {
   // unique identifier of the voice
@@ -31,11 +33,29 @@ export interface SynthesisResult {
 
 export interface TtsService {
   readonly id: string;
-  listVoices(): Promise<Voice[]>;
+  // Voices for the given BCP-47 language (primary subtag match, e.g. "en"
+  // and "en-GB" both select "en-*" voices); may be empty when the service
+  // has none for it (synthesis then uses the service default voice). All
+  // voices when `language` is undefined.
+  listVoices(language?: string): Promise<Voice[]>;
   // Rejects with TtsServiceError on service failure; when `signal` aborts,
   // rejects with the abort reason (DOMException "AbortError"), never with
   // TtsServiceError, so cancellations are not mistaken for outages.
   synthesize(req: SynthesisRequest, signal?: AbortSignal): Promise<SynthesisResult>;
+  // The playback pipeline appropriate for this service: TtsServicePipeline
+  // for services whose synthesize returns audio data, a service-specific
+  // implementation for those that play speech themselves (browser).
+  createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline;
+}
+
+// primary-subtag language comparison: voice "en-US" matches "en" and "en-GB"
+export function matchesLanguage(
+  voiceLang: string | undefined,
+  language: string,
+): boolean {
+  if (!voiceLang) return false;
+  const primary = (tag: string) => tag.toLowerCase().split("-")[0];
+  return primary(voiceLang) === primary(language);
 }
 
 export class TtsServiceError extends Error {
@@ -49,15 +69,42 @@ export class TtsServiceError extends Error {
   }
 }
 
+// additional provider-specific parameters entered on the settings page as a
+// JSON object; {} when empty or invalid
+function serviceParams(): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(appSettings.ttsServiceParams);
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // invalid JSON is rejected by the settings page already
+  }
+  return {};
+}
+
+// Builds the service selected on the settings page (appSettings.ttsProvider);
+// the params object is passed to the provider's constructor, so its keys are
+// provider-specific (e.g. {"baseUrl": ...} for edge).
 export async function createTtsService(): Promise<TtsService> {
-  if (TTS_PROVIDER === "mock") {
-    const { MockTtsService } = await import("./mock-tts-service");
-    return new MockTtsService();
+  const params = serviceParams();
+  switch (appSettings.ttsProvider) {
+    case "mock": {
+      const { MockTtsService } = await import("./mock-tts-service");
+      return new MockTtsService(
+        params as { latencyMs?: number; failEveryNth?: number },
+      );
+    }
+    case "edge": {
+      const { EdgeTtsService } = await import("./edge-tts-service");
+      return new EdgeTtsService({
+        baseUrl: TTS_URL,
+        ...(params as { baseUrl?: string }),
+      });
+    }
+    default: {
+      const { BrowserTtsService } = await import("./browser-tts-service");
+      return new BrowserTtsService();
+    }
   }
-  if (TTS_PROVIDER === "edge") {
-    const { EdgeTtsService } = await import("./edge-tts-service");
-    return new EdgeTtsService({ baseUrl: TTS_URL });
-  }
-  const { RestTtsService } = await import("./rest-tts-service");
-  return new RestTtsService();
 }

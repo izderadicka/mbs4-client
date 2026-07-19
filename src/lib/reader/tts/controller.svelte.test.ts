@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FoliateView } from "foliate-js/view.js";
 import type { PlayerEvent, SpeechPlayerLike } from "./player";
+import { TtsServicePipeline, type PipelineEvent, type SpeechPipeline } from "./pipeline";
 import type { SynthesisRequest, SynthesisResult, TtsService } from "./tts-service";
 
-// The controller instantiates SpeechPlayer (WebAudio) and createTtsService
-// internally - substitute both with test fakes.
+// The service's pipeline instantiates SpeechPlayer (WebAudio) and the
+// controller calls createTtsService internally - substitute both with test
+// fakes (the ./player mock makes TtsServicePipeline pick up FakePlayer).
 const fakes = vi.hoisted(() => {
   class FakePlayer implements SpeechPlayerLike {
     static instances: FakePlayer[] = [];
@@ -52,11 +54,20 @@ const fakes = vi.hoisted(() => {
   class FakeService implements TtsService {
     readonly id = "fake";
     requests: { text: string; voice?: string }[] = [];
-    async listVoices() {
-      return [
+    voicesRequestedFor: (string | undefined)[] = [];
+    createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
+      return new TtsServicePipeline(this, onEvent);
+    }
+    async listVoices(language?: string) {
+      this.voicesRequestedFor.push(language);
+      const voices = [
         { name: "Czech Voice", lang: "cs" },
+        { name: "Other Czech Voice", lang: "cs" },
         { name: "English Voice", lang: "en" },
       ];
+      return language === undefined
+        ? voices
+        : voices.filter((v) => v.lang === language.toLowerCase().split("-")[0]);
     }
     async synthesize(req: SynthesisRequest): Promise<SynthesisResult> {
       this.requests.push({ text: req.text, voice: req.voice });
@@ -149,6 +160,7 @@ describe("TtsController", () => {
     localStorage.clear();
     fakes.FakePlayer.instances.length = 0;
     fakes.service.requests.length = 0;
+    fakes.service.voicesRequestedFor.length = 0;
   });
 
   async function setup() {
@@ -158,24 +170,28 @@ describe("TtsController", () => {
     return { ...stub, controller, player: fakes.FakePlayer.instances.at(-1)! };
   }
 
-  it("enable loads voices and prefers a voice matching the book language", async () => {
+  it("enable lists voices for the book language and picks the first", async () => {
     const { controller } = await setup();
     expect(controller.status).toBe("idle");
-    expect(controller.voices.length).toBe(2);
-    expect(controller.voice).toBe("Czech Voice"); // book lang = cs
+    expect(fakes.service.voicesRequestedFor).toEqual(["cs"]); // book lang
+    expect(controller.voices.map((v) => v.name)).toEqual([
+      "Czech Voice",
+      "Other Czech Voice",
+    ]);
+    expect(controller.voice).toBe("Czech Voice");
   });
 
   it("enable respects the persisted voice preference", async () => {
     localStorage.setItem(
       "mbs4.tts",
-      JSON.stringify({ voice: "English Voice", rate: 1.5 }),
+      JSON.stringify({ voice: "Other Czech Voice", rate: 1.5 }),
     );
     vi.resetModules();
     const { TtsController: Ctl } = await import("./controller.svelte");
     const stub = makeView(["<p>Hello there.</p>"]);
     const controller = new Ctl(() => stub.view);
     await controller.enable();
-    expect(controller.voice).toBe("English Voice");
+    expect(controller.voice).toBe("Other Czech Voice");
     expect(controller.rate).toBe(1.5);
   });
 

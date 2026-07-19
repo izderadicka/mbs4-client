@@ -2,7 +2,9 @@
 // tone whose duration is proportional to the text length, encoded as WAV.
 // Uses no audio APIs, so it also runs in happy-dom unit tests.
 
+import { TtsServicePipeline, type PipelineEvent, type SpeechPipeline } from "./pipeline";
 import {
+  matchesLanguage,
   TtsServiceError,
   type SynthesisRequest,
   type SynthesisResult,
@@ -91,9 +93,15 @@ export class MockTtsService implements TtsService {
     this.#failEveryNth = opts?.failEveryNth ?? 0;
   }
 
-  async listVoices(): Promise<Voice[]> {
+  createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
+    return new TtsServicePipeline(this, onEvent);
+  }
+
+  async listVoices(language?: string): Promise<Voice[]> {
     await delay(this.#latencyMs);
-    return VOICES.map((v) => ({ ...v }));
+    return VOICES.filter(
+      (v) => language === undefined || matchesLanguage(v.lang, language),
+    ).map((v) => ({ ...v }));
   }
 
   async synthesize(

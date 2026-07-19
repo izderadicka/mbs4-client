@@ -35,6 +35,16 @@ describe("MockTtsService", () => {
     expect(voices[0].name).toBeTruthy();
   });
 
+  it("filters voices by language (primary subtag, case-insensitive)", async () => {
+    const svc = new MockTtsService({ latencyMs: 0 });
+    const czech = await svc.listVoices("cs");
+    expect(czech.map((v) => v.name)).toEqual(["Mock Bell"]);
+    const english = await svc.listVoices("EN-GB");
+    expect(english.length).toBeGreaterThan(0);
+    expect(english.every((v) => v.lang === "en")).toBe(true);
+    expect(await svc.listVoices("fr")).toEqual([]);
+  });
+
   it("synthesizes WAV with duration proportional to text length", async () => {
     const svc = new MockTtsService({ latencyMs: 0 });
     const short = await svc.synthesize({ text: "Hi there." });

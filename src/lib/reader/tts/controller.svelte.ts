@@ -19,8 +19,7 @@ import type {
   RendererRelocateDetail,
 } from "foliate-js/view.js";
 import { toast } from "svelte-sonner";
-import { SpeechPipeline, type PipelineEvent } from "./pipeline";
-import { SpeechPlayer } from "./player";
+import type { PipelineEvent, SpeechPipeline } from "./pipeline";
 import { SentenceSource, type SentenceRef } from "./sentences";
 import { setTtsRate, setTtsVoice, ttsPrefs, type TtsRate } from "./tts-prefs.svelte";
 import { createTtsService, type TtsService, type Voice } from "./tts-service";
@@ -48,7 +47,6 @@ export class TtsController {
   #getView: () => FoliateView | null;
   #service: TtsService | null = null;
   #source: SentenceSource | null = null;
-  #player: SpeechPlayer | null = null;
   #pipeline: SpeechPipeline | null = null;
   #highlighted: string | null = null;
   #selfNav = 0;
@@ -101,8 +99,7 @@ export class TtsController {
     this.errorMessage = null;
     this.#service = await createTtsService();
     this.#source = new SentenceSource(view);
-    this.#player = new SpeechPlayer();
-    this.#pipeline = new SpeechPipeline(this.#service, this.#player, (e) =>
+    this.#pipeline = this.#service.createPipeline((e) =>
       this.#onPipelineEvent(e),
     );
     view.addEventListener("draw-annotation", this.#onDrawAnnotation);
@@ -112,7 +109,7 @@ export class TtsController {
     this.#pipeline.setRate(this.rate);
     this.status = "idle";
     try {
-      this.voices = await this.#service.listVoices();
+      this.voices = await this.#service.listVoices(this.#bookLanguage());
     } catch (e) {
       console.error("Failed to list TTS voices", e);
       this.voices = [];
@@ -131,11 +128,10 @@ export class TtsController {
       view.removeEventListener("create-overlay", this.#onCreateOverlay);
       view.renderer?.removeEventListener("relocate", this.#onRendererRelocate);
     }
-    await this.#player?.destroy();
+    await this.#pipeline?.destroy();
     this.#source?.dispose();
     this.#service = null;
     this.#source = null;
-    this.#player = null;
     this.#pipeline = null;
     this.currentSentence = null;
     this.status = "off";
@@ -147,22 +143,17 @@ export class TtsController {
     await this.disable();
   }
 
-  // preferred voice: persisted pref if available, else a voice matching the
-  // book language, else the first one
+  #bookLanguage(): string | undefined {
+    const bookLang = this.#view?.book.metadata?.language;
+    return Array.isArray(bookLang) ? bookLang[0] : bookLang;
+  }
+
+  // preferred voice: persisted pref if available in the (language-filtered)
+  // list, else the first one
   #pickVoice(): string | null {
     if (this.voices.length === 0) return null;
     if (ttsPrefs.voice && this.voices.some((v) => v.name === ttsPrefs.voice)) {
       return ttsPrefs.voice;
-    }
-    const bookLang = this.#view?.book.metadata?.language;
-    const lang = (Array.isArray(bookLang) ? bookLang[0] : bookLang)
-      ?.toLowerCase()
-      .split("-")[0];
-    if (lang) {
-      const match = this.voices.find((v) =>
-        v.lang?.toLowerCase().startsWith(lang),
-      );
-      if (match) return match.name;
     }
     return this.voices[0].name;
   }

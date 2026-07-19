@@ -12,7 +12,7 @@ import {
   TTS_RETRY_WINDOW_MS,
   TTS_TARGET_BUFFER_S,
 } from "$lib/config";
-import type { PlayerEvent, SpeechPlayerLike } from "./player";
+import { SpeechPlayer, type PlayerEvent, type SpeechPlayerLike } from "./player";
 import type { SentenceCursor, SentenceRef } from "./sentences";
 import { TtsServiceError, type SynthesisResult, type TtsService } from "./tts-service";
 
@@ -28,6 +28,22 @@ export type PipelineEvent =
   // terminal failure (non-retryable error or retry window exhausted)
   | { type: "error"; error: unknown };
 
+// Playback pipeline contract used by the controller. Each TtsService creates
+// the implementation appropriate for it (TtsService.createPipeline):
+// TtsServicePipeline below for services returning audio data, or a
+// service-specific one (browser speech synthesis plays audio itself and
+// cannot feed the WebAudio player).
+export interface SpeechPipeline {
+  readonly currentSentence: SentenceRef | null;
+  readonly active: boolean;
+  start(cursor: SentenceCursor, voice?: string): Promise<void>;
+  pause(): Promise<void>;
+  resume(): Promise<void>;
+  stop(): void;
+  setRate(rate: number): void;
+  destroy(): Promise<void>;
+}
+
 export interface PipelineOptions {
   targetBufferSeconds?: number;
   minLookaheadSentences?: number;
@@ -36,6 +52,8 @@ export interface PipelineOptions {
   retryInitialMs?: number;
   retryMaxMs?: number;
   retryWindowMs?: number;
+  // substitute for the WebAudio SpeechPlayer (tests)
+  player?: SpeechPlayerLike;
 }
 
 interface LedgerEntry {
@@ -62,11 +80,11 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-export class SpeechPipeline {
+export class TtsServicePipeline implements SpeechPipeline {
   #service: TtsService;
   #player: SpeechPlayerLike;
   #onEvent: (e: PipelineEvent) => void;
-  #opts: Required<PipelineOptions>;
+  #opts: Required<Omit<PipelineOptions, "player">>;
 
   #cursor: SentenceCursor | null = null;
   #voice: string | undefined;
@@ -91,12 +109,11 @@ export class SpeechPipeline {
 
   constructor(
     service: TtsService,
-    player: SpeechPlayerLike,
     onEvent: (e: PipelineEvent) => void,
     opts?: PipelineOptions,
   ) {
     this.#service = service;
-    this.#player = player;
+    this.#player = opts?.player ?? new SpeechPlayer();
     this.#onEvent = onEvent;
     this.#opts = {
       targetBufferSeconds: opts?.targetBufferSeconds ?? TTS_TARGET_BUFFER_S,
@@ -109,7 +126,7 @@ export class SpeechPipeline {
       retryMaxMs: opts?.retryMaxMs ?? TTS_RETRY_MAX_MS,
       retryWindowMs: opts?.retryWindowMs ?? TTS_RETRY_WINDOW_MS,
     };
-    player.onEvent = (e) => this.#onPlayerEvent(e);
+    this.#player.onEvent = (e) => this.#onPlayerEvent(e);
   }
 
   get currentSentence(): SentenceRef | null {
@@ -166,6 +183,11 @@ export class SpeechPipeline {
 
   setRate(rate: number): void {
     this.#player.setRate(rate);
+  }
+
+  async destroy(): Promise<void> {
+    this.stop();
+    await this.#player.destroy();
   }
 
   #lookahead(): number {
