@@ -11,6 +11,14 @@ describe("matchesLanguage", () => {
     expect(matchesLanguage("cs", "en")).toBe(false);
     expect(matchesLanguage(undefined, "en")).toBe(false);
   });
+
+  it("accepts Android's underscore locale form on either side", async () => {
+    const { matchesLanguage } = await import("./tts-service");
+    expect(matchesLanguage("cs_CZ", "cs")).toBe(true);
+    expect(matchesLanguage("en_US", "en-GB")).toBe(true);
+    expect(matchesLanguage("cs-CZ", "cs_CZ")).toBe(true);
+    expect(matchesLanguage("de_DE", "cs")).toBe(false);
+  });
 });
 
 describe("createTtsService", () => {
