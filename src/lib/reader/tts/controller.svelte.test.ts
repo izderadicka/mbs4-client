@@ -106,6 +106,9 @@ const flush = async (times = 8) => {
 // sentences.test.ts for the encoding)
 function makeView(sectionHtml: string[]) {
   const counters = new Map<number, number>();
+  // records highlight annotation operations; "added" marks the async add
+  // completing (a few microtasks later, like foliate's CFI resolution)
+  const annotationLog: string[] = [];
   const view = document.createElement("div") as unknown as FoliateView &
     Record<string, unknown>;
   const renderer = document.createElement("div") as unknown as {
@@ -135,12 +138,19 @@ function makeView(sectionHtml: string[]) {
       if (!m) throw new Error("bad cfi");
       return { index: parseInt(m[1]) / 2 - 1, anchor: () => docs[0].body };
     },
-    addAnnotation: vi.fn(async () => undefined),
-    deleteAnnotation: vi.fn(async () => undefined),
+    addAnnotation: vi.fn(async () => {
+      annotationLog.push("add");
+      await Promise.resolve();
+      await Promise.resolve();
+      annotationLog.push("added");
+    }),
+    deleteAnnotation: vi.fn(async () => {
+      annotationLog.push("del");
+    }),
     goTo: vi.fn(async () => undefined),
     lastLocation: { cfi: "epubcfi(/6/2!/4/2/1:0)" },
   });
-  return { view: view as unknown as FoliateView, renderer, counters };
+  return { view: view as unknown as FoliateView, renderer, counters, annotationLog };
 }
 
 function rendererRelocate(
@@ -221,10 +231,41 @@ describe("TtsController", () => {
     player.startNext();
     await flush();
     controller.stop();
+    await flush();
     expect(controller.status).toBe("idle");
     expect(
       (view.deleteAnnotation as ReturnType<typeof vi.fn>).mock.calls.length,
     ).toBeGreaterThan(0);
+  });
+
+  it("stop immediately after a sentence starts still clears the highlight", async () => {
+    const { controller, player, annotationLog } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext(); // sentence-started: highlight add is in flight
+    controller.stop(); // stop before the add resolved
+    await flush();
+    // the delete must run after the add completed, never before it
+    expect(annotationLog).toContain("added");
+    expect(annotationLog.at(-1)).toBe("del");
+  });
+
+  it("pause keeps the highlight; stop while paused clears it", async () => {
+    const { controller, view, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    const deletes = () =>
+      (view.deleteAnnotation as ReturnType<typeof vi.fn>).mock.calls.length;
+    const deletesBefore = deletes();
+    controller.pause();
+    await flush();
+    expect(controller.status).toBe("paused");
+    expect(deletes()).toBe(deletesBefore);
+    controller.stop();
+    await flush();
+    expect(deletes()).toBeGreaterThan(deletesBefore);
   });
 
   it("user navigation while playing restarts speech from the new location", async () => {

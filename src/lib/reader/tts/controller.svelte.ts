@@ -50,6 +50,11 @@ export class TtsController {
   #source: SentenceSource | null = null;
   #pipeline: SpeechPipeline | null = null;
   #highlighted: string | null = null;
+  // Annotation add/delete calls are async (foliate resolves the CFI first)
+  // and must run strictly in order: a stop right after a sentence started
+  // would otherwise delete the highlight before its add has drawn it,
+  // leaving an orphaned highlight on the page.
+  #highlightChain: Promise<void> = Promise.resolve();
   #selfNav = 0;
   #disposed = false;
   // bumped whenever playback intent changes (stop, new play, navigation) so
@@ -67,7 +72,12 @@ export class TtsController {
     // change) - re-add the highlight if it belongs to that section
     const { index } = (event as CustomEvent<CreateOverlayDetail>).detail;
     if (this.#highlighted && this.currentSentence?.sectionIndex === index) {
-      void this.#view?.addAnnotation({ value: this.#highlighted });
+      this.#highlightChain = this.#highlightChain.then(async () => {
+        if (!this.#highlighted) return; // removed meanwhile
+        await this.#view
+          ?.addAnnotation({ value: this.#highlighted })
+          .catch(() => {});
+      });
     }
   };
 
@@ -289,22 +299,30 @@ export class TtsController {
   }
 
   #moveHighlight(sentence: SentenceRef): void {
-    const view = this.#view;
-    if (!view) return;
-    this.#removeHighlight();
-    this.#highlighted = sentence.cfi;
-    void view.addAnnotation({ value: sentence.cfi }).catch((e) => {
-      console.error("Failed to highlight sentence", e);
-    });
+    this.#setHighlight(sentence.cfi);
   }
 
   #removeHighlight(): void {
-    const view = this.#view;
-    if (this.#highlighted && view) {
-      const annotation: Annotation = { value: this.#highlighted };
-      void view.deleteAnnotation(annotation).catch(() => {});
-    }
-    this.#highlighted = null;
+    this.#setHighlight(null);
+  }
+
+  #setHighlight(cfi: string | null): void {
+    const prev = this.#highlighted;
+    if (prev === cfi) return;
+    this.#highlighted = cfi;
+    this.#highlightChain = this.#highlightChain.then(async () => {
+      const view = this.#view;
+      if (!view) return;
+      if (prev) {
+        const annotation: Annotation = { value: prev };
+        await view.deleteAnnotation(annotation).catch(() => {});
+      }
+      if (cfi) {
+        await view.addAnnotation({ value: cfi }).catch((e) => {
+          console.error("Failed to highlight sentence", e);
+        });
+      }
+    });
   }
 
   // keep the spoken sentence visible: scroll within the rendered section or

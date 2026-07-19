@@ -97,9 +97,21 @@ describe("reader read-aloud (browser)", () => {
     });
     expect(drawn[0]).toMatch(/^epubcfi\(/);
 
-    // pause returns the Play button and playback stays paused
+    // highlights are elements in the section overlayer's SVG
+    const view = root.querySelector("foliate-view") as unknown as FoliateView;
+    const highlightCount = () =>
+      view.renderer
+        .getContents()
+        .reduce((n, c) => n + (c.overlayer?.element.childElementCount ?? 0), 0);
+    await vi.waitFor(() => expect(highlightCount()).toBeGreaterThan(0), {
+      timeout: 5000,
+    });
+
+    // pause returns the Play button, playback stays paused and the spoken
+    // sentence stays highlighted
     button(root, "Pause").click();
     await vi.waitFor(() => button(root, "Play"), { timeout: 5000 });
+    expect(highlightCount()).toBeGreaterThan(0);
 
     // resume + jump to next sentence keeps playing
     button(root, "Play").click();
@@ -107,12 +119,13 @@ describe("reader read-aloud (browser)", () => {
     button(root, "Next sentence").click();
     await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
 
-    // stop disarms playback
+    // stop disarms playback and clears the highlight
     button(root, "Stop reading").click();
     await vi.waitFor(
       () => expect(button(root, "Play").disabled).toBe(false),
       { timeout: 5000 },
     );
+    await vi.waitFor(() => expect(highlightCount()).toBe(0), { timeout: 5000 });
 
     // disable TTS: the control bar goes away
     button(root, "Read aloud").click();

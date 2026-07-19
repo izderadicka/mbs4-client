@@ -18,7 +18,8 @@ declare module "foliate-js/view.js" {
   export interface RendererContent {
     doc: Document;
     index: number;
-    overlayer?: unknown;
+    // Overlayer instance; element is the SVG holding the drawn annotations
+    overlayer?: { element: SVGElement };
   }
 
   export interface FoliateRenderer extends HTMLElement {
