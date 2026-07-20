@@ -35,7 +35,6 @@ export type TtsStatus =
 
 const HIGHLIGHT_COLOR = "rgba(59, 130, 246, 0.4)";
 const SELF_NAV_TIMEOUT_MS = 2000;
-const HIGHLIGHT_CLEAR_REPEAT_MS = 600;
 
 export class TtsController {
   status: TtsStatus = $state("off");
@@ -85,9 +84,15 @@ export class TtsController {
   #onRendererRelocate = (event: Event) => {
     const detail = (event as CustomEvent<RendererRelocateDetail>).detail;
     if (this.status === "off") return;
-    // layout re-anchoring (resize etc.) and our own scrollToAnchor calls
-    // (select=true => reason "selection") are not user navigation
-    if (detail.reason === "anchor" || detail.reason === "selection") return;
+    // our own page-follow scrollToAnchor(select=true) relocates with reason
+    // "selection", which also makes foliate select the sentence text - drop
+    // that native selection (we show our own overlay highlight instead)
+    if (detail.reason === "selection") {
+      this.#clearNativeSelection();
+      return;
+    }
+    // layout re-anchoring (resize etc.) is not user navigation
+    if (detail.reason === "anchor") return;
     // "navigation" is ambiguous: TOC/slider (user) or our own cross-section
     // goTo - the self-nav counter marks the latter
     if (detail.reason === "navigation" && this.#selfNav > 0) {
@@ -134,6 +139,7 @@ export class TtsController {
     if (this.status === "off") return;
     this.#pipeline?.stop();
     this.#removeHighlight();
+    this.#clearNativeSelection();
     const view = this.#view;
     if (view) {
       view.removeEventListener("draw-annotation", this.#onDrawAnnotation);
@@ -211,6 +217,7 @@ export class TtsController {
     this.#op++;
     this.#pipeline?.stop();
     this.#removeHighlight();
+    this.#clearNativeSelection();
     this.currentSentence = null;
     this.status = "idle";
   }
@@ -299,17 +306,12 @@ export class TtsController {
     }
   }
 
-  // hide/show the overlay SVGs with a forced reflow in between, so the
-  // compositor cannot keep stale pixels of removed highlights
-  #forceOverlayRepaint(): void {
+  // drop any native text selection foliate created in the section documents
+  // (page-follow selects the sentence - we show our overlay highlight instead)
+  #clearNativeSelection(): void {
     const contents = this.#view?.renderer.getContents() ?? [];
     for (const c of contents) {
-      const el = c.overlayer?.element;
-      if (!el) continue;
-      const display = el.style.display;
-      el.style.display = "none";
-      void el.getBoundingClientRect();
-      el.style.display = display;
+      c.doc?.getSelection()?.removeAllRanges();
     }
   }
 
@@ -331,22 +333,6 @@ export class TtsController {
       if (prev) {
         const annotation: Annotation = { value: prev };
         await view.deleteAnnotation(annotation).catch(() => {});
-        if (cfi === null) {
-          // The DOM removal alone left the highlight visible on Android:
-          // the overlay SVG in the book iframe is GPU-composited and Chrome
-          // may keep its stale pixels until the layer is invalidated, so
-          // force a repaint - and repeat once after the layout settles
-          // (deleting again is idempotent)
-          this.#forceOverlayRepaint();
-          setTimeout(() => {
-            if (this.#highlighted !== prev) {
-              void this.#view
-                ?.deleteAnnotation(annotation)
-                .then(() => this.#forceOverlayRepaint())
-                .catch(() => {});
-            }
-          }, HIGHLIGHT_CLEAR_REPEAT_MS);
-        }
       }
       if (cfi) {
         await view.addAnnotation({ value: cfi }).catch((e) => {
@@ -365,7 +351,9 @@ export class TtsController {
       const contents = view.renderer.getContents();
       const rendered = contents.find((c) => c.index === sentence.sectionIndex);
       if (rendered) {
-        // relocates caused by this are reason "selection" - no counter needed
+        // select=true tags the relocate reason "selection" so it is not
+        // treated as user navigation (no self-nav counter needed); the
+        // native selection foliate makes is dropped in #onRendererRelocate
         const resolved = view.resolveCFI(sentence.cfi);
         const anchor = resolved.anchor(rendered.doc);
         view.renderer.scrollToAnchor(anchor, true);

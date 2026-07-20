@@ -116,6 +116,12 @@ function makeView(sectionHtml: string[]) {
     dispatchEvent: typeof HTMLElement.prototype.dispatchEvent;
   } & Record<string, unknown>;
   const docs = sectionHtml.map((h) => parseDoc(h));
+  // spy on the native selection clearing (happy-dom has no real selection)
+  const removeAllRanges = vi.fn();
+  for (const d of docs) {
+    (d as unknown as { getSelection: () => Selection }).getSelection = () =>
+      ({ removeAllRanges }) as unknown as Selection;
+  }
   Object.assign(renderer, {
     getContents: () => [{ doc: docs[0], index: 0, overlayer: {} }],
     scrollToAnchor: vi.fn(),
@@ -150,7 +156,13 @@ function makeView(sectionHtml: string[]) {
     goTo: vi.fn(async () => undefined),
     lastLocation: { cfi: "epubcfi(/6/2!/4/2/1:0)" },
   });
-  return { view: view as unknown as FoliateView, renderer, counters, annotationLog };
+  return {
+    view: view as unknown as FoliateView,
+    renderer,
+    counters,
+    annotationLog,
+    removeAllRanges,
+  };
 }
 
 function rendererRelocate(
@@ -250,20 +262,31 @@ describe("TtsController", () => {
     expect(annotationLog.at(-1)).toBe("del");
   });
 
-  it("stop repeats the highlight delete once as a safety net", async () => {
-    const { controller, view, player } = await setup();
+  it("stop clears the native text selection", async () => {
+    const { controller, player, removeAllRanges } = await setup();
     await controller.play();
     await flush();
     player.startNext();
     await flush();
+    removeAllRanges.mockClear();
     controller.stop();
+    expect(removeAllRanges).toHaveBeenCalled();
+  });
+
+  it("drops the native selection foliate makes on a page-follow relocate", async () => {
+    const { controller, renderer, player, removeAllRanges } = await setup();
+    await controller.play();
     await flush();
-    const deletes = () =>
-      (view.deleteAnnotation as ReturnType<typeof vi.fn>).mock.calls.length;
-    const initial = deletes();
-    await vi.waitFor(() => expect(deletes()).toBe(initial + 1), {
-      timeout: 2000,
-    });
+    player.startNext();
+    await flush();
+    const requestsBefore = fakes.service.requests.length;
+    removeAllRanges.mockClear();
+    rendererRelocate(renderer, "selection"); // our own scrollToAnchor(select)
+    await flush();
+    // selection cleared, speech not restarted
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(fakes.service.requests.length).toBe(requestsBefore);
+    expect(controller.status).toBe("playing");
   });
 
   it("pause keeps the highlight; stop while paused clears it", async () => {
