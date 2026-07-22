@@ -85,11 +85,12 @@ vi.mock("./tts-service", async (importOriginal) => ({
 vi.mock("svelte-sonner", () => ({
   toast: { error: vi.fn(), info: vi.fn() },
 }));
+const { HIGHLIGHT_FN } = vi.hoisted(() => ({ HIGHLIGHT_FN: () => null }));
 vi.mock("foliate-js/overlayer.js", () => ({
-  Overlayer: { highlight: () => null },
+  Overlayer: { highlight: HIGHLIGHT_FN },
 }));
 
-import { TtsController } from "./controller.svelte";
+import { TtsController, highlightStyle } from "./controller.svelte";
 
 function parseDoc(bodyHtml: string): Document {
   return new DOMParser().parseFromString(
@@ -116,6 +117,11 @@ function makeView(sectionHtml: string[]) {
     dispatchEvent: typeof HTMLElement.prototype.dispatchEvent;
   } & Record<string, unknown>;
   const docs = sectionHtml.map((h) => parseDoc(h));
+  // stand-in for the section's overlay SVG (holds the highlight opacity var)
+  const overlayEl = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg",
+  );
   // spy on the native selection clearing (happy-dom has no real selection)
   const removeAllRanges = vi.fn();
   for (const d of docs) {
@@ -123,7 +129,9 @@ function makeView(sectionHtml: string[]) {
       ({ removeAllRanges }) as unknown as Selection;
   }
   Object.assign(renderer, {
-    getContents: () => [{ doc: docs[0], index: 0, overlayer: {} }],
+    getContents: () => [
+      { doc: docs[0], index: 0, overlayer: { element: overlayEl } },
+    ],
     scrollToAnchor: vi.fn(),
   });
   Object.assign(view, {
@@ -162,6 +170,7 @@ function makeView(sectionHtml: string[]) {
     counters,
     annotationLog,
     removeAllRanges,
+    overlayEl,
   };
 }
 
@@ -305,6 +314,53 @@ describe("TtsController", () => {
     controller.stop();
     await flush();
     expect(deletes()).toBeGreaterThan(deletesBefore);
+  });
+
+  it("highlightStyle differs between light and dark", () => {
+    const light = highlightStyle("light");
+    const dark = highlightStyle("dark");
+    expect(light.color).not.toBe(dark.color);
+    expect(light.opacity).toBeNull();
+    expect(dark.opacity).not.toBeNull();
+  });
+
+  it("draws the highlight with the current scheme's colour", async () => {
+    const { controller, view } = await setup();
+    controller.setScheme("dark");
+    const draw = vi.fn();
+    view.dispatchEvent(
+      new CustomEvent("draw-annotation", { detail: { draw } }),
+    );
+    expect(draw).toHaveBeenCalledWith(HIGHLIGHT_FN, {
+      color: highlightStyle("dark").color,
+    });
+  });
+
+  it("setScheme sets the overlay opacity var for dark and clears it for light", async () => {
+    const { controller, overlayEl } = await setup();
+    controller.setScheme("dark");
+    expect(
+      overlayEl.style.getPropertyValue("--overlayer-highlight-opacity"),
+    ).toBe(highlightStyle("dark").opacity);
+    controller.setScheme("light");
+    expect(
+      overlayEl.style.getPropertyValue("--overlayer-highlight-opacity"),
+    ).toBe("");
+  });
+
+  it("setScheme recolours a live highlight (re-adds the annotation)", async () => {
+    const { controller, view, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    const addsBefore = (view.addAnnotation as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    controller.setScheme("dark");
+    await flush();
+    expect(
+      (view.addAnnotation as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(addsBefore);
   });
 
   it("user navigation while playing restarts speech from the new location", async () => {

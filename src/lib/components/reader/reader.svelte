@@ -307,6 +307,7 @@
   $effect(() => {
     const scheme = mode.current === "dark" ? "dark" : "light";
     const size = fontSize;
+    tts.setScheme(scheme);
     if (!loading && view) {
       view.renderer?.setStyles?.(contentCSS(scheme, size));
     }
