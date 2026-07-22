@@ -45,7 +45,7 @@ export function highlightStyle(scheme: ColorScheme): {
 } {
   return scheme === "dark"
     ? { color: "rgb(96, 165, 250)", opacity: "0.55" }
-    : { color: "rgba(59, 130, 246, 0.4)", opacity: null };
+    : { color: "rgba(59, 130, 246, 0.6)", opacity: null };
 }
 
 const HIGHLIGHT_OPACITY_VAR = "--overlayer-highlight-opacity";
