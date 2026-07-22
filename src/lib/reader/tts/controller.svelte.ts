@@ -33,7 +33,22 @@ export type TtsStatus =
   | "ended"
   | "error";
 
-const HIGHLIGHT_COLOR = "rgba(59, 130, 246, 0.4)";
+export type ColorScheme = "light" | "dark";
+
+// Highlight rects are drawn at a fixed group opacity (foliate's Overlayer:
+// var(--overlayer-highlight-opacity, .3)), so on a dark page the light-theme
+// colour ends up too faint. Dark uses a brighter blue and raises that opacity
+// variable (colour alpha alone caps the effective value at ~0.3).
+export function highlightStyle(scheme: ColorScheme): {
+  color: string;
+  opacity: string | null;
+} {
+  return scheme === "dark"
+    ? { color: "rgb(96, 165, 250)", opacity: "0.55" }
+    : { color: "rgba(59, 130, 246, 0.4)", opacity: null };
+}
+
+const HIGHLIGHT_OPACITY_VAR = "--overlayer-highlight-opacity";
 const SELF_NAV_TIMEOUT_MS = 2000;
 
 export class TtsController {
@@ -44,6 +59,8 @@ export class TtsController {
   voice: string | null = $state(null);
   rate: TtsRate = $state(1);
   errorMessage: string | null = $state(null);
+  // current reader colour scheme; drives the highlight colour/opacity
+  scheme: ColorScheme = $state("light");
 
   #getView: () => FoliateView | null;
   #service: TtsService | null = null;
@@ -64,13 +81,14 @@ export class TtsController {
 
   #onDrawAnnotation = (event: Event) => {
     const { draw } = (event as CustomEvent<DrawAnnotationDetail>).detail;
-    draw(Overlayer.highlight, { color: HIGHLIGHT_COLOR });
+    draw(Overlayer.highlight, { color: highlightStyle(this.scheme).color });
   };
 
   #onCreateOverlay = (event: Event) => {
     // a section's overlay layer was (re)created (e.g. after a font-size
     // change) - re-add the highlight if it belongs to that section
     const { index } = (event as CustomEvent<CreateOverlayDetail>).detail;
+    this.#applyOverlayVars();
     if (this.#highlighted && this.currentSentence?.sectionIndex === index) {
       this.#highlightChain = this.#highlightChain.then(async () => {
         if (!this.#highlighted) return; // removed meanwhile
@@ -80,6 +98,19 @@ export class TtsController {
       });
     }
   };
+
+  // push the per-scheme highlight opacity onto each section's overlay SVG;
+  // the highlight <g> reads it via var(--overlayer-highlight-opacity)
+  #applyOverlayVars(): void {
+    const { opacity } = highlightStyle(this.scheme);
+    const contents = this.#view?.renderer.getContents() ?? [];
+    for (const c of contents) {
+      const el = c.overlayer?.element;
+      if (!el) continue;
+      if (opacity === null) el.style.removeProperty(HIGHLIGHT_OPACITY_VAR);
+      else el.style.setProperty(HIGHLIGHT_OPACITY_VAR, opacity);
+    }
+  }
 
   #onRendererRelocate = (event: Event) => {
     const detail = (event as CustomEvent<RendererRelocateDetail>).detail;
@@ -268,6 +299,28 @@ export class TtsController {
     this.#pipeline?.setRate(rate);
   }
 
+  // follow the reader's light/dark theme; recolours a live highlight
+  setScheme(scheme: ColorScheme): void {
+    if (scheme === this.scheme) return;
+    this.scheme = scheme;
+    this.#applyOverlayVars();
+    this.#refreshHighlight();
+  }
+
+  // redraw the current highlight so #onDrawAnnotation re-runs with the new
+  // scheme's colour (delete + add through the ordered chain)
+  #refreshHighlight(): void {
+    const cfi = this.#highlighted;
+    if (!cfi) return;
+    this.#highlightChain = this.#highlightChain.then(async () => {
+      const view = this.#view;
+      if (!view || this.#highlighted !== cfi) return;
+      await view.deleteAnnotation({ value: cfi }).catch(() => {});
+      await view.addAnnotation({ value: cfi }).catch(() => {});
+      this.#applyOverlayVars();
+    });
+  }
+
   #currentLocation(): string | null {
     const view = this.#view;
     if (!view) return null;
@@ -338,6 +391,7 @@ export class TtsController {
         await view.addAnnotation({ value: cfi }).catch((e) => {
           console.error("Failed to highlight sentence", e);
         });
+        this.#applyOverlayVars();
       }
     });
   }
