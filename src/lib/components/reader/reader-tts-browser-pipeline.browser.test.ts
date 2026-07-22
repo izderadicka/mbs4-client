@@ -139,18 +139,26 @@ describe("reader read-aloud with the browser TTS pipeline", () => {
       view.renderer
         .getContents()
         .reduce((n, c) => n + (c.overlayer?.element.childElementCount ?? 0), 0);
+    // any non-collapsed native text selection in the section documents
+    // (the grey selection that must never be left behind)
+    const hasSelection = () =>
+      view.renderer
+        .getContents()
+        .some((c) => (c.doc?.getSelection()?.toString().length ?? 0) > 0);
 
     button(root, "Read aloud").click();
     await vi.waitFor(() => expect(button(root, "Play").disabled).toBe(false), {
       timeout: 10000,
     });
 
-    // play: the fake engine voice is used and the sentence gets highlighted
+    // play: the sentence gets our overlay highlight - and NOT a native
+    // text selection (the bug: foliate's page-follow selected the sentence)
     button(root, "Play").click();
     await vi.waitFor(() => button(root, "Pause"), { timeout: 10000 });
     await vi.waitFor(() => expect(highlightCount()).toBeGreaterThan(0), {
       timeout: 5000,
     });
+    expect(hasSelection()).toBe(false);
 
     // pause mid-sentence: speech stops but the highlight stays
     button(root, "Pause").click();
@@ -158,12 +166,14 @@ describe("reader read-aloud with the browser TTS pipeline", () => {
     await new Promise((r) => setTimeout(r, 100));
     expect(highlightCount()).toBeGreaterThan(0);
 
-    // resume, then stop in the middle of a sentence: highlight is cleared
+    // resume, then stop in the middle of a sentence: highlight and any
+    // selection are cleared
     button(root, "Play").click();
     await vi.waitFor(() => button(root, "Pause"), { timeout: 10000 });
     await new Promise((r) => setTimeout(r, 200)); // well inside the utterance
     button(root, "Stop reading").click();
     await vi.waitFor(() => expect(highlightCount()).toBe(0), { timeout: 5000 });
+    expect(hasSelection()).toBe(false);
     expect(button(root, "Play").disabled).toBe(false);
   }, 90000);
 });

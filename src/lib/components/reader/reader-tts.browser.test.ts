@@ -103,9 +103,15 @@ describe("reader read-aloud (browser)", () => {
       view.renderer
         .getContents()
         .reduce((n, c) => n + (c.overlayer?.element.childElementCount ?? 0), 0);
+    const hasSelection = () =>
+      view.renderer
+        .getContents()
+        .some((c) => (c.doc?.getSelection()?.toString().length ?? 0) > 0);
     await vi.waitFor(() => expect(highlightCount()).toBeGreaterThan(0), {
       timeout: 5000,
     });
+    // page-follow must not leave a native text selection behind
+    expect(hasSelection()).toBe(false);
 
     // pause returns the Play button, playback stays paused and the spoken
     // sentence stays highlighted
@@ -119,13 +125,14 @@ describe("reader read-aloud (browser)", () => {
     button(root, "Next sentence").click();
     await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
 
-    // stop disarms playback and clears the highlight
+    // stop disarms playback and clears the highlight and any selection
     button(root, "Stop reading").click();
     await vi.waitFor(
       () => expect(button(root, "Play").disabled).toBe(false),
       { timeout: 5000 },
     );
     await vi.waitFor(() => expect(highlightCount()).toBe(0), { timeout: 5000 });
+    expect(hasSelection()).toBe(false);
 
     // disable TTS: the control bar goes away
     button(root, "Read aloud").click();

@@ -32,3 +32,6 @@ __screenshots__
 
 # Package manager (project uses pnpm; prevent stray npm lockfiles)
 package-lock.json
+
+# vitest browser-mode failure screenshots
+.vitest-attachments/
