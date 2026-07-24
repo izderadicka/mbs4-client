@@ -28,6 +28,10 @@ const DEFAULT_MOVE_TOLERANCE_PX = 10;
 // how long after a handled press the browser-synthesized click and context
 // menu are still swallowed
 const SUPPRESS_MS = 700;
+// how long after a fired press the native text selection keeps being cleared;
+// Chrome finalizes its long-press word-selection shortly after the press, so a
+// single clear is not enough
+const SELECTION_SUPPRESS_MS = 300;
 
 export class LongPressRecognizer<T = void> {
   #options: LongPressOptions<T>;
@@ -36,6 +40,9 @@ export class LongPressRecognizer<T = void> {
   #y = 0;
   #startNode: Node | null = null;
   #suppressUntil = 0;
+  // tears down the active selection-suppression window (removes the listener,
+  // clears its timers, restores user-select); null when no window is active
+  #endSelectionSuppression: (() => void) | null = null;
 
   constructor(options: LongPressOptions<T>) {
     this.#options = options;
@@ -102,11 +109,51 @@ export class LongPressRecognizer<T = void> {
     this.#timer = null;
     if (!this.#enabled()) return;
     this.#suppressUntil = Date.now() + SUPPRESS_MS;
-    // a long press also starts native text selection - drop it
+    // a long press also starts native text selection - drop it (and keep
+    // dropping it briefly, since Chrome finalizes its word-selection after
+    // this point)
     const node = this.#startNode;
     const doc = node instanceof Document ? node : (node?.ownerDocument ?? null);
-    doc?.getSelection()?.removeAllRanges();
+    if (doc) this.#suppressSelection(doc);
     this.#options.onLongPress({ x: this.#x, y: this.#y }, context);
+  }
+
+  // Clear the native selection now and for a short window afterwards, and
+  // block re-selection with user-select:none, then restore. Chrome re-selects
+  // the word a moment after the press fires, so a single removeAllRanges() is
+  // not enough. The caret APIs used by onLongPress ignore user-select, so the
+  // tapped position still resolves.
+  #suppressSelection(doc: Document): void {
+    // supersede any window still running from an earlier press
+    this.#endSelectionSuppression?.();
+    const clear = () => doc.getSelection?.()?.removeAllRanges();
+    const root = doc.documentElement as HTMLElement | null;
+    const prevUserSelect = root?.style.userSelect ?? "";
+    const prevWebkit =
+      root?.style.getPropertyValue("-webkit-user-select") ?? "";
+    if (root) {
+      root.style.userSelect = "none";
+      root.style.setProperty("-webkit-user-select", "none");
+    }
+    const onSelectionChange = () => clear();
+    doc.addEventListener("selectionchange", onSelectionChange);
+    clear();
+    const settle = setTimeout(clear, 0);
+    const end = () => {
+      this.#endSelectionSuppression = null;
+      clearTimeout(settle);
+      clearTimeout(deadline);
+      doc.removeEventListener("selectionchange", onSelectionChange);
+      if (root) {
+        if (prevUserSelect) root.style.userSelect = prevUserSelect;
+        else root.style.removeProperty("user-select");
+        if (prevWebkit) root.style.setProperty("-webkit-user-select", prevWebkit);
+        else root.style.removeProperty("-webkit-user-select");
+      }
+      clear();
+    };
+    const deadline = setTimeout(end, SELECTION_SUPPRESS_MS);
+    this.#endSelectionSuppression = end;
   }
 
   // suppress the context menu of a pending or just-handled press; a plain
