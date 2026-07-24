@@ -231,7 +231,11 @@
   // collapsed Range. caretPositionFromPoint is Baseline, but Safari only
   // since 26.2 (Dec 2025) - keep the legacy caretRangeFromPoint fallback
   // until older WebKit fades out
-  function caretRangeAtPoint(doc: Document, x: number, y: number): Range | null {
+  function caretRangeAtPoint(
+    doc: Document,
+    x: number,
+    y: number,
+  ): Range | null {
     if (typeof doc.caretPositionFromPoint === "function") {
       const pos = doc.caretPositionFromPoint(x, y);
       if (!pos) return null;
@@ -390,57 +394,60 @@
 </svelte:head>
 
 <div class="bg-background flex h-dvh flex-col">
-  {#if chromeVisible}
-    <header class="flex h-12 shrink-0 items-center gap-2 border-b px-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Table of contents"
-        disabled={toc.length === 0}
-        onclick={() => (tocOpen = true)}><MenuIcon /></Button>
-      <div class="min-w-0 flex-1 text-center">
-        <span class="block truncate text-sm font-medium">{bookTitle}</span>
-        {#if bookAuthor}
-          <span class="text-muted-foreground block truncate text-xs"
-            >{bookAuthor}</span>
-        {/if}
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Decrease font size"
-        disabled={fontSize <= FONT_SIZE_MIN}
-        onclick={() => changeFontSize(-FONT_SIZE_STEP)}
-        ><AArrowDownIcon /></Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Increase font size"
-        disabled={fontSize >= FONT_SIZE_MAX}
-        onclick={() => changeFontSize(FONT_SIZE_STEP)}><AArrowUpIcon /></Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Read aloud"
-        class={ttsEnabled ? "text-primary" : ""}
-        disabled={loading || !!error}
-        onclick={toggleTts}><HeadphonesIcon /></Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Toggle theme"
-        onclick={toggleMode}>
-        <SunIcon
-          class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <MoonIcon
-          class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      </Button>
-      <span class="text-muted-foreground w-16 text-right text-xs"
-        >{loading || error ? "" : `${percent}`}</span>
-    </header>
-  {/if}
-
   <div class="relative min-h-0 flex-1">
+    {#if chromeVisible}
+      <!-- bars overlay the book area instead of resizing it: a resize would
+           re-paginate the chapter and make the visible text jump around -->
+      <header
+        class="bg-background/70 absolute inset-x-0 top-0 z-20 flex h-12 items-center gap-2 border-b px-2 backdrop-blur-xs">
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Table of contents"
+          disabled={toc.length === 0}
+          onclick={() => (tocOpen = true)}><MenuIcon /></Button>
+        <div class="min-w-0 flex-1 text-center">
+          <span class="block truncate text-sm font-medium">{bookTitle}</span>
+          {#if bookAuthor}
+            <span class="text-muted-foreground block truncate text-xs"
+              >{bookAuthor}</span>
+          {/if}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Decrease font size"
+          disabled={fontSize <= FONT_SIZE_MIN}
+          onclick={() => changeFontSize(-FONT_SIZE_STEP)}
+          ><AArrowDownIcon /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Increase font size"
+          disabled={fontSize >= FONT_SIZE_MAX}
+          onclick={() => changeFontSize(FONT_SIZE_STEP)}
+          ><AArrowUpIcon /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Read aloud"
+          class={ttsEnabled ? "text-primary" : ""}
+          disabled={loading || !!error}
+          onclick={toggleTts}><HeadphonesIcon /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Toggle theme"
+          onclick={toggleMode}>
+          <SunIcon
+            class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <MoonIcon
+            class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </Button>
+        <span class="text-muted-foreground w-16 text-right text-xs"
+          >{loading || error ? "" : `${percent}`}</span>
+      </header>
+    {/if}
     {#if loading}
       <div class="absolute inset-0 z-10 flex items-center justify-center">
         <Spinner class="size-8" />
@@ -458,35 +465,35 @@
         class="text-muted-foreground pointer-events-none absolute top-0 right-1 text-[10px] leading-none tabular-nums"
         >{percent}</span>
     {/if}
+    {#if chromeVisible}
+      <footer
+        class="bg-background/70 absolute inset-x-0 bottom-0 z-20 flex h-12 items-center gap-2 border-t px-2 backdrop-blur-xs">
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Previous page"
+          onclick={() => view?.goLeft()}><ChevronLeftIcon /></Button>
+        <input
+          type="range"
+          class="accent-primary min-w-0 flex-1"
+          min="0"
+          max="1"
+          step="any"
+          value={fraction}
+          disabled={loading || !!error}
+          oninput={onSliderInput}
+          title={locationLabel ? `${percent} · ${locationLabel}` : percent} />
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Next page"
+          onclick={() => view?.goRight()}><ChevronRightIcon /></Button>
+      </footer>
+    {/if}
   </div>
 
   {#if ttsEnabled}
     <SpeechControls controller={tts} />
-  {/if}
-
-  {#if chromeVisible}
-    <footer class="flex h-12 shrink-0 items-center gap-2 border-t px-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Previous page"
-        onclick={() => view?.goLeft()}><ChevronLeftIcon /></Button>
-      <input
-        type="range"
-        class="accent-primary min-w-0 flex-1"
-        min="0"
-        max="1"
-        step="any"
-        value={fraction}
-        disabled={loading || !!error}
-        oninput={onSliderInput}
-        title={locationLabel ? `${percent} · ${locationLabel}` : percent} />
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Next page"
-        onclick={() => view?.goRight()}><ChevronRightIcon /></Button>
-    </footer>
   {/if}
 </div>
 
