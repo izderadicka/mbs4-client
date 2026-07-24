@@ -7,10 +7,15 @@
   import SquareIcon from "@lucide/svelte/icons/square";
   import SkipBackIcon from "@lucide/svelte/icons/skip-back";
   import SkipForwardIcon from "@lucide/svelte/icons/skip-forward";
+  import XIcon from "@lucide/svelte/icons/x";
   import type { TtsController } from "$lib/reader/tts/controller.svelte";
   import { TTS_RATES, type TtsRate } from "$lib/reader/tts/tts-prefs.svelte";
 
-  let { controller }: { controller: TtsController } = $props();
+  // onClose ends read-aloud mode and hides this bar
+  let {
+    controller,
+    onClose,
+  }: { controller: TtsController; onClose: () => void } = $props();
 
   let playing = $derived(
     controller.status === "playing" || controller.status === "buffering",
@@ -94,8 +99,7 @@
         class="w-36 max-[520px]:w-auto max-[520px]:flex-1"
         title="Voice"
         disabled={controller.voices.length === 0}
-        ><span class="truncate">{voiceName}</span
-        ></Select.Trigger>
+        ><span class="truncate">{voiceName}</span></Select.Trigger>
       <Select.Content>
         <Select.Group>
           {#each controller.voices as v (v.id)}
@@ -120,5 +124,11 @@
         </Select.Group>
       </Select.Content>
     </Select.Root>
+
+    <Button
+      variant="ghost"
+      size="icon"
+      title="Close read aloud"
+      onclick={onClose}><XIcon /></Button>
   </div>
 </div>

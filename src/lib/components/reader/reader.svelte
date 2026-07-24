@@ -12,6 +12,7 @@
   import AArrowUpIcon from "@lucide/svelte/icons/a-arrow-up";
   import AArrowDownIcon from "@lucide/svelte/icons/a-arrow-down";
   import HeadphonesIcon from "@lucide/svelte/icons/headphones";
+  import HeadphonesOffIcon from "@lucide/svelte/icons/headphone-off";
   import type {
     FoliateView,
     RelocateDetail,
@@ -430,10 +431,13 @@
         <Button
           variant="ghost"
           size="icon"
-          title="Read aloud"
+          title={ttsEnabled ? "Turn off read aloud" : "Read aloud"}
+          aria-pressed={ttsEnabled}
           class={ttsEnabled ? "text-primary" : ""}
           disabled={loading || !!error}
-          onclick={toggleTts}><HeadphonesIcon /></Button>
+          onclick={toggleTts}>
+          {#if ttsEnabled}<HeadphonesIcon />{:else}<HeadphonesOffIcon />{/if}
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -493,7 +497,7 @@
   </div>
 
   {#if ttsEnabled}
-    <SpeechControls controller={tts} />
+    <SpeechControls controller={tts} onClose={toggleTts} />
   {/if}
 </div>
 
