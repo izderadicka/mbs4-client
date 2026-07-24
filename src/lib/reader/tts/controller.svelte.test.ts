@@ -178,10 +178,11 @@ function rendererRelocate(
   renderer: { dispatchEvent: (e: Event) => boolean },
   reason: string,
   index = 0,
+  fraction = 0,
 ) {
   renderer.dispatchEvent(
     new CustomEvent("relocate", {
-      detail: { reason, range: null, index, fraction: 0, size: 100 },
+      detail: { reason, range: null, index, fraction, size: 100 },
     }),
   );
 }
@@ -373,6 +374,44 @@ describe("TtsController", () => {
     rendererRelocate(renderer, "page");
     await flush();
     // pipeline restarted: synthesis requested again from the nav target
+    expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
+    expect(["buffering", "playing"]).toContain(controller.status);
+  });
+
+  it("ignores a snap relocate at the unchanged position (stationary tap)", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    // a real page turn establishes the current position (fraction 0.5)
+    rendererRelocate(renderer, "page", 0, 0.5);
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.status).toBe("playing");
+    const requestsBefore = fakes.service.requests.length;
+    // a tap on the same page snaps back to it - must not restart speech
+    rendererRelocate(renderer, "snap", 0, 0.5);
+    await flush();
+    expect(fakes.service.requests.length).toBe(requestsBefore);
+    expect(controller.status).toBe("playing");
+  });
+
+  it("a snap to a new position still restarts speech", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    rendererRelocate(renderer, "page", 0, 0.5);
+    await flush();
+    player.startNext();
+    await flush();
+    const requestsBefore = fakes.service.requests.length;
+    // a real swipe changes the page fraction - speech restarts there
+    rendererRelocate(renderer, "snap", 0, 0.9);
+    await flush();
     expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
     expect(["buffering", "playing"]).toContain(controller.status);
   });

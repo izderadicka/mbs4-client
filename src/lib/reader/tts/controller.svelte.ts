@@ -73,6 +73,13 @@ export class TtsController {
   // leaving an orphaned highlight on the page.
   #highlightChain: Promise<void> = Promise.resolve();
   #selfNav = 0;
+  // last renderer position seen, used to detect a relocate that did not
+  // actually move the reading position (a stationary tap/long-press ends with
+  // foliate's snap() re-emitting a relocate at the same page). The -1/NaN
+  // sentinels never equal a real position, so the first relocate always counts
+  // as a change.
+  #lastIndex = -1;
+  #lastFraction = Number.NaN;
   #disposed = false;
   // bumped whenever playback intent changes (stop, new play, navigation) so
   // still-awaiting async operations from an older intent abort instead of
@@ -115,6 +122,16 @@ export class TtsController {
   #onRendererRelocate = (event: Event) => {
     const detail = (event as CustomEvent<RendererRelocateDetail>).detail;
     if (this.status === "off") return;
+    // Did the reading position actually move? A tap or long-press ends with
+    // foliate's snap(), which re-emits a relocate at the *same* page (reason
+    // "snap"); that must not restart speech. Record the new position
+    // unconditionally so follow-scrolls, cross-section goTo and re-anchors
+    // keep the reference current for the next comparison.
+    const unchanged =
+      detail.index === this.#lastIndex &&
+      Math.abs(detail.fraction - this.#lastFraction) < 1e-6;
+    this.#lastIndex = detail.index;
+    this.#lastFraction = detail.fraction;
     // our own page-follow scrollToAnchor(select=true) relocates with reason
     // "selection", which also makes foliate select the sentence text - drop
     // that native selection (we show our own overlay highlight instead)
@@ -130,6 +147,8 @@ export class TtsController {
       this.#selfNav--;
       return;
     }
+    // a tap/long-press that snapped back to the current page is not navigation
+    if (unchanged) return;
     this.#onUserNavigation(detail);
   };
 
