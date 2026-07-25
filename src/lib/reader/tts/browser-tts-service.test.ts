@@ -294,6 +294,15 @@ describe("BrowserSpeechPipeline", () => {
     expect(synth.queue[0].lang).toBe("en-US");
   });
 
+  it("falls back to the sentence language when the voice reports an empty lang", async () => {
+    synth.voices = [{ name: "No-lang", voiceURI: "urn:nolang", lang: "" }];
+    const pipeline = new BrowserSpeechPipeline(() => {});
+    const cursor = new FakeCursor(makeSentences(["Ahoj."], "cs"));
+    await pipeline.start(cursor, "urn:nolang");
+    await flush();
+    expect(synth.queue[0].lang).toBe("cs");
+  });
+
   it("stop cancels utterances and keeps the current sentence", async () => {
     const { pipeline, cursor } = setup(["One.", "Two."]);
     await pipeline.start(cursor);

@@ -16,8 +16,9 @@ export interface SentenceRef {
   // range CFI of the sentence, usable for highlighting and navigation
   cfi: string;
   sectionIndex: number;
-  // language of the sentence's section; NOT passed to synthesis (the voice
-  // implies the language) - used for segmentation and voice pre-selection
+  // language of the sentence's section; used for segmentation, voice
+  // pre-selection, and as a fallback for the utterance language when the
+  // selected voice reports no language of its own
   lang?: string;
 }
 

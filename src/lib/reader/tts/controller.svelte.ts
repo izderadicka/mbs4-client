@@ -164,6 +164,9 @@ export class TtsController {
     const view = this.#view;
     if (!view || this.status !== "off") return;
     this.errorMessage = null;
+    // a fresh session must not compare against a position from a previous one
+    this.#lastIndex = -1;
+    this.#lastFraction = Number.NaN;
     this.#service = await createTtsService();
     this.#source = new SentenceSource(view);
     this.#pipeline = this.#service.createPipeline((e) =>

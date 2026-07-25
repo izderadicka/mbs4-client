@@ -234,8 +234,9 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     const voice = this.#resolveVoice();
     if (voice) utterance.voice = voice;
     // set lang from the chosen voice (authoritative) or the sentence's section
-    // language, so Chrome actually uses the selected voice's language
-    const lang = normalizeLang(voice?.lang ?? sentence.lang);
+    // language, so Chrome actually uses the selected voice's language. Use ||
+    // so a voice reporting an empty lang ("") still falls back to the sentence.
+    const lang = normalizeLang(voice?.lang || sentence.lang);
     if (lang) utterance.lang = lang;
     utterance.rate = this.#rate;
     utterance.onstart = () => {
