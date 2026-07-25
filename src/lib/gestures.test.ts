@@ -17,9 +17,25 @@ describe("LongPressRecognizer", () => {
     vi.useFakeTimers();
   });
   afterEach(() => {
+    // Let any open selection-suppression window run to completion so its
+    // document-level selectionchange listener is removed and user-select is
+    // restored; otherwise fake-timer teardown drops the pending restore and
+    // leaks the listener onto the shared document across tests.
+    vi.runAllTimers();
     vi.useRealTimers();
     document.body.innerHTML = "";
+    document.documentElement.style.removeProperty("user-select");
+    document.documentElement.style.removeProperty("-webkit-user-select");
   });
+
+  // override document.getSelection (happy-dom's may be a no-op) with a spy;
+  // returns a restore fn
+  function stubSelection(): { removeAllRanges: ReturnType<typeof vi.fn> } {
+    const removeAllRanges = vi.fn();
+    (document as unknown as { getSelection: () => Selection }).getSelection =
+      () => ({ removeAllRanges }) as unknown as Selection;
+    return { removeAllRanges };
+  }
 
   function setup(enabled: () => boolean = () => true) {
     const fired: { x: number; y: number; context: string }[] = [];
@@ -94,6 +110,38 @@ describe("LongPressRecognizer", () => {
     const menu = new Event("contextmenu", { cancelable: true });
     target.dispatchEvent(menu);
     expect(menu.defaultPrevented).toBe(false);
+  });
+
+  it("keeps clearing the selection during the window, then restores user-select", () => {
+    const { removeAllRanges } = stubSelection();
+    const { target } = setup();
+    const root = document.documentElement;
+
+    target.dispatchEvent(touchEvent("touchstart", [{ x: 5, y: 7 }]));
+    vi.advanceTimersByTime(500); // fire
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(root.style.userSelect).toBe("none");
+
+    // Chrome re-selects the word a moment later: selectionchange re-clears it
+    removeAllRanges.mockClear();
+    document.dispatchEvent(new Event("selectionchange"));
+    expect(removeAllRanges).toHaveBeenCalled();
+
+    // after the 300ms window: user-select restored, listener detached
+    vi.advanceTimersByTime(300);
+    expect(root.style.userSelect).toBe("");
+    removeAllRanges.mockClear();
+    document.dispatchEvent(new Event("selectionchange"));
+    expect(removeAllRanges).not.toHaveBeenCalled();
+  });
+
+  it("does not clear the selection or set user-select while disabled", () => {
+    const { removeAllRanges } = stubSelection();
+    const { target } = setup(() => false);
+    target.dispatchEvent(touchEvent("touchstart", [{ x: 1, y: 1 }]));
+    vi.advanceTimersByTime(500);
+    expect(removeAllRanges).not.toHaveBeenCalled();
+    expect(document.documentElement.style.userSelect).toBe("");
   });
 
   it("swallows the synthesized click after a handled press, but not later ones", () => {

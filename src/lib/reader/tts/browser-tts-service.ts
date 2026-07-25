@@ -37,6 +37,13 @@ function unsupportedError(): TtsServiceError {
   );
 }
 
+// Chrome frequently ignores utterance.voice unless utterance.lang matches it,
+// falling back to a default (English) voice; setting lang fixes that. Normalize
+// Android's Java-locale form ("cs_CZ") to BCP-47 ("cs-CZ") so the tag is valid.
+function normalizeLang(tag: string | undefined): string | undefined {
+  return tag ? tag.replace(/_/g, "-") : undefined;
+}
+
 async function loadNativeVoices(): Promise<SpeechSynthesisVoice[]> {
   const s = synth();
   if (!s) throw unsupportedError();
@@ -226,6 +233,11 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     const utterance = new SpeechSynthesisUtterance(sentence.text);
     const voice = this.#resolveVoice();
     if (voice) utterance.voice = voice;
+    // set lang from the chosen voice (authoritative) or the sentence's section
+    // language, so Chrome actually uses the selected voice's language. Use ||
+    // so a voice reporting an empty lang ("") still falls back to the sentence.
+    const lang = normalizeLang(voice?.lang || sentence.lang);
+    if (lang) utterance.lang = lang;
     utterance.rate = this.#rate;
     utterance.onstart = () => {
       if (generation !== this.#generation) return;

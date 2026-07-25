@@ -178,10 +178,11 @@ function rendererRelocate(
   renderer: { dispatchEvent: (e: Event) => boolean },
   reason: string,
   index = 0,
+  fraction = 0,
 ) {
   renderer.dispatchEvent(
     new CustomEvent("relocate", {
-      detail: { reason, range: null, index, fraction: 0, size: 100 },
+      detail: { reason, range: null, index, fraction, size: 100 },
     }),
   );
 }
@@ -375,6 +376,74 @@ describe("TtsController", () => {
     // pipeline restarted: synthesis requested again from the nav target
     expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
     expect(["buffering", "playing"]).toContain(controller.status);
+  });
+
+  it("ignores a snap relocate at the unchanged position (stationary tap)", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    // a real page turn establishes the current position (fraction 0.5)
+    rendererRelocate(renderer, "page", 0, 0.5);
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.status).toBe("playing");
+    const requestsBefore = fakes.service.requests.length;
+    // a tap on the same page snaps back to it - must not restart speech
+    rendererRelocate(renderer, "snap", 0, 0.5);
+    await flush();
+    expect(fakes.service.requests.length).toBe(requestsBefore);
+    expect(controller.status).toBe("playing");
+  });
+
+  it("a snap to a new position still restarts speech", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    rendererRelocate(renderer, "page", 0, 0.5);
+    await flush();
+    player.startNext();
+    await flush();
+    const requestsBefore = fakes.service.requests.length;
+    // a real swipe changes the page fraction - speech restarts there
+    rendererRelocate(renderer, "snap", 0, 0.9);
+    await flush();
+    expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
+    expect(["buffering", "playing"]).toContain(controller.status);
+  });
+
+  it("resets the position guard when TTS is toggled off and on", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    // establish a position at fraction 0.5 in this session
+    rendererRelocate(renderer, "page", 0, 0.5);
+    await flush();
+    player.startNext();
+    await flush();
+
+    // turn TTS off and on again - a new session
+    await controller.disable();
+    await controller.enable();
+    const player2 = fakes.FakePlayer.instances.at(-1)!;
+    await controller.play();
+    await flush();
+    player2.startNext();
+    await flush();
+    expect(controller.status).toBe("playing");
+
+    const requestsBefore = fakes.service.requests.length;
+    // navigating to the same fraction as the previous session must still
+    // restart (the guard must not carry over the old position)
+    rendererRelocate(renderer, "navigation", 0, 0.5);
+    await flush();
+    expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
   });
 
   it("ignores layout re-anchoring and self-navigation relocates", async () => {

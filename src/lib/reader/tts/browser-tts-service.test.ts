@@ -19,6 +19,7 @@ interface FakeVoice {
 class FakeUtterance {
   text: string;
   voice: FakeVoice | null = null;
+  lang = "";
   rate = 1;
   onstart: (() => void) | null = null;
   onend: (() => void) | null = null;
@@ -71,11 +72,12 @@ class FakeSynth {
   }
 }
 
-function makeSentences(texts: string[]): SentenceRef[] {
+function makeSentences(texts: string[], lang?: string): SentenceRef[] {
   return texts.map((text, i) => ({
     text,
     cfi: `epubcfi(/6/2!/4/${(i + 1) * 2},/1:0,/1:5)`,
     sectionIndex: 0,
+    lang,
   }));
 }
 
@@ -255,6 +257,50 @@ describe("BrowserSpeechPipeline", () => {
     await pipeline.start(cursor, "urn:voice:en-b");
     await flush();
     expect(synth.queue[0].voice?.name).toBe("English B");
+  });
+
+  it("sets utterance.lang from the selected voice so Chrome uses it", async () => {
+    const { pipeline, cursor } = setup(["Ahoj."]);
+    await pipeline.start(cursor, "urn:voice:cs-a"); // lang cs-CZ
+    await flush();
+    expect(synth.queue[0].lang).toBe("cs-CZ");
+  });
+
+  it("normalizes an Android underscore voice locale for utterance.lang", async () => {
+    synth.voices = [
+      { name: "Czech Android", voiceURI: "urn:and:cs", lang: "cs_CZ" },
+    ];
+    const pipeline = new BrowserSpeechPipeline(() => {});
+    const cursor = new FakeCursor(makeSentences(["Ahoj."]));
+    await pipeline.start(cursor, "urn:and:cs");
+    await flush();
+    expect(synth.queue[0].lang).toBe("cs-CZ");
+  });
+
+  it("falls back to the sentence language when no voice is selected", async () => {
+    const pipeline = new BrowserSpeechPipeline(() => {});
+    const cursor = new FakeCursor(makeSentences(["Ahoj."], "cs"));
+    await pipeline.start(cursor);
+    await flush();
+    expect(synth.queue[0].lang).toBe("cs");
+  });
+
+  it("prefers the voice language over the sentence language", async () => {
+    const pipeline = new BrowserSpeechPipeline(() => {});
+    // sentence claims Czech, but the user picked an English voice
+    const cursor = new FakeCursor(makeSentences(["Hello."], "cs"));
+    await pipeline.start(cursor, "urn:voice:en-a"); // lang en-US
+    await flush();
+    expect(synth.queue[0].lang).toBe("en-US");
+  });
+
+  it("falls back to the sentence language when the voice reports an empty lang", async () => {
+    synth.voices = [{ name: "No-lang", voiceURI: "urn:nolang", lang: "" }];
+    const pipeline = new BrowserSpeechPipeline(() => {});
+    const cursor = new FakeCursor(makeSentences(["Ahoj."], "cs"));
+    await pipeline.start(cursor, "urn:nolang");
+    await flush();
+    expect(synth.queue[0].lang).toBe("cs");
   });
 
   it("stop cancels utterances and keeps the current sentence", async () => {
