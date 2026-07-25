@@ -15,9 +15,10 @@ export interface OnlineSearch {
 }
 
 // TTS (read aloud) service implementations selectable on the settings page:
-// browser (Web Speech API), mock (dummy audio for dev) and edge (stopgap
-// Edge TTS proxy); mock and edge are offered in dev builds only
-export const TTS_PROVIDERS = ["browser", "mock", "edge"] as const;
+// browser (Web Speech API), piper (offline neural voices synthesized in the
+// browser), mock (dummy audio for dev) and edge (stopgap Edge TTS proxy);
+// mock and edge are offered in dev builds only
+export const TTS_PROVIDERS = ["browser", "piper", "mock", "edge"] as const;
 export type TtsProvider = (typeof TTS_PROVIDERS)[number];
 
 export interface AppSettings {

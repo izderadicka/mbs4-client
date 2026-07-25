@@ -35,3 +35,8 @@ package-lock.json
 
 # vitest browser-mode failure screenshots
 .vitest-attachments/
+
+# Piper TTS runtime assets fetched/copied by scripts/prepare-piper-assets.mjs
+# (large binaries kept out of git; regenerate with `pnpm run piper:assets`)
+/static/onnxruntime/
+/static/piper/espeakng.worker.data

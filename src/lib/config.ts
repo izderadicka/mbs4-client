@@ -39,3 +39,17 @@ export const TTS_RETRY_INITIAL_MS = 1000;
 export const TTS_RETRY_MAX_MS = 15000;
 // give up (terminal error) when a sentence cannot be synthesized this long
 export const TTS_RETRY_WINDOW_MS = 90000;
+
+// --- Piper (browser-side neural TTS) -----------------------------------------
+// Same-origin dirs the app/mbs4 server serves the WASM runtime assets from.
+// Must match scripts/prepare-piper-assets.mjs. onnxruntime-web wasm/mjs:
+export const PIPER_WASM_BASE = "/onnxruntime/";
+// espeak-ng phonemizer assets (espeakng.worker.js/.wasm/.data):
+export const PIPER_ESPEAK_BASE = "/piper/";
+// API path (on the mbs4 server) that lists voices and serves voice files;
+// GET {base}/tts/piper/voices[?language=], GET {base}/tts/piper/voices/{model}.onnx(.json)
+export const PIPER_VOICES_PATH = "/tts/piper/voices";
+// Piper VITS scales; length scale is inverse of speed (voice config may override).
+export const PIPER_DEFAULT_LENGTH_SCALE = 1.0;
+export const PIPER_DEFAULT_NOISE_SCALE = 0.667;
+export const PIPER_DEFAULT_NOISE_W_SCALE = 0.8;

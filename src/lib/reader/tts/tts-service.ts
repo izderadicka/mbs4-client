@@ -49,6 +49,13 @@ export interface TtsService {
   // for services whose synthesize returns audio data, a service-specific
   // implementation for those that play speech themselves (browser).
   createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline;
+  // Optional: begin loading/initializing the given voice ahead of playback so
+  // the first synthesize is fast (e.g. Piper downloads and warms up the model).
+  // No-op for services with nothing to preload.
+  preload?(voice?: string): void;
+  // Optional: release resources (workers, WASM, audio graph) when read-aloud is
+  // disabled. Services holding nothing heavy can omit it.
+  destroy?(): void;
 }
 
 // primary-subtag language comparison: voice "en-US" matches "en" and "en-GB"
@@ -105,6 +112,25 @@ export async function createTtsService(): Promise<TtsService> {
       return new EdgeTtsService({
         baseUrl: TTS_URL,
         ...(params as { baseUrl?: string }),
+      });
+    }
+    case "piper": {
+      // Voice files come from the mbs4 server; reuse the API client's base URL
+      // (same origin in prod, the dev API origin locally). Imported here, not
+      // at module top, so unit tests of other services don't pull it in.
+      const [{ PiperTtsService }, { apiClient }] = await Promise.all([
+        import("./piper/piper-tts-service"),
+        import("$lib/api/client"),
+      ]);
+      return new PiperTtsService({
+        baseUrl: apiClient.baseUrl,
+        ...(params as {
+          baseUrl?: string;
+          numThreads?: number;
+          lengthScale?: number;
+          noiseScale?: number;
+          noiseWScale?: number;
+        }),
       });
     }
     default: {
