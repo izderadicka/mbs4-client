@@ -25,14 +25,16 @@ const ortDist = join(root, "node_modules", "onnxruntime-web", "dist");
 const ortOut = join(root, "static", "onnxruntime");
 const piperOut = join(root, "static", "piper");
 
-// The onnxruntime-web ESM bundle (loaded at runtime by piper-core) plus the CPU
-// SIMD+threads WASM runtime it fetches from ort.env.wasm.wasmPaths. The .bundle.
-// entry inlines the proxy/pthread workers, so only this pair is needed (no
-// jsep/webgpu build).
+// The onnxruntime-web ESM bundle (loaded at runtime by piper-core) plus the
+// SIMD+threads WASM runtime it fetches from ort.env.wasm.wasmPaths. In
+// onnxruntime-web >=1.27 `ort.bundle.min.mjs` is the jsep (SIMD+threads,
+// WebGPU-capable) build, so it requests the `.jsep.*` runtime pair. The bundle
+// inlines the pthread worker; with env.wasm.proxy=false no proxy worker is
+// fetched, so only this trio is needed.
 const ORT_FILES = [
   "ort.bundle.min.mjs",
-  "ort-wasm-simd-threaded.mjs",
-  "ort-wasm-simd-threaded.wasm",
+  "ort-wasm-simd-threaded.jsep.mjs",
+  "ort-wasm-simd-threaded.jsep.wasm",
 ];
 
 // espeak-ng data package (preload file for the espeakng.worker Emscripten
