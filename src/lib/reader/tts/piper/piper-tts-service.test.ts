@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PiperTtsService, type PiperWorkerLike } from "./piper-tts-service";
 import type { PiperRequest, PiperResponse } from "./piper-messages";
 import { TtsServiceError } from "../tts-service";
+import { ApiClient } from "$lib/api/client";
 
 // A controllable fake of the Piper worker. By default it answers every request
 // successfully (configure -> ok, setVoice -> sampleRate, synthesize -> PCM). A
@@ -99,7 +100,12 @@ const VOICE_CONFIG = { audio: { sample_rate: 22050 }, phoneme_type: "espeak" };
 // A fetch that serves the voice list, the voice config, and the model bytes.
 function makeFetch(overrides?: { list?: () => Response | Promise<Response> }) {
   return vi.fn(async (input: RequestInfo | URL) => {
-    const url = String(input);
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
     if (url.includes("/tts/piper/voices/")) {
       if (url.endsWith(".onnx.json")) {
         return new Response(JSON.stringify(VOICE_CONFIG), { status: 200 });
@@ -123,9 +129,10 @@ function makeService(opts?: {
   lengthScale?: number;
 }) {
   const worker = opts?.worker ?? new FakeWorker();
+  const api = new ApiClient();
+  api.setFetch(opts?.fetch ?? makeFetch());
   const service = new PiperTtsService({
-    baseUrl: "http://mbs4.test",
-    fetch: opts?.fetch ?? makeFetch(),
+    api,
     lengthScale: opts?.lengthScale,
     createWorker: () => worker,
   });

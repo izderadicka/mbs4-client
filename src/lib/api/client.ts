@@ -710,6 +710,29 @@ export class ApiClient {
     return this.checkResponse(response, data);
   }
 
+  // Piper (browser-side neural TTS) voice endpoints. These return openapi-fetch's
+  // native { data, response } rather than going through checkResponse, so the
+  // caller (PiperTtsService) can classify failures into its own retryable
+  // TtsServiceError contract (a background TTS fetch must not redirect to login).
+  async listPiperVoices(language?: string) {
+    return this.client.GET("/tts/piper/voices", {
+      params: { query: { language } },
+    });
+  }
+
+  async getPiperVoiceConfig(id: string) {
+    return this.client.GET("/tts/piper/voices/{id}.onnx.json", {
+      params: { path: { id } },
+    });
+  }
+
+  async getPiperVoiceModel(id: string) {
+    return this.client.GET("/tts/piper/voices/{id}.onnx", {
+      params: { path: { id } },
+      parseAs: "arrayBuffer",
+    });
+  }
+
   private formatCache: { date: Date; data: FormatShort[] } | null = null;
   async listFormats(): Promise<readonly FormatShort[]> {
     if (

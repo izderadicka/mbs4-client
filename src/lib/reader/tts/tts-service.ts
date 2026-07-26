@@ -115,23 +115,18 @@ export async function createTtsService(): Promise<TtsService> {
       });
     }
     case "piper": {
-      // Voice files come from the mbs4 server; reuse the API client's base URL
-      // (same origin in prod, the dev API origin locally). Imported here, not
-      // at module top, so unit tests of other services don't pull it in.
-      const [{ PiperTtsService }, { apiClient }] = await Promise.all([
-        import("./piper/piper-tts-service"),
-        import("$lib/api/client"),
-      ]);
-      return new PiperTtsService({
-        baseUrl: apiClient.baseUrl,
-        ...(params as {
-          baseUrl?: string;
+      // Voice list and voice files come from the mbs4 server via the shared API
+      // client (the service defaults to the singleton). Imported here, not at
+      // module top, so unit tests of other services don't pull it in.
+      const { PiperTtsService } = await import("./piper/piper-tts-service");
+      return new PiperTtsService(
+        params as {
           numThreads?: number;
           lengthScale?: number;
           noiseScale?: number;
           noiseWScale?: number;
-        }),
-      });
+        },
+      );
     }
     default: {
       const { BrowserTtsService } = await import("./browser-tts-service");

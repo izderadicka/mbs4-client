@@ -14,7 +14,6 @@ import {
   PIPER_DEFAULT_NOISE_SCALE,
   PIPER_DEFAULT_NOISE_W_SCALE,
   PIPER_ESPEAK_BASE,
-  PIPER_VOICES_PATH,
   PIPER_WASM_BASE,
 } from "$lib/config";
 import {
@@ -39,6 +38,7 @@ import type {
   PiperResponse,
 } from "./piper-messages";
 import type { VoiceInfo } from "$lib/api";
+import { apiClient, ApiClient } from "$lib/api/client";
 
 // Minimal structural view of a Worker so the service can be unit-tested with a
 // fake (the real Worker satisfies this).
@@ -56,17 +56,17 @@ export interface PiperWorkerLike {
 }
 
 export interface PiperTtsServiceOptions {
-  // Base URL of the mbs4 server serving voice files; "" (default) = same origin.
-  baseUrl?: string;
+  // API client used to fetch the voice list and voice files from the mbs4
+  // server; defaults to the shared singleton.
+  api?: ApiClient;
   // WASM inference threads; defaults to hardwareConcurrency when the page is
   // cross-origin isolated, else 1 (single-threaded fallback).
   numThreads?: number;
   lengthScale?: number;
   noiseScale?: number;
   noiseWScale?: number;
-  // Test seams.
+  // Test seam.
   createWorker?: () => PiperWorkerLike;
-  fetch?: typeof fetch;
 }
 
 function defaultNumThreads(): number {
@@ -92,12 +92,11 @@ interface Pending {
 export class PiperTtsService implements TtsService {
   readonly id = "piper";
 
-  #baseUrl: string;
+  #api: ApiClient;
   #numThreads: number;
   #lengthScale: number;
   #noiseScale: number;
   #noiseWScale: number;
-  #fetch: typeof fetch;
   #createWorker: () => PiperWorkerLike;
 
   #worker: PiperWorkerLike | null = null;
@@ -114,12 +113,11 @@ export class PiperTtsService implements TtsService {
   #loadPromise: Promise<number> | null = null;
 
   constructor(opts?: PiperTtsServiceOptions) {
-    this.#baseUrl = (opts?.baseUrl ?? "").replace(/\/$/, "");
+    this.#api = opts?.api ?? apiClient;
     this.#numThreads = opts?.numThreads ?? defaultNumThreads();
     this.#lengthScale = opts?.lengthScale ?? PIPER_DEFAULT_LENGTH_SCALE;
     this.#noiseScale = opts?.noiseScale ?? PIPER_DEFAULT_NOISE_SCALE;
     this.#noiseWScale = opts?.noiseWScale ?? PIPER_DEFAULT_NOISE_W_SCALE;
-    this.#fetch = opts?.fetch ?? globalThis.fetch.bind(globalThis);
     this.#createWorker =
       opts?.createWorker ??
       (() =>
@@ -133,25 +131,25 @@ export class PiperTtsService implements TtsService {
   }
 
   async listVoices(language?: string): Promise<Voice[]> {
-    const url =
-      this.#url(PIPER_VOICES_PATH) +
-      (language ? `?language=${encodeURIComponent(language)}` : "");
-    let response: Response;
+    let result: Awaited<ReturnType<ApiClient["listPiperVoices"]>>;
     try {
-      response = await this.#fetch(url, { credentials: "include" });
+      result = await this.#api.listPiperVoices(language);
     } catch (e) {
       throw new TtsServiceError("Piper voice service unreachable", {
         retryable: true,
         cause: e,
       });
     }
-    if (!response.ok) {
+    if (!result.response.ok) {
       throw new TtsServiceError(
-        `Piper voice list error (status ${response.status})`,
-        { retryable: response.status === 429 || response.status >= 500 },
+        `Piper voice list error (status ${result.response.status})`,
+        {
+          retryable:
+            result.response.status === 429 || result.response.status >= 500,
+        },
       );
     }
-    const data = (await response.json()) as unknown;
+    const data = result.data as unknown;
     if (!Array.isArray(data)) {
       throw new TtsServiceError("Invalid Piper voices response", {
         retryable: false,
@@ -248,10 +246,6 @@ export class PiperTtsService implements TtsService {
 
   // --- internals ---------------------------------------------------------------
 
-  #url(path: string): string {
-    return this.#baseUrl + path;
-  }
-
   // Map a numeric rate (1.0 = normal) to Piper's length scale, which is the
   // inverse of speed (larger = slower).
   #lengthScaleFor(rate?: number): number {
@@ -284,16 +278,19 @@ export class PiperTtsService implements TtsService {
   }
 
   async #loadVoice(model: string): Promise<number> {
-    const enc = encodeURIComponent(model);
     const [config, modelBytes] = await Promise.all([
-      this.#fetchJson(`${PIPER_VOICES_PATH}/${enc}.onnx.json`),
-      this.#fetchBytes(`${PIPER_VOICES_PATH}/${enc}.onnx`),
+      this.#fetchVoiceFile(() => this.#api.getPiperVoiceConfig(model)),
+      this.#fetchVoiceFile(() => this.#api.getPiperVoiceModel(model)),
     ]);
     let response: PiperOkResponse;
     try {
       response = await this.#rpc(
-        { type: "setVoice", config: config as PiperVoiceConfig, modelBytes },
-        [modelBytes],
+        {
+          type: "setVoice",
+          config: config as PiperVoiceConfig,
+          modelBytes: modelBytes as ArrayBuffer,
+        },
+        [modelBytes as ArrayBuffer],
       );
     } catch (e) {
       throw new TtsServiceError("Failed to initialize Piper voice", {
@@ -306,35 +303,32 @@ export class PiperTtsService implements TtsService {
     );
   }
 
-  async #fetchJson(path: string): Promise<unknown> {
-    const res = await this.#fetchFile(path);
-    return res.json();
-  }
-
-  async #fetchBytes(path: string): Promise<ArrayBuffer> {
-    const res = await this.#fetchFile(path);
-    return res.arrayBuffer();
-  }
-
-  async #fetchFile(path: string): Promise<Response> {
-    let res: Response;
+  // Await an API-client voice-file request and classify failures into the
+  // retryable TtsServiceError contract (network -> retryable; 429/5xx ->
+  // retryable; other non-ok -> terminal). Returns the parsed body (JSON config
+  // or ArrayBuffer model bytes, per the request).
+  async #fetchVoiceFile(
+    request: () => Promise<{ data?: unknown; response: Response }>,
+  ): Promise<unknown> {
+    let result: { data?: unknown; response: Response };
     try {
-      res = await this.#fetch(this.#url(path), { credentials: "include" });
+      result = await request();
     } catch (e) {
       throw new TtsServiceError("Piper voice file unreachable", {
         retryable: true,
         cause: e,
       });
     }
-    if (!res.ok) {
+    if (!result.response.ok) {
       throw new TtsServiceError(
-        `Piper voice file error (status ${res.status})`,
+        `Piper voice file error (status ${result.response.status})`,
         {
-          retryable: res.status === 429 || res.status >= 500,
+          retryable:
+            result.response.status === 429 || result.response.status >= 500,
         },
       );
     }
-    return res;
+    return result.data;
   }
 
   #ensureWorker(): PiperWorkerLike {
