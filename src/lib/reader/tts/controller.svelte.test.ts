@@ -239,7 +239,45 @@ describe("TtsController", () => {
     expect(
       (view.addAnnotation as ReturnType<typeof vi.fn>).mock.calls.length,
     ).toBeGreaterThan(0);
-    // page-follow scrolled to the sentence (self navigation)
+    // the first sentence is already at the current reader location, so
+    // page-follow does not scroll (no backward jump)
+    expect(
+      (view.renderer.scrollToAnchor as ReturnType<typeof vi.fn>).mock.calls
+        .length,
+    ).toBe(0);
+  });
+
+  it("does not scroll back to a sentence that continues from the previous page", async () => {
+    const { controller, view, player } = await setup();
+    // Visible page starts partway through "First one." (its start is in the
+    // previous column) but contains its tail. #currentLocation is this range.
+    (view as unknown as { lastLocation: { cfi: string } }).lastLocation.cfi =
+      "epubcfi(/6/2!/4,/2/5:0,/8)";
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.currentSentence?.text).toBe("First one.");
+    // the sentence's tail is on-screen -> no navigation of any kind (a scroll
+    // or goTo here would jump the reader back to the previous page)
+    expect(
+      (view.renderer.scrollToAnchor as ReturnType<typeof vi.fn>).mock.calls
+        .length,
+    ).toBe(0);
+    expect(view.goTo as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
+  });
+
+  it("scrolls forward to follow a sentence below the current page", async () => {
+    const { controller, view, player } = await setup();
+    // Visible page ends before "First one." begins -> the sentence is off-screen
+    // ahead and must be scrolled into view (forward auto-advance).
+    (view as unknown as { lastLocation: { cfi: string } }).lastLocation.cfi =
+      "epubcfi(/6/2!/4,/1/1:0,/1/2)";
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.currentSentence?.text).toBe("First one.");
     expect(
       (view.renderer.scrollToAnchor as ReturnType<typeof vi.fn>).mock.calls
         .length,

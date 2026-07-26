@@ -11,6 +11,7 @@
 // "selection" = our own scrollToAnchor).
 
 import { Overlayer } from "foliate-js/overlayer.js";
+import { collapse, compare } from "foliate-js/epubcfi.js";
 import type {
   Annotation,
   CreateOverlayDetail,
@@ -356,6 +357,22 @@ export class TtsController {
     return loc?.cfi ?? null;
   }
 
+  // True when any part of the sentence lies within the current page's visible
+  // range. #currentLocation() is a range CFI spanning the visible page, so the
+  // sentence overlaps it iff sentenceStart <= pageEnd && sentenceEnd >= pageStart.
+  #isSentenceVisible(sentence: SentenceRef): boolean {
+    const loc = this.#currentLocation();
+    if (!loc) return false;
+    try {
+      return (
+        compare(collapse(sentence.cfi), collapse(loc, true)) <= 0 &&
+        compare(collapse(sentence.cfi, true), collapse(loc)) >= 0
+      );
+    } catch {
+      return false;
+    }
+  }
+
   #onPipelineEvent(e: PipelineEvent): void {
     switch (e.type) {
       case "sentence-started":
@@ -432,6 +449,11 @@ export class TtsController {
       const contents = view.renderer.getContents();
       const rendered = contents.find((c) => c.index === sentence.sectionIndex);
       if (rendered) {
+        // Already (partly) on the current page? Don't scroll. A sentence that
+        // continues from the previous page has its start in the prior column,
+        // and scrollToAnchor would jump to that first rect - yanking the reader
+        // backwards. The overlay highlight still paints only the visible part.
+        if (this.#isSentenceVisible(sentence)) return;
         // select=true tags the relocate reason "selection" so it is not
         // treated as user navigation (no self-nav counter needed); the
         // native selection foliate makes is dropped in #onRendererRelocate
