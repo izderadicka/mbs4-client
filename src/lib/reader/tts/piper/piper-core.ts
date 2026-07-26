@@ -184,14 +184,24 @@ export async function synthesizeSentence(
 async function loadEspeak(): Promise<EspeakInstance> {
   const base = new URL(espeakBaseUrl, self.location.href);
   const moduleUrl = new URL("espeakng.worker.js", base).href;
-  // The espeak glue is served as a same-origin static asset, not bundled by
-  // Vite; import it at runtime and let locateFile resolve its .wasm/.data.
-  const mod = (await import(/* @vite-ignore */ moduleUrl)) as {
-    default: EspeakModuleFactory;
-  };
-  return mod.default({
-    locateFile: (path: string) => new URL(path, base).href,
-  });
+  // The espeak glue is a dedicated-worker build: when instantiated it installs
+  // its own global `self.onmessage` dispatch, clobbering piper-worker's message
+  // handler (every later RPC would then hit espeak's dispatch and throw
+  // "worker[e.data.method] is undefined"). We only use its synchronous
+  // _espeak_* API, so save and restore our handler around instantiation to keep
+  // the piper-worker RPC channel alive. Imported at runtime (same-origin static
+  // asset, not bundled by Vite); locateFile resolves its .wasm/.data.
+  const savedOnMessage = self.onmessage;
+  try {
+    const mod = (await import(/* @vite-ignore */ moduleUrl)) as {
+      default: EspeakModuleFactory;
+    };
+    return await mod.default({
+      locateFile: (path: string) => new URL(path, base).href,
+    });
+  } finally {
+    self.onmessage = savedOnMessage;
+  }
 }
 
 function resolveScales(scales: SynthesisScales): {

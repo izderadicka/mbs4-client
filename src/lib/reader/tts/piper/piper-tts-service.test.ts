@@ -81,16 +81,16 @@ const VOICE_LIST = [
   {
     id: "cs_CZ-jirka-medium",
     name: "Jirka",
-    language: "cs",
-    model: "cs_CZ-jirka-medium",
+    lang: "cs",
     quality: "medium",
+    num_speakers: 1,
   },
   {
     id: "en_US-lessac-high",
     name: "Lessac",
-    language: "en-US",
-    model: "en_US-lessac-high",
+    lang: "en-US",
     quality: "high",
+    num_speakers: 1,
   },
 ];
 

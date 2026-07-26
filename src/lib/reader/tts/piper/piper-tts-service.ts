@@ -38,20 +38,7 @@ import type {
   PiperRequestBody,
   PiperResponse,
 } from "./piper-messages";
-
-// One entry of the voice-list endpoint (contract with the mbs4 server, which
-// derives it by scanning the .onnx.json files). `model` is the file base name
-// (files: {model}.onnx and {model}.onnx.json); `speaker` selects a speaker for
-// multi-speaker models. When `model`/`speaker` are omitted, `id` is the model
-// and speaker 0 is used.
-interface PiperVoiceListEntry {
-  id: string;
-  name?: string;
-  language?: string;
-  model?: string;
-  speaker?: number;
-  quality?: string;
-}
+import type { VoiceInfo } from "$lib/api";
 
 // Minimal structural view of a Worker so the service can be unit-tested with a
 // fake (the real Worker satisfies this).
@@ -117,8 +104,9 @@ export class PiperTtsService implements TtsService {
   #nextReqId = 1;
   #pending = new Map<number, Pending>();
 
-  // Voice.id -> {model file base name, speaker index}, populated by listVoices.
-  #voiceMeta = new Map<string, { model: string; speaker: number }>();
+  // Voice ids from the most recent listVoices (post language filter, in order),
+  // used to pick a default when synthesize/preload is called without a voice.
+  #voiceIds: string[] = [];
 
   // The model currently loaded (or loading) in the worker, and its load promise
   // (resolving to the sample rate). Switching voices replaces both.
@@ -170,19 +158,18 @@ export class PiperTtsService implements TtsService {
       });
     }
 
-    this.#voiceMeta.clear();
+    this.#voiceIds = [];
     const voices: Voice[] = [];
-    for (const entry of data as PiperVoiceListEntry[]) {
+    // The `id` is the model file base name: {id}.onnx and {id}.onnx.json.
+    for (const entry of data as VoiceInfo[]) {
       if (!entry || typeof entry.id !== "string") continue;
-      const model = typeof entry.model === "string" ? entry.model : entry.id;
-      const speaker = typeof entry.speaker === "number" ? entry.speaker : 0;
-      this.#voiceMeta.set(entry.id, { model, speaker });
       // The server already filters by language; filter again defensively.
-      if (language && !matchesLanguage(entry.language, language)) continue;
+      if (language && !matchesLanguage(entry.lang, language)) continue;
+      this.#voiceIds.push(entry.id);
       voices.push({
         id: entry.id,
         name: entry.name ?? entry.id,
-        lang: entry.language,
+        lang: entry.lang,
         description: entry.quality,
       });
     }
@@ -195,7 +182,7 @@ export class PiperTtsService implements TtsService {
   ): Promise<SynthesisResult> {
     if (signal?.aborted) throw abortReason(signal);
 
-    const { model, speaker } = this.#resolveVoice(req.voice);
+    const model = this.#resolveVoice(req.voice);
     if (!model) {
       throw new TtsServiceError("No Piper voice selected", {
         retryable: false,
@@ -211,7 +198,6 @@ export class PiperTtsService implements TtsService {
         {
           type: "synthesize",
           text: req.text,
-          speakerId: speaker,
           lengthScale: this.#lengthScaleFor(req.rate),
           noiseScale: this.#noiseScale,
           noiseWScale: this.#noiseWScale,
@@ -237,7 +223,7 @@ export class PiperTtsService implements TtsService {
   // Kick off model download + initialization ahead of playback (idempotent per
   // model). Errors are swallowed here; they resurface on the next synthesize.
   preload(voice?: string): void {
-    const { model } = this.#resolveVoice(voice);
+    const model = this.#resolveVoice(voice);
     if (!model) return;
     void this.#ensureVoice(model).catch(() => {});
   }
@@ -273,17 +259,11 @@ export class PiperTtsService implements TtsService {
     return this.#lengthScale / rate;
   }
 
-  #resolveVoice(voiceId?: string): { model: string | null; speaker: number } {
-    if (voiceId) {
-      const meta = this.#voiceMeta.get(voiceId);
-      if (meta) return { model: meta.model, speaker: meta.speaker };
-      // Not from a prior listVoices (e.g. a persisted pref) - treat as a model.
-      return { model: voiceId, speaker: 0 };
-    }
-    const first = this.#voiceMeta.values().next().value;
-    return first
-      ? { model: first.model, speaker: first.speaker }
-      : { model: null, speaker: 0 };
+  // Resolve a requested voice id to the model file base name (id === model).
+  // An explicit id is used as-is (a persisted pref may not be in the current
+  // list); with no id, fall back to the first listed voice.
+  #resolveVoice(voiceId?: string): string | null {
+    return voiceId ?? this.#voiceIds[0] ?? null;
   }
 
   #ensureVoice(model: string): Promise<number> {
