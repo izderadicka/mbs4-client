@@ -5,14 +5,19 @@ export async function load({ params }) {
   const ebookPromise = apiClient.getEbook(ebookId);
   const sourcesPromise = apiClient.listEbookSources(ebookId);
   const conversionsPromise = apiClient.listEbookConversions(ebookId);
-  const myRatingPromise = apiClient.getMyEbookRating(ebookId).catch(() => null);
 
-  const [ebook, sources, conversions, myRating] = await Promise.all([
+
+  const [ebook, sources, conversions] = await Promise.all([
     ebookPromise,
     sourcesPromise,
-    conversionsPromise,
-    myRatingPromise,
+    conversionsPromise
+
   ]);
+  let myRating = null;
+  if (ebook.rating_count ?? 0 > 0) {
+    myRating = await apiClient.getMyEbookRating(ebookId);
+  }
+
   return {
     ebook,
     sources,
