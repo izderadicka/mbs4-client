@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { appUser } from "$lib/globals.svelte";
   import AppSidebar from "$lib/components/navigation/app-sidebar.svelte";
+  import SidebarSwipe from "$lib/components/navigation/sidebar-swipe.svelte";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import BreadcrumbNav from "$lib/components/navigation/breadcrumb-nav.svelte";
@@ -18,6 +19,7 @@
 
 {#if appUser.user}
   <Sidebar.Provider>
+    <SidebarSwipe />
     <AppSidebar />
     <Sidebar.Inset>
       <header

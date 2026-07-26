@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LongPressRecognizer } from "./gestures";
+import { HorizontalSwipeRecognizer, LongPressRecognizer } from "./gestures";
 
 // touch events fabricated for happy-dom, which has no Touch/TouchEvent
-// constructors; the recognizer only reads touches[i].clientX/clientY
-function touchEvent(type: string, touches: { x: number; y: number }[]): Event {
-  const event = new Event(type, { bubbles: true });
-  Object.defineProperty(event, "touches", {
-    value: touches.map((t) => ({ clientX: t.x, clientY: t.y })),
+// constructors; the recognizers only read clientX/clientY of the touch lists
+function touchEvent(
+  type: string,
+  touches: { x: number; y: number }[],
+  changedTouches: { x: number; y: number }[] = [],
+): Event {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  const list = (points: { x: number; y: number }[]) =>
+    points.map((t) => ({ clientX: t.x, clientY: t.y }));
+  Object.defineProperty(event, "touches", { value: list(touches) });
+  Object.defineProperty(event, "changedTouches", {
+    value: list(changedTouches),
   });
   return event;
 }
@@ -196,5 +203,157 @@ describe("LongPressRecognizer", () => {
     recognizer.cancel();
     vi.advanceTimersByTime(500);
     expect(fired).toEqual([]);
+  });
+});
+
+describe("HorizontalSwipeRecognizer", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  function setup(
+    options: {
+      enabled?: () => boolean;
+      claim?: (start: { x: number; y: number }) => boolean;
+    } = {},
+  ) {
+    const swiped: { direction: string; startX: number; distancePx: number }[] =
+      [];
+    const recognizer = new HorizontalSwipeRecognizer({
+      claim: () => true,
+      onSwipe: ({ direction, start, distancePx }) =>
+        swiped.push({ direction, startX: start.x, distancePx }),
+      ...options,
+    });
+    const target = document.createElement("div");
+    document.body.append(target);
+    const detach = recognizer.observe(target);
+    return { recognizer, target, swiped, detach };
+  }
+
+  // dispatch a whole touch sequence: down at `from`, a move to each waypoint,
+  // then up at the last one; returns the dispatched move events
+  function drag(
+    target: EventTarget,
+    from: { x: number; y: number },
+    ...waypoints: { x: number; y: number }[]
+  ): Event[] {
+    target.dispatchEvent(touchEvent("touchstart", [from]));
+    const moves = waypoints.map((point) => {
+      const event = touchEvent("touchmove", [point]);
+      target.dispatchEvent(event);
+      return event;
+    });
+    const last = waypoints.at(-1) ?? from;
+    target.dispatchEvent(touchEvent("touchend", [], [last]));
+    return moves;
+  }
+
+  it("recognizes a swipe to the right with its start and distance", () => {
+    const { target, swiped } = setup();
+    drag(target, { x: 5, y: 100 }, { x: 40, y: 104 }, { x: 90, y: 110 });
+    expect(swiped).toEqual([{ direction: "right", startX: 5, distancePx: 85 }]);
+  });
+
+  it("recognizes a swipe to the left", () => {
+    const { target, swiped } = setup();
+    drag(target, { x: 200, y: 100 }, { x: 120, y: 100 });
+    expect(swiped).toEqual([
+      { direction: "left", startX: 200, distancePx: 80 },
+    ]);
+  });
+
+  it("ignores a drag shorter than the threshold", () => {
+    const { target, swiped } = setup();
+    drag(target, { x: 5, y: 100 }, { x: 50, y: 100 });
+    expect(swiped).toEqual([]);
+  });
+
+  it("ignores a mostly vertical drag", () => {
+    const { target, swiped } = setup();
+    drag(target, { x: 5, y: 100 }, { x: 70, y: 220 });
+    expect(swiped).toEqual([]);
+  });
+
+  it("ignores a drag that took too long", () => {
+    vi.useFakeTimers();
+    try {
+      const { target, swiped } = setup();
+      target.dispatchEvent(touchEvent("touchstart", [{ x: 5, y: 100 }]));
+      vi.advanceTimersByTime(1001);
+      target.dispatchEvent(touchEvent("touchend", [], [{ x: 100, y: 100 }]));
+      expect(swiped).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("ignores touches that are not claimed", () => {
+    const { target, swiped } = setup({ claim: (start) => start.x <= 32 });
+    // starts outside the claimed zone: not recognized and not interfered with
+    const moves = drag(target, { x: 200, y: 100 }, { x: 300, y: 100 });
+    expect(swiped).toEqual([]);
+    expect(moves.some((e) => e.defaultPrevented)).toBe(false);
+
+    drag(target, { x: 10, y: 100 }, { x: 110, y: 100 });
+    expect(swiped.length).toBe(1);
+  });
+
+  it("does nothing while disabled", () => {
+    const { target, swiped } = setup({ enabled: () => false });
+    const moves = drag(target, { x: 5, y: 100 }, { x: 100, y: 100 });
+    expect(swiped).toEqual([]);
+    expect(moves[0].defaultPrevented).toBe(false);
+  });
+
+  it("drops the gesture when a second finger joins", () => {
+    const { target, swiped } = setup();
+    target.dispatchEvent(touchEvent("touchstart", [{ x: 5, y: 100 }]));
+    target.dispatchEvent(
+      touchEvent("touchmove", [
+        { x: 40, y: 100 },
+        { x: 200, y: 300 },
+      ]),
+    );
+    target.dispatchEvent(touchEvent("touchend", [], [{ x: 100, y: 100 }]));
+    expect(swiped).toEqual([]);
+  });
+
+  it("drops the gesture on touchcancel", () => {
+    const { target, swiped } = setup();
+    target.dispatchEvent(touchEvent("touchstart", [{ x: 5, y: 100 }]));
+    target.dispatchEvent(touchEvent("touchcancel", []));
+    target.dispatchEvent(touchEvent("touchend", [], [{ x: 100, y: 100 }]));
+    expect(swiped).toEqual([]);
+  });
+
+  it("suppresses the default of a horizontal drag, but keeps scrolling free", () => {
+    const { target } = setup();
+
+    // vertical movement stays untouched, so the page keeps scrolling
+    const vertical = drag(target, { x: 5, y: 100 }, { x: 8, y: 200 });
+    expect(vertical.map((e) => e.defaultPrevented)).toEqual([false]);
+
+    // horizontal movement beyond the slop is ours: the browser's own edge
+    // gesture must not run alongside it
+    const horizontal = drag(
+      target,
+      { x: 5, y: 100 },
+      { x: 10, y: 100 },
+      { x: 40, y: 100 },
+      { x: 90, y: 140 },
+    );
+    expect(horizontal.map((e) => e.defaultPrevented)).toEqual([
+      false,
+      true,
+      true,
+    ]);
+  });
+
+  it("stops recognizing once detached", () => {
+    const { target, swiped, detach } = setup();
+    detach();
+    drag(target, { x: 5, y: 100 }, { x: 100, y: 100 });
+    expect(swiped).toEqual([]);
   });
 });
