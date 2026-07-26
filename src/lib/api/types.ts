@@ -1064,6 +1064,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tts/piper/voices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPiperVoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tts/piper/voices/{id}.onnx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPiperVoiceModel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tts/piper/voices/{id}.onnx.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPiperVoiceConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users": {
         parameters: {
             query?: never;
@@ -1922,6 +1970,33 @@ export interface components {
             name: string;
             email: string;
             roles?: string[] | null;
+        };
+        /**
+         * @description Voice metadata returned by the listing endpoint. This is the typed shape the
+         *     client's `listVoices` consumes.
+         */
+        VoiceInfo: {
+            /**
+             * @description Voice id, i.e. the file name without the `.onnx`/`.onnx.json` suffix,
+             *     e.g. `en_US-amy-medium`.
+             */
+            id: string;
+            /**
+             * @description Human friendly voice name (the `{name}` part of the id, or the config's
+             *     `dataset`).
+             */
+            name: string;
+            /** @description BCP47 language tag, e.g. `en-US`. */
+            lang: string;
+            /** @description Voice quality, i.e. the `{quality}` part of the id (e.g. `medium`). */
+            quality: string;
+            /**
+             * Format: int32
+             * @description Number of speakers in the model (1 for single speaker voices).
+             */
+            num_speakers: number;
+            /** @description Speaker names for multi speaker models, ordered by speaker id. */
+            speakers?: string[] | null;
         };
     };
     responses: never;
@@ -4004,6 +4079,92 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SearchItem"][];
                 };
+            };
+        };
+    };
+    listPiperVoices: {
+        parameters: {
+            query?: {
+                /**
+                 * @description BCP47 language tag. Filters voices by their primary language subtag
+                 *     (e.g. `en` or `en-US` both match `en_US-*` voices). Omit for all voices.
+                 */
+                language?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available Piper voices */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceInfo"][];
+                };
+            };
+        };
+    };
+    getPiperVoiceModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice id, e.g. en_US-amy-medium */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Piper ONNX model file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": unknown;
+                };
+            };
+            /** @description Voice not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPiperVoiceConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice id, e.g. en_US-amy-medium */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Piper voice config file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Voice not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
