@@ -42,6 +42,14 @@ function button(container: HTMLElement, title: string): HTMLButtonElement {
   return el;
 }
 
+// Speech is really playing once Pause is not only shown but enabled: while
+// the pipeline buffers, the whole transport is disabled except Stop.
+async function waitPlaying(container: HTMLElement, timeout = 15000) {
+  await vi.waitFor(
+    () => expect(button(container, "Pause").disabled).toBe(false),
+    { timeout },
+  );
+}
 
 describe("reader read-aloud (browser)", () => {
   beforeEach(() => {
@@ -89,7 +97,7 @@ describe("reader read-aloud (browser)", () => {
 
     // play: mock synthesis buffers, playback starts (Play flips to Pause)
     button(root, "Play").click();
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await waitPlaying(root);
 
     // the spoken sentence got highlighted (overlay drawn for its CFI)
     await vi.waitFor(() => expect(drawn.length).toBeGreaterThan(0), {
@@ -115,15 +123,16 @@ describe("reader read-aloud (browser)", () => {
 
     // pause returns the Play button, playback stays paused and the spoken
     // sentence stays highlighted
+    await waitPlaying(root); // may have re-buffered meanwhile
     button(root, "Pause").click();
     await vi.waitFor(() => button(root, "Play"), { timeout: 5000 });
     expect(highlightCount()).toBeGreaterThan(0);
 
     // resume + jump to next sentence keeps playing
     button(root, "Play").click();
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await waitPlaying(root);
     button(root, "Next sentence").click();
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await waitPlaying(root);
 
     // stop disarms playback and clears the highlight and any selection
     button(root, "Stop reading").click();
@@ -231,7 +240,7 @@ describe("reader read-aloud (browser)", () => {
 
     // playback started from the clicked (third) sentence, skipping the
     // first two - its highlight is the first one drawn
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await waitPlaying(root);
     await vi.waitFor(
       () =>
         expect(highlightedText(view, doc, drawn)).toContain(
@@ -260,7 +269,7 @@ describe("reader read-aloud (browser)", () => {
     await new Promise((r) => setTimeout(r, 700));
     target.dispatchEvent(new TouchEvent("touchend", { bubbles: true }));
 
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 15000 });
+    await waitPlaying(root);
     await vi.waitFor(
       () =>
         expect(highlightedText(view, doc, drawn)).toContain(
