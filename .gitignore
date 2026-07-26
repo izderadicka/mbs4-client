@@ -35,3 +35,7 @@ package-lock.json
 
 # vitest browser-mode failure screenshots
 .vitest-attachments/
+
+# Piper TTS runtime assets copied by scripts/prepare-piper-assets.mjs
+# (regenerate with `pnpm run piper:assets`)
+/static/onnxruntime/

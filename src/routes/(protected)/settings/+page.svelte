@@ -54,11 +54,14 @@
 
   const TTS_PROVIDER_LABELS: Record<TtsProvider, string> = {
     browser: "Browser (built-in voices)",
+    piper: "Piper (offline)",
     mock: "Dummy (dev)",
     edge: "Edge TTS (proxy)",
   };
-  // mock and edge are dev-only options
-  const ttsProviders = TTS_PROVIDERS.filter((p) => p === "browser" || IS_DEV);
+  // browser and piper are real production providers; mock and edge are dev-only
+  const ttsProviders = TTS_PROVIDERS.filter(
+    (p) => p === "browser" || p === "piper" || IS_DEV,
+  );
 
   let ttsProvider = $state(appSettings.ttsProvider);
   let ttsParams = $state(appSettings.ttsServiceParams);

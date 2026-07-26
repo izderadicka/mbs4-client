@@ -186,6 +186,9 @@ export class TtsController {
       toast.error("Could not load voices from the speech service");
     }
     this.voice = this.#pickVoice();
+    // Start downloading/initializing the chosen voice now so the first play is
+    // fast (Piper loads a neural model); no-op for services with nothing to warm.
+    this.#service.preload?.(this.voice ?? undefined);
   }
 
   async disable(): Promise<void> {
@@ -200,6 +203,7 @@ export class TtsController {
       view.renderer?.removeEventListener("relocate", this.#onRendererRelocate);
     }
     await this.#pipeline?.destroy();
+    this.#service?.destroy?.();
     this.#source?.dispose();
     this.#service = null;
     this.#source = null;
@@ -307,6 +311,7 @@ export class TtsController {
   setVoice(id: string): void {
     this.voice = id;
     setTtsVoice(id);
+    this.#service?.preload?.(id);
     if (this.#pipeline?.active) {
       // re-synthesize from the current sentence with the new voice
       const current = this.#pipeline.currentSentence;

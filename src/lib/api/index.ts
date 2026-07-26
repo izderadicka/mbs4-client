@@ -39,6 +39,9 @@ export type LanguageShort = components["schemas"]["LanguageShort"];
 export type GenreShort = components["schemas"]["GenreShort"];
 export type FormatShort = components["schemas"]["FormatShort"];
 
+// TTS
+export type VoiceInfo = components["schemas"]["VoiceInfo"];
+
 export type EbookFileInfo = components["schemas"]["EbookFileInfo"];
 export type EbookCoverInfo = components["schemas"]["EbookCoverInfo"];
 export type Source = components["schemas"]["Source"];
