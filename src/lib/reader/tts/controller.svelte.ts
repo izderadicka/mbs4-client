@@ -186,8 +186,16 @@ export class TtsController {
     this.rate = ttsPrefs.rate;
     this.#pipeline.setRate(this.rate);
     this.status = "idle";
+    const language = this.#bookLanguage();
     try {
-      this.voices = await this.#service.listVoices(this.#bookLanguage());
+      this.voices = await this.#service.listVoices(language);
+      if (this.voices.length === 0) {
+        // usually a book language the service has no voices for, or a
+        // language code in the library that is not a BCP-47 tag
+        console.warn(
+          `No TTS voices for language ${language ?? "(unknown)"} from service ${this.#service.id}`,
+        );
+      }
     } catch (e) {
       console.error("Failed to list TTS voices", e);
       this.voices = [];

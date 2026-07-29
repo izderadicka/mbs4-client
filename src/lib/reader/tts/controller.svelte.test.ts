@@ -234,6 +234,19 @@ describe("TtsController", () => {
     expect(fakes.service.voicesRequestedFor).toEqual(["cs"]);
   });
 
+  it("warns when the service has no voices for the book language", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const stub = makeView(["<p>Hello there.</p>"]);
+    const controller = new TtsController(
+      () => stub.view,
+      () => "de",
+    );
+    await controller.enable();
+    expect(controller.voices).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("de"));
+    warn.mockRestore();
+  });
+
   it("enable respects the persisted voice preference", async () => {
     localStorage.setItem(
       "mbs4.tts",
