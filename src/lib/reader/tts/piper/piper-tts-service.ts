@@ -187,7 +187,7 @@ export class PiperTtsService implements TtsService {
       });
     }
 
-    const sampleRate = await this.#ensureVoice(model);
+    const sampleRate = await this.#awaitVoice(model, signal);
     if (signal?.aborted) throw abortReason(signal);
 
     let response: PiperOkResponse;
@@ -258,6 +258,29 @@ export class PiperTtsService implements TtsService {
   // list); with no id, fall back to the first listed voice.
   #resolveVoice(voiceId?: string): string | null {
     return voiceId ?? this.#voiceIds[0] ?? null;
+  }
+
+  // Wait for the voice to be loaded, but give up as soon as the request is
+  // aborted: a model download plus worker init takes seconds, and a stopped
+  // request must not stay attached to it (the user pressed stop while the
+  // pipeline was buffering). The load itself is shared and keeps running, so
+  // a later play reuses it instead of starting over.
+  #awaitVoice(model: string, signal?: AbortSignal): Promise<number> {
+    const load = this.#ensureVoice(model);
+    if (!signal) return load;
+    // the racing await below may lose; keep its rejection from going unhandled
+    load.catch(() => {});
+    return new Promise<number>((resolve, reject) => {
+      if (signal.aborted) {
+        reject(abortReason(signal));
+        return;
+      }
+      const onAbort = () => reject(abortReason(signal));
+      signal.addEventListener("abort", onAbort, { once: true });
+      load.then(resolve, reject).finally(() => {
+        signal.removeEventListener("abort", onAbort);
+      });
+    });
   }
 
   #ensureVoice(model: string): Promise<number> {

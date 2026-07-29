@@ -17,9 +17,14 @@
     onClose,
   }: { controller: TtsController; onClose: () => void } = $props();
 
-  let playing = $derived(
-    controller.status === "playing" || controller.status === "buffering",
-  );
+  // While buffering, every control except Stop is locked: they would only
+  // restart or re-queue synthesis that has not produced audio yet. Stop
+  // cancels the wait (important for Piper, whose voices take notable time to
+  // download and initialize); Close leaves read-aloud altogether and stays
+  // available too, so the user is never stuck in the bar.
+  let buffering = $derived(controller.status === "buffering");
+  let playing = $derived(controller.status === "playing" || buffering);
+  let locked = $derived(controller.status === "off" || buffering);
   let rateStr = $derived(`${controller.rate}×`);
   let voiceName = $derived(
     controller.voices.find((v) => v.id === controller.voice)?.name ?? "Voice",
@@ -33,20 +38,21 @@
       variant="ghost"
       size="icon"
       title="Previous sentence"
-      disabled={controller.status === "off"}
+      disabled={locked}
       onclick={() => controller.prevSentence()}><SkipBackIcon /></Button>
     {#if playing}
       <Button
         variant="ghost"
         size="icon"
         title="Pause"
+        disabled={buffering}
         onclick={() => controller.pause()}><PauseIcon /></Button>
     {:else}
       <Button
         variant="ghost"
         size="icon"
         title="Play"
-        disabled={controller.status === "off"}
+        disabled={locked}
         onclick={() => controller.play()}><PlayIcon /></Button>
     {/if}
     <Button
@@ -59,7 +65,7 @@
       variant="ghost"
       size="icon"
       title="Next sentence"
-      disabled={controller.status === "off"}
+      disabled={locked}
       onclick={() => controller.nextSentence()}><SkipForwardIcon /></Button>
   </div>
 
@@ -98,7 +104,7 @@
       <Select.Trigger
         class="w-36 max-[520px]:w-auto max-[520px]:flex-1"
         title="Voice"
-        disabled={controller.voices.length === 0}
+        disabled={controller.voices.length === 0 || buffering}
         ><span class="truncate">{voiceName}</span></Select.Trigger>
       <Select.Content>
         <Select.Group>
@@ -114,7 +120,7 @@
       type="single"
       value={String(controller.rate)}
       onValueChange={(v) => controller.setRate(Number(v) as TtsRate)}>
-      <Select.Trigger class="w-20" title="Speech rate"
+      <Select.Trigger class="w-20" title="Speech rate" disabled={buffering}
         >{rateStr}</Select.Trigger>
       <Select.Content>
         <Select.Group>

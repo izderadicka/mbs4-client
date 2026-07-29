@@ -95,6 +95,15 @@ function button(container: HTMLElement, title: string): HTMLButtonElement {
   return el;
 }
 
+// Speech is really playing once Pause is not only shown but enabled: while
+// the pipeline buffers, the whole transport is disabled except Stop.
+async function waitPlaying(container: HTMLElement, timeout = 10000) {
+  await vi.waitFor(
+    () => expect(button(container, "Pause").disabled).toBe(false),
+    { timeout },
+  );
+}
+
 describe("reader read-aloud with the browser TTS pipeline", () => {
   let engine: FakeSpeechEngine;
 
@@ -154,13 +163,14 @@ describe("reader read-aloud with the browser TTS pipeline", () => {
     // play: the sentence gets our overlay highlight - and NOT a native
     // text selection (the bug: foliate's page-follow selected the sentence)
     button(root, "Play").click();
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 10000 });
+    await waitPlaying(root);
     await vi.waitFor(() => expect(highlightCount()).toBeGreaterThan(0), {
       timeout: 5000,
     });
     expect(hasSelection()).toBe(false);
 
     // pause mid-sentence: speech stops but the highlight stays
+    await waitPlaying(root); // may have re-buffered meanwhile
     button(root, "Pause").click();
     await vi.waitFor(() => button(root, "Play"), { timeout: 5000 });
     await new Promise((r) => setTimeout(r, 100));
@@ -169,7 +179,7 @@ describe("reader read-aloud with the browser TTS pipeline", () => {
     // resume, then stop in the middle of a sentence: highlight and any
     // selection are cleared
     button(root, "Play").click();
-    await vi.waitFor(() => button(root, "Pause"), { timeout: 10000 });
+    await waitPlaying(root);
     await new Promise((r) => setTimeout(r, 200)); // well inside the utterance
     button(root, "Stop reading").click();
     await vi.waitFor(() => expect(highlightCount()).toBe(0), { timeout: 5000 });

@@ -55,6 +55,8 @@ const fakes = vi.hoisted(() => {
     readonly id = "fake";
     requests: { text: string; voice?: string }[] = [];
     voicesRequestedFor: (string | undefined)[] = [];
+    // abort signals handed to synthesize, to check that stop cancels them
+    signals: AbortSignal[] = [];
     createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
       return new TtsServicePipeline(this, onEvent);
     }
@@ -69,8 +71,12 @@ const fakes = vi.hoisted(() => {
         ? voices
         : voices.filter((v) => v.lang === language.toLowerCase().split("-")[0]);
     }
-    async synthesize(req: SynthesisRequest): Promise<SynthesisResult> {
+    async synthesize(
+      req: SynthesisRequest,
+      signal?: AbortSignal,
+    ): Promise<SynthesisResult> {
       this.requests.push({ text: req.text, voice: req.voice });
+      if (signal) this.signals.push(signal);
       return { data: new ArrayBuffer(4), mimeType: "audio/wav" };
     }
   }
@@ -193,6 +199,7 @@ describe("TtsController", () => {
     fakes.FakePlayer.instances.length = 0;
     fakes.service.requests.length = 0;
     fakes.service.voicesRequestedFor.length = 0;
+    fakes.service.signals.length = 0;
   });
 
   async function setup() {
@@ -296,6 +303,25 @@ describe("TtsController", () => {
     expect(
       (view.deleteAnnotation as ReturnType<typeof vi.fn>).mock.calls.length,
     ).toBeGreaterThan(0);
+  });
+
+  it("stop while buffering cancels the pending synthesis", async () => {
+    const { controller, player } = await setup();
+    await controller.play();
+    await flush();
+    // nothing has started playing yet - the pipeline is still buffering
+    expect(controller.status).toBe("buffering");
+    controller.stop();
+    await flush();
+    expect(controller.status).toBe("idle");
+    expect(controller.currentSentence).toBeNull();
+    expect(player.queuedCount).toBe(0);
+    // the in-flight synthesis requests were aborted and nothing that was
+    // still in flight puts the controller back into buffering
+    expect(fakes.service.signals.length).toBeGreaterThan(0);
+    expect(fakes.service.signals.every((s) => s.aborted)).toBe(true);
+    await flush();
+    expect(controller.status).toBe("idle");
   });
 
   it("stop immediately after a sentence starts still clears the highlight", async () => {

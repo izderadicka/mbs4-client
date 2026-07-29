@@ -210,11 +210,12 @@
       event.preventDefault();
       chromeVisible = !chromeVisible;
     } else if ((k === "p" || k === "P") && ttsEnabled) {
-      // play/pause read aloud
+      // play/pause read aloud; while buffering the transport is locked,
+      // same as in the speech bar (only stop is available there)
       event.preventDefault();
-      if (tts.status === "playing" || tts.status === "buffering") {
+      if (tts.status === "playing") {
         tts.pause();
-      } else {
+      } else if (tts.status !== "buffering") {
         void tts.play();
       }
     }

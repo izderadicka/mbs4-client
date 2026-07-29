@@ -235,6 +235,45 @@ describe("PiperTtsService.synthesize", () => {
     ).rejects.toBe(reason);
   });
 
+  it("aborting while the voice is loading rejects without waiting for the model", async () => {
+    // hold back the model download - the request must not stay attached to it
+    let releaseModel = () => {};
+    const modelDownloaded = new Promise<void>((r) => (releaseModel = r));
+    const base = makeFetch();
+    const slowFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      if (url.endsWith(".onnx")) await modelDownloaded;
+      return base(input, init);
+    }) as unknown as typeof fetch;
+
+    const { service, worker } = makeService({ fetch: slowFetch });
+    await service.listVoices();
+    const controller = new AbortController();
+    const reason = new DOMException("stop", "AbortError");
+    const pending = service.synthesize(
+      { text: "Ahoj", voice: "cs_CZ-jirka-medium" },
+      controller.signal,
+    );
+    controller.abort(reason);
+    await expect(pending).rejects.toBe(reason);
+    // the voice was never spoken, and nothing was synthesized
+    expect(worker.posted.some((m) => m.type === "synthesize")).toBe(false);
+
+    // the load itself kept running, so a later play reuses it
+    releaseModel();
+    const result = await service.synthesize({
+      text: "Ahoj",
+      voice: "cs_CZ-jirka-medium",
+    });
+    expect(result.mimeType).toBe("audio/wav");
+    expect(worker.posted.filter((m) => m.type === "setVoice")).toHaveLength(1);
+  });
+
   it("surfaces a worker synthesis error as a non-retryable TtsServiceError", async () => {
     const worker = new FakeWorker((msg) =>
       msg.type === "synthesize"
