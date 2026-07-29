@@ -18,6 +18,9 @@
   const author = $derived(
     data.ebook?.authors?.map(formatName).join(", ") ?? "",
   );
+  // language from the library database - more reliable than the one in the
+  // book file, which is what read-aloud would otherwise use to find voices
+  const language = $derived(data.ebook?.language?.code);
 
   // File name matters to foliate-js format detection (fb2, cbz), so make
   // sure it ends with the expected extension
@@ -60,7 +63,8 @@
       {file}
       storageKey={`mbs4.reading.${data.kind}.${data.item.id}`}
       {title}
-      {author} />
+      {author}
+      {language} />
   {:else if error}
     <div class="flex h-dvh items-center justify-center p-8">
       <p class="text-destructive text-center">{error}</p>

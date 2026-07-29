@@ -95,12 +95,16 @@ function bookLanguage(book: FoliateBook): string | undefined {
 
 export class SentenceSource {
   #view: FoliateView;
+  // language known to the application (database), overrides anything the
+  // book file says about its language
+  #appLang?: string;
   #bookLang?: string;
   // section index -> sentences, LRU (Map preserves insertion order)
   #cache = new Map<number, SentenceRef[]>();
 
-  constructor(view: FoliateView) {
+  constructor(view: FoliateView, language?: string) {
     this.#view = view;
+    this.#appLang = language || undefined;
     this.#bookLang = bookLanguage(view.book);
   }
 
@@ -124,7 +128,9 @@ export class SentenceSource {
     let sentences: SentenceRef[] = [];
     if (section && typeof section.createDocument === "function") {
       const doc = await section.createDocument();
-      const lang = doc.documentElement?.lang || this.#bookLang;
+      // per-document lang is only a hint from the same (often wrong) file as
+      // the book metadata, so the application language outranks it too
+      const lang = this.#appLang || doc.documentElement?.lang || this.#bookLang;
       sentences = segmentDocumentSentences(doc, lang).map(({ text, range }) => ({
         text,
         cfi: this.#view.getCFI(index, range),

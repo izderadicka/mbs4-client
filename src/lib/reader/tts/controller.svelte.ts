@@ -64,6 +64,9 @@ export class TtsController {
   scheme: ColorScheme = $state("light");
 
   #getView: () => FoliateView | null;
+  // language of the book as known to the application (database); takes
+  // precedence over the one embedded in the book file
+  #getLanguage: () => string | undefined;
   #service: TtsService | null = null;
   #source: SentenceSource | null = null;
   #pipeline: SpeechPipeline | null = null;
@@ -153,8 +156,12 @@ export class TtsController {
     this.#onUserNavigation(detail);
   };
 
-  constructor(getView: () => FoliateView | null) {
+  constructor(
+    getView: () => FoliateView | null,
+    getLanguage: () => string | undefined = () => undefined,
+  ) {
     this.#getView = getView;
+    this.#getLanguage = getLanguage;
   }
 
   get #view(): FoliateView | null {
@@ -169,7 +176,7 @@ export class TtsController {
     this.#lastIndex = -1;
     this.#lastFraction = Number.NaN;
     this.#service = await createTtsService();
-    this.#source = new SentenceSource(view);
+    this.#source = new SentenceSource(view, this.#getLanguage());
     this.#pipeline = this.#service.createPipeline((e) =>
       this.#onPipelineEvent(e),
     );
@@ -219,7 +226,12 @@ export class TtsController {
     await this.disable();
   }
 
+  // Language used to pre-select the voices. The application (database) value
+  // wins over the book file metadata, which is frequently wrong (a Czech book
+  // tagged as Slovak would otherwise get Slovak voices offered).
   #bookLanguage(): string | undefined {
+    const appLang = this.#getLanguage();
+    if (appLang) return appLang;
     const bookLang = this.#view?.book.metadata?.language;
     return Array.isArray(bookLang) ? bookLang[0] : bookLang;
   }
