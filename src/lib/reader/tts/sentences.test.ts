@@ -152,6 +152,18 @@ describe("SentenceSource", () => {
     expect(await source.sentenceAt(pointCfi(0, 0))).toBeNull();
   });
 
+  it("tags sentences with the book file language by default", async () => {
+    const source = new SentenceSource(makeStubView(THREE_SECTIONS));
+    const cursor = (await source.sentenceAt(pointCfi(0, 0)))!;
+    expect(cursor.current.lang).toBe("en");
+  });
+
+  it("prefers the language given by the application", async () => {
+    const source = new SentenceSource(makeStubView(THREE_SECTIONS), "cs");
+    const cursor = (await source.sentenceAt(pointCfi(0, 0)))!;
+    expect(cursor.current.lang).toBe("cs");
+  });
+
   it("caches section segmentation", async () => {
     const view = makeStubView(THREE_SECTIONS);
     const source = new SentenceSource(view);

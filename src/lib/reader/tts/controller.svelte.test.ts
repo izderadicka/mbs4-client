@@ -220,6 +220,40 @@ describe("TtsController", () => {
     expect(controller.voice).toBe("Czech Voice");
   });
 
+  it("enable prefers the application language over the book file metadata", async () => {
+    const stub = makeView(["<p>Hello there.</p>"]); // file metadata says "cs"
+    const controller = new TtsController(
+      () => stub.view,
+      () => "en",
+    );
+    await controller.enable();
+    expect(fakes.service.voicesRequestedFor).toEqual(["en"]);
+    expect(controller.voices.map((v) => v.name)).toEqual(["English Voice"]);
+  });
+
+  it("enable falls back to the book file language when the app has none", async () => {
+    const stub = makeView(["<p>Hello there.</p>"]);
+    const controller = new TtsController(
+      () => stub.view,
+      () => undefined,
+    );
+    await controller.enable();
+    expect(fakes.service.voicesRequestedFor).toEqual(["cs"]);
+  });
+
+  it("warns when the service has no voices for the book language", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const stub = makeView(["<p>Hello there.</p>"]);
+    const controller = new TtsController(
+      () => stub.view,
+      () => "de",
+    );
+    await controller.enable();
+    expect(controller.voices).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("de"));
+    warn.mockRestore();
+  });
+
   it("enable respects the persisted voice preference", async () => {
     localStorage.setItem(
       "mbs4.tts",

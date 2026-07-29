@@ -27,6 +27,7 @@
     storageKey,
     title,
     author,
+    language,
     showBars = false,
   }: {
     file: File;
@@ -35,6 +36,9 @@
     // book file is used as backup
     title?: string;
     author?: string;
+    // language code of the book from the application (database); used to
+    // pick read-aloud voices, as the language in the file is often wrong
+    language?: string;
     // initial visibility of header/footer; toggled by clicking the book page
     showBars?: boolean;
   } = $props();
@@ -54,7 +58,10 @@
   let chromeVisible = $state(showBars);
 
   // read aloud (TTS): control bar visibility + orchestration
-  const tts = new TtsController(() => view);
+  const tts = new TtsController(
+    () => view,
+    () => language,
+  );
   let ttsEnabled = $state(false);
 
   async function toggleTts() {
