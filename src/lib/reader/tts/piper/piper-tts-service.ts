@@ -9,13 +9,7 @@
 // providers. The model is downloaded and initialized ahead of playback via
 // preload(), invoked by the controller as soon as a voice is chosen.
 
-import {
-  PIPER_DEFAULT_LENGTH_SCALE,
-  PIPER_DEFAULT_NOISE_SCALE,
-  PIPER_DEFAULT_NOISE_W_SCALE,
-  PIPER_ESPEAK_BASE,
-  PIPER_WASM_BASE,
-} from "$lib/config";
+import { PIPER_ESPEAK_BASE, PIPER_WASM_BASE } from "$lib/config";
 import {
   TtsServicePipeline,
   type PipelineEvent,
@@ -91,12 +85,17 @@ interface Pending {
 
 export class PiperTtsService implements TtsService {
   readonly id = "piper";
+  // rate is baked into the audio via the VITS length scale (pitch-preserving)
+  readonly appliesRate = true;
 
   #api: ApiClient;
   #numThreads: number;
-  #lengthScale: number;
-  #noiseScale: number;
-  #noiseWScale: number;
+  // Explicit overrides from the settings params; when unset the voice's own
+  // inference defaults apply (falling back to the engine defaults in the
+  // worker's resolveScales).
+  #lengthScale?: number;
+  #noiseScale?: number;
+  #noiseWScale?: number;
   #createWorker: () => PiperWorkerLike;
 
   #worker: PiperWorkerLike | null = null;
@@ -111,13 +110,16 @@ export class PiperTtsService implements TtsService {
   // (resolving to the sample rate). Switching voices replaces both.
   #loadModel: string | null = null;
   #loadPromise: Promise<number> | null = null;
+  // The loaded voice's inference defaults from its .onnx.json, used as the
+  // base for the rate -> length-scale mapping.
+  #voiceInference: PiperVoiceConfig["inference"];
 
   constructor(opts?: PiperTtsServiceOptions) {
     this.#api = opts?.api ?? apiClient;
     this.#numThreads = opts?.numThreads ?? defaultNumThreads();
-    this.#lengthScale = opts?.lengthScale ?? PIPER_DEFAULT_LENGTH_SCALE;
-    this.#noiseScale = opts?.noiseScale ?? PIPER_DEFAULT_NOISE_SCALE;
-    this.#noiseWScale = opts?.noiseWScale ?? PIPER_DEFAULT_NOISE_W_SCALE;
+    this.#lengthScale = opts?.lengthScale;
+    this.#noiseScale = opts?.noiseScale;
+    this.#noiseWScale = opts?.noiseWScale;
     this.#createWorker =
       opts?.createWorker ??
       (() =>
@@ -242,15 +244,17 @@ export class PiperTtsService implements TtsService {
     this.#pending.clear();
     this.#loadModel = null;
     this.#loadPromise = null;
+    this.#voiceInference = undefined;
   }
 
   // --- internals ---------------------------------------------------------------
 
   // Map a numeric rate (1.0 = normal) to Piper's length scale, which is the
-  // inverse of speed (larger = slower).
+  // inverse of speed (larger = slower). The rate scales the voice's natural
+  // pace: explicit option > voice inference default > 1.0.
   #lengthScaleFor(rate?: number): number {
-    if (!rate || rate <= 0) return this.#lengthScale;
-    return this.#lengthScale / rate;
+    const base = this.#lengthScale ?? this.#voiceInference?.length_scale ?? 1;
+    return rate && rate > 0 ? base / rate : base;
   }
 
   // Resolve a requested voice id to the model file base name (id === model).
@@ -305,6 +309,10 @@ export class PiperTtsService implements TtsService {
       this.#fetchVoiceFile(() => this.#api.getPiperVoiceConfig(model)),
       this.#fetchVoiceFile(() => this.#api.getPiperVoiceModel(model)),
     ]);
+    // overlapping loads: only the current model's load owns the field
+    if (this.#loadModel === model) {
+      this.#voiceInference = (config as PiperVoiceConfig).inference;
+    }
     let response: PiperOkResponse;
     try {
       response = await this.#rpc(

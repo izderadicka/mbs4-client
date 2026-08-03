@@ -36,6 +36,10 @@ export interface SynthesisResult {
 
 export interface TtsService {
   readonly id: string;
+  // Optional: true when synthesize applies req.rate into the generated audio
+  // (pitch-preserving). The pipeline then keeps the player at normal speed,
+  // and a rate change requires re-synthesis.
+  readonly appliesRate?: boolean;
   // Voices for the given BCP-47 language (primary subtag match, e.g. "en"
   // and "en-GB" both select "en-*" voices); may be empty when the service
   // has none for it (synthesis then uses the service default voice). All

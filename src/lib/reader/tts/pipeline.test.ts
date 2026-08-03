@@ -44,12 +44,14 @@ class FakeCursor implements SentenceCursor {
 interface PendingRequest {
   text: string;
   voice?: string;
+  rate?: number;
   resolve: () => void;
   reject: (e: unknown) => void;
 }
 
 class FakeService implements TtsService {
   readonly id = "fake";
+  appliesRate = false;
   requests: PendingRequest[] = [];
   createPipeline(onEvent: (e: PipelineEvent) => void): SpeechPipeline {
     return new TtsServicePipeline(this, onEvent);
@@ -69,6 +71,7 @@ class FakeService implements TtsService {
       this.requests.push({
         text: req.text,
         voice: req.voice,
+        rate: req.rate,
         resolve: () => resolve(audio),
         reject,
       });
@@ -367,5 +370,39 @@ describe("TtsServicePipeline", () => {
     const { player, pipeline } = setup(2);
     pipeline.setRate(1.5);
     expect(player.rate).toBe(1.5);
+  });
+
+  it("does not pass a rate to services relying on playback rate", async () => {
+    const { service, pipeline, cursor } = setup(4);
+    pipeline.setRate(1.5);
+    await pipeline.start(cursor);
+    await flush();
+    expect(service.requests.length).toBeGreaterThan(0);
+    expect(service.requests.every((r) => r.rate === undefined)).toBe(true);
+  });
+
+  it("passes the rate to a service applying it and keeps the player at normal speed", async () => {
+    const { service, player, pipeline, cursor } = setup(4);
+    service.appliesRate = true;
+    pipeline.setRate(1.5);
+    await pipeline.start(cursor);
+    await flush();
+    expect(player.rate).toBe(1);
+    expect(service.requests.length).toBeGreaterThan(0);
+    expect(service.requests.every((r) => r.rate === 1.5)).toBe(true);
+  });
+
+  it("keeps the rate across stop and restart", async () => {
+    const { service, pipeline, cursor } = setup(4);
+    service.appliesRate = true;
+    pipeline.setRate(2);
+    await pipeline.start(cursor);
+    await flush();
+    pipeline.stop();
+    service.requests = [];
+    await pipeline.start(new FakeCursor(makeSentences(4)));
+    await flush();
+    expect(service.requests.length).toBeGreaterThan(0);
+    expect(service.requests.every((r) => r.rate === 2)).toBe(true);
   });
 });

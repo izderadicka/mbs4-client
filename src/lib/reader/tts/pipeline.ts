@@ -89,6 +89,9 @@ export class TtsServicePipeline implements SpeechPipeline {
 
   #cursor: SentenceCursor | null = null;
   #voice: string | undefined;
+  // survives stop/restart; the controller sets it once when read-aloud is
+  // enabled and on every user rate change
+  #rate = 1;
   // bumped on every stop/flush; async completions from older generations
   // discard themselves
   #generation = 0;
@@ -182,8 +185,11 @@ export class TtsServicePipeline implements SpeechPipeline {
     this.#player.flush();
   }
 
+  // Services that bake the rate into the synthesized audio (appliesRate) get
+  // it per request; for the rest the player time-stretches playback.
   setRate(rate: number): void {
-    this.#player.setRate(rate);
+    this.#rate = rate;
+    if (!this.#service.appliesRate) this.#player.setRate(rate);
   }
 
   async destroy(): Promise<void> {
@@ -258,7 +264,11 @@ export class TtsServicePipeline implements SpeechPipeline {
       for (;;) {
         try {
           const audio = await this.#service.synthesize(
-            { text: entry.sentence.text, voice: this.#voice },
+            {
+              text: entry.sentence.text,
+              voice: this.#voice,
+              rate: this.#service.appliesRate ? this.#rate : undefined,
+            },
             signal,
           );
           if (generation !== this.#generation) return;

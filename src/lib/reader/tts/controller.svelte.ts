@@ -333,18 +333,25 @@ export class TtsController {
     this.voice = id;
     setTtsVoice(id);
     this.#service?.preload?.(id);
-    if (this.#pipeline?.active) {
-      // re-synthesize from the current sentence with the new voice
-      const current = this.#pipeline.currentSentence;
-      this.#pipeline.stop();
-      void this.playFrom(current?.cfi ?? this.#currentLocation());
-    }
+    this.#restartFromCurrent();
   }
 
   setRate(rate: TtsRate): void {
     this.rate = rate;
     setTtsRate(rate);
     this.#pipeline?.setRate(rate);
+    // services that bake the rate into the audio need re-synthesis; buffered
+    // audio has the old rate
+    if (this.#service?.appliesRate) this.#restartFromCurrent();
+  }
+
+  // Re-synthesize from the current sentence after a synthesis-parameter
+  // change (voice, baked-in rate); no-op when not playing.
+  #restartFromCurrent(): void {
+    if (!this.#pipeline?.active) return;
+    const current = this.#pipeline.currentSentence;
+    this.#pipeline.stop();
+    void this.playFrom(current?.cfi ?? this.#currentLocation());
   }
 
   // follow the reader's light/dark theme; recolours a live highlight

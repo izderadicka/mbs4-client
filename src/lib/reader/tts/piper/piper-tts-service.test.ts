@@ -97,8 +97,16 @@ const VOICE_LIST = [
 
 const VOICE_CONFIG = { audio: { sample_rate: 22050 }, phoneme_type: "espeak" };
 
+const VOICE_CONFIG_WITH_INFERENCE = {
+  ...VOICE_CONFIG,
+  inference: { length_scale: 0.9, noise_scale: 0.5, noise_w: 0.7 },
+};
+
 // A fetch that serves the voice list, the voice config, and the model bytes.
-function makeFetch(overrides?: { list?: () => Response | Promise<Response> }) {
+function makeFetch(overrides?: {
+  list?: () => Response | Promise<Response>;
+  config?: object;
+}) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url =
       typeof input === "string"
@@ -108,7 +116,9 @@ function makeFetch(overrides?: { list?: () => Response | Promise<Response> }) {
           : input.url;
     if (url.includes("/tts/piper/voices/")) {
       if (url.endsWith(".onnx.json")) {
-        return new Response(JSON.stringify(VOICE_CONFIG), { status: 200 });
+        return new Response(JSON.stringify(overrides?.config ?? VOICE_CONFIG), {
+          status: 200,
+        });
       }
       if (url.endsWith(".onnx")) {
         return new Response(new ArrayBuffer(8), { status: 200 });
@@ -209,6 +219,42 @@ describe("PiperTtsService.synthesize", () => {
     });
     const synth = worker.posted.find((m) => m.type === "synthesize");
     expect(synth).toBeDefined();
+    expect((synth as { lengthScale: number }).lengthScale).toBeCloseTo(0.5);
+  });
+
+  it("bases the length scale on the voice's inference defaults", async () => {
+    const { service, worker } = makeService({
+      fetch: makeFetch({ config: VOICE_CONFIG_WITH_INFERENCE }),
+    });
+    await service.listVoices();
+    await service.synthesize({
+      text: "Ahoj",
+      voice: "cs_CZ-jirka-medium",
+      rate: 2,
+    });
+    const synth = worker.posted.find((m) => m.type === "synthesize") as {
+      lengthScale?: number;
+      noiseScale?: number;
+      noiseWScale?: number;
+    };
+    expect(synth.lengthScale).toBeCloseTo(0.45); // 0.9 / 2
+    // noise scales stay unset so the worker falls back to the voice config
+    expect(synth.noiseScale).toBeUndefined();
+    expect(synth.noiseWScale).toBeUndefined();
+  });
+
+  it("an explicit lengthScale option overrides the voice default", async () => {
+    const { service, worker } = makeService({
+      fetch: makeFetch({ config: VOICE_CONFIG_WITH_INFERENCE }),
+      lengthScale: 1.0,
+    });
+    await service.listVoices();
+    await service.synthesize({
+      text: "Ahoj",
+      voice: "cs_CZ-jirka-medium",
+      rate: 2,
+    });
+    const synth = worker.posted.find((m) => m.type === "synthesize");
     expect((synth as { lengthScale: number }).lengthScale).toBeCloseTo(0.5);
   });
 

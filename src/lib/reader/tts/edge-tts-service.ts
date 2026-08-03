@@ -36,6 +36,8 @@ export function rateToEdgeForm(rate: number): string | undefined {
 
 export class EdgeTtsService implements TtsService {
   readonly id = "edge";
+  // rate goes into the SSML prosody (pitch-preserving), not playback speed
+  readonly appliesRate = true;
   #baseUrl: string;
 
   constructor(opts?: { baseUrl?: string }) {

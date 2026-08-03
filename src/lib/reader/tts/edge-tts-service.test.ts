@@ -102,6 +102,10 @@ describe("EdgeTtsService", () => {
     });
   });
 
+  it("declares that it applies the rate itself", () => {
+    expect(new EdgeTtsService().appliesRate).toBe(true);
+  });
+
   it("omits rate at normal speed", async () => {
     mockFetch.mockResolvedValue(
       new Response(new Uint8Array([1]), {

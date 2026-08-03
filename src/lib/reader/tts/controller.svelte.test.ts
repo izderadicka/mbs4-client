@@ -53,7 +53,8 @@ const fakes = vi.hoisted(() => {
 
   class FakeService implements TtsService {
     readonly id = "fake";
-    requests: { text: string; voice?: string }[] = [];
+    appliesRate = false;
+    requests: { text: string; voice?: string; rate?: number }[] = [];
     voicesRequestedFor: (string | undefined)[] = [];
     // abort signals handed to synthesize, to check that stop cancels them
     signals: AbortSignal[] = [];
@@ -75,7 +76,7 @@ const fakes = vi.hoisted(() => {
       req: SynthesisRequest,
       signal?: AbortSignal,
     ): Promise<SynthesisResult> {
-      this.requests.push({ text: req.text, voice: req.voice });
+      this.requests.push({ text: req.text, voice: req.voice, rate: req.rate });
       if (signal) this.signals.push(signal);
       return { data: new ArrayBuffer(4), mimeType: "audio/wav" };
     }
@@ -197,6 +198,7 @@ describe("TtsController", () => {
   beforeEach(() => {
     localStorage.clear();
     fakes.FakePlayer.instances.length = 0;
+    fakes.service.appliesRate = false;
     fakes.service.requests.length = 0;
     fakes.service.voicesRequestedFor.length = 0;
     fakes.service.signals.length = 0;
@@ -621,6 +623,23 @@ describe("TtsController", () => {
     controller.setRate(1.5);
     expect(player.rate).toBe(1.5);
     expect(JSON.parse(localStorage.getItem("mbs4.tts")!).rate).toBe(1.5);
+  });
+
+  it("rate change mid-playback re-synthesizes when the service applies rate", async () => {
+    fakes.service.appliesRate = true;
+    const { controller, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    fakes.service.requests.length = 0;
+    controller.setRate(1.5);
+    await flush();
+    // re-synthesized from the current sentence at the new rate, player untouched
+    expect(fakes.service.requests.length).toBeGreaterThan(0);
+    expect(fakes.service.requests[0].text).toBe("First one.");
+    expect(fakes.service.requests.every((r) => r.rate === 1.5)).toBe(true);
+    expect(player.rate).toBe(1);
   });
 
   it("disable tears everything down", async () => {

@@ -46,7 +46,3 @@ export const TTS_RETRY_WINDOW_MS = 90000;
 export const PIPER_WASM_BASE = "/onnxruntime/";
 // espeak-ng phonemizer assets (espeakng.worker.js/.wasm/.data):
 export const PIPER_ESPEAK_BASE = "/piper/";
-// Piper VITS scales; length scale is inverse of speed (voice config may override).
-export const PIPER_DEFAULT_LENGTH_SCALE = 1.0;
-export const PIPER_DEFAULT_NOISE_SCALE = 0.667;
-export const PIPER_DEFAULT_NOISE_W_SCALE = 0.8;
