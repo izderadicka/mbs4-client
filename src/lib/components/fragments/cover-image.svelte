@@ -93,7 +93,7 @@
       <img
         {src}
         alt="Book cover"
-        class="max-h-full max-w-full object-contain" />
+        class="h-full max-h-[1200px] w-auto max-w-full object-contain" />
       <Dialog.Close
         class="bg-background/80 hover:bg-background focus-visible:ring-ring
           absolute end-2 top-2 rounded-full p-1.5 opacity-80
