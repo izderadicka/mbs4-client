@@ -64,13 +64,13 @@
 <div class="block items-center justify-center w-sm" {...attrs}>
   {#if src}
     {#if zoomable}
-      <button
-        type="button"
-        class="block w-full cursor-zoom-in"
-        title="Click to enlarge"
-        onclick={() => (zoomOpen = true)}>
-        <img {src} alt="Book cover" />
-      </button>
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <img
+        {src}
+        alt="Book cover"
+        class="cursor-zoom-in"
+        onclick={() => (zoomOpen = true)} />
     {:else}
       <img {src} alt="Book cover" />
     {/if}
