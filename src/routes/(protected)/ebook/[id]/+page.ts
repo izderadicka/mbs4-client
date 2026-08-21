@@ -14,7 +14,7 @@ export async function load({ params }) {
 
   ]);
   let myRating = null;
-  if (ebook.rating_count ?? 0 > 0) {
+  if ((ebook.rating_count ?? 0) > 0) {
     myRating = await apiClient.getMyEbookRating(ebookId);
   }
 

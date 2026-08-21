@@ -5,6 +5,8 @@
   import * as Table from "$lib/components/ui/table";
   import { hasRole } from "$lib/globals.svelte";
   import RatingWidget from "$lib/components/rating-widget.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import MessageSquareTextIcon from "@lucide/svelte/icons/message-square-text";
 
   let {
     ebook,
@@ -13,6 +15,8 @@
     userRating,
     onRate,
     onDeleteRating,
+    hasReview,
+    onEditReview,
   }: {
     ebook: Ebook;
     rating: number | null;
@@ -20,6 +24,8 @@
     userRating: number | null;
     onRate: (value: number) => Promise<void>;
     onDeleteRating: () => Promise<void>;
+    hasReview: boolean;
+    onEditReview: () => void;
   } = $props();
 </script>
 
@@ -54,11 +60,25 @@
       <Table.Row>
         <Table.Head>Your rating</Table.Head>
         <Table.Cell>
-          <RatingWidget
-            mode="interactive"
-            {userRating}
-            {onRate}
-            onDelete={onDeleteRating} />
+          <div class="flex items-center gap-2">
+            <RatingWidget
+              mode="interactive"
+              {userRating}
+              {onRate}
+              onDelete={onDeleteRating} />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={userRating == null}
+              title={userRating == null
+                ? "Rate this ebook first to add a review"
+                : undefined}
+              onclick={onEditReview}>
+              <MessageSquareTextIcon class="size-4" />
+              <span class="hidden md:inline"
+                >{hasReview ? "Edit review" : "Add review"}</span>
+            </Button>
+          </div>
         </Table.Cell>
       </Table.Row>
       <Table.Row>

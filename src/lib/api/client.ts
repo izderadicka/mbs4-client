@@ -527,7 +527,7 @@ export class ApiClient {
     this.checkResponseCode(response);
   }
 
-  async rateEbook(id: number, rating: number, description?: string): Promise<Ebook> {
+  async rateEbook(id: number, rating: number, description?: string | null): Promise<Ebook> {
     const { data, response } = await this.client.POST("/api/ebook/{id}/rate", {
       params: { path: { id } },
       body: { rating, description },
