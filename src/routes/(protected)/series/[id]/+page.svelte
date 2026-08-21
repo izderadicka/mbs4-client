@@ -34,6 +34,7 @@
   import EbookList from "$lib/components/ebook-list.svelte";
   import SeriesMenu from "$lib/components/item-menu.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
+  import DescriptionBlock from "$lib/components/fragments/description-block.svelte";
   import Title from "$lib/components/title.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { breadcrumb, hasAnyRole } from "$lib/globals.svelte";
@@ -91,6 +92,8 @@
     </div>
   </div>
 </div>
+
+<DescriptionBlock text={series.description} class="mt-2" />
 
 <Subtitle>Ebooks</Subtitle>
 <EbookList

@@ -11,6 +11,7 @@
   import Title from "$lib/components/title.svelte";
   import { breadcrumb, hasAnyRole } from "$lib/globals.svelte.js";
   import ItemsList from "./items-list.svelte";
+  import DescriptionBlock from "$lib/components/fragments/description-block.svelte";
   import BookshelfMenu from "$lib/components/item-menu.svelte";
   import BatchConvertDialog from "$lib/components/batch-convert-dialog.svelte";
   import { goto } from "$app/navigation";
@@ -50,9 +51,7 @@
   {/if}
 </div>
 
-{#if bookshelf.description}
-  <p>{bookshelf.description}</p>
-{/if}
+<DescriptionBlock text={bookshelf.description} class="mt-2" />
 
 <ItemsList bookshelfId={bookshelf.id} items={data.items} sort={data.sort} />
 

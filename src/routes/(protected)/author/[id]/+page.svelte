@@ -24,6 +24,7 @@
   import { type Author } from "$lib/api";
   import EbookList from "$lib/components/ebook-list.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
+  import DescriptionBlock from "$lib/components/fragments/description-block.svelte";
   import Title from "$lib/components/title.svelte";
   import { breadcrumb } from "$lib/globals.svelte";
 
@@ -66,6 +67,8 @@
       title="Author Actions" />
   </div>
 </div>
+
+<DescriptionBlock text={author.description} class="mt-2" />
 
 <BatchConvertDialog
   bind:this={batchConvertDialog}
