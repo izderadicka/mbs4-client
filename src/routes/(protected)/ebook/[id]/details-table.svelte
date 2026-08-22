@@ -66,18 +66,23 @@
               {userRating}
               {onRate}
               onDelete={onDeleteRating} />
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={userRating == null}
+            <!-- a disabled button gets pointer-events: none, so the hint has
+                 to sit on a wrapper that still reacts to hover -->
+            <span
+              class="inline-flex"
               title={userRating == null
                 ? "Rate this ebook first to add a review"
-                : undefined}
-              onclick={onEditReview}>
-              <MessageSquareTextIcon class="size-4" />
-              <span class="hidden md:inline"
-                >{hasReview ? "Edit review" : "Add review"}</span>
-            </Button>
+                : undefined}>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={userRating == null}
+                onclick={onEditReview}>
+                <MessageSquareTextIcon class="size-4" />
+                <span class="hidden md:inline"
+                  >{hasReview ? "Edit review" : "Add review"}</span>
+              </Button>
+            </span>
           </div>
         </Table.Cell>
       </Table.Row>
