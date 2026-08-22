@@ -44,6 +44,16 @@ describe("RatingWidget", () => {
     expect(screen.getByText("(0)")).toBeTruthy();
   });
 
+  it("view mode hides the count when showCount is false", () => {
+    render(RatingWidget, {
+      rating: 80,
+      count: 5,
+      mode: "view",
+      showCount: false,
+    });
+    expect(screen.queryByText("(5)")).toBeNull();
+  });
+
   it("clicking right half of star i calls onRate with (i+1)*20", async () => {
     const onRate = vi.fn().mockResolvedValue(undefined);
     render(RatingWidget, { rating: null, mode: "interactive", userRating: null, onRate });

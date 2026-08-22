@@ -18,6 +18,7 @@ import type {
   CreateSeries,
   Ebook,
   EbookRating,
+  PagedEbookRating,
   EbookConversion,
   EbookCoverInfo,
   EbookFileInfo,
@@ -549,6 +550,13 @@ export class ApiClient {
     if (response.status === 404) {
       return null;
     }
+    return this.checkResponse(response, data);
+  }
+
+  async listEbookRatings(id: number, queryParams?: ListParams): Promise<PagedEbookRating> {
+    const { data, response } = await this.client.GET("/api/ebook/{id}/ratings", {
+      params: { path: { id }, query: queryParams },
+    });
     return this.checkResponse(response, data);
   }
 

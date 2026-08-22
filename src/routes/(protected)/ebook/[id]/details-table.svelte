@@ -6,7 +6,6 @@
   import { hasRole } from "$lib/globals.svelte";
   import RatingWidget from "$lib/components/rating-widget.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
-  import MessageSquareTextIcon from "@lucide/svelte/icons/message-square-text";
 
   let {
     ebook,
@@ -15,8 +14,7 @@
     userRating,
     onRate,
     onDeleteRating,
-    hasReview,
-    onEditReview,
+    onOpenReviews,
   }: {
     ebook: Ebook;
     rating: number | null;
@@ -24,8 +22,7 @@
     userRating: number | null;
     onRate: (value: number) => Promise<void>;
     onDeleteRating: () => Promise<void>;
-    hasReview: boolean;
-    onEditReview: () => void;
+    onOpenReviews: () => void;
   } = $props();
 </script>
 
@@ -53,37 +50,21 @@
       </Table.Row>
       <Table.Row>
         <Table.Head>Ratings</Table.Head>
-        <Table.Cell>
+        <Table.Cell class="flex items-center gap-2">
           <RatingWidget {rating} count={ratingCount} mode="view" />
+          <Button variant="link" class="h-auto px-0" onclick={onOpenReviews}>
+            Reviews
+          </Button>
         </Table.Cell>
       </Table.Row>
       <Table.Row>
         <Table.Head>Your rating</Table.Head>
         <Table.Cell>
-          <div class="flex items-center gap-2">
-            <RatingWidget
-              mode="interactive"
-              {userRating}
-              {onRate}
-              onDelete={onDeleteRating} />
-            <!-- a disabled button gets pointer-events: none, so the hint has
-                 to sit on a wrapper that still reacts to hover -->
-            <span
-              class="inline-flex"
-              title={userRating == null
-                ? "Rate this ebook first to add a review"
-                : undefined}>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={userRating == null}
-                onclick={onEditReview}>
-                <MessageSquareTextIcon class="size-4" />
-                <span class="hidden md:inline"
-                  >{hasReview ? "Edit review" : "Add review"}</span>
-              </Button>
-            </span>
-          </div>
+          <RatingWidget
+            mode="interactive"
+            {userRating}
+            {onRate}
+            onDelete={onDeleteRating} />
         </Table.Cell>
       </Table.Row>
       <Table.Row>

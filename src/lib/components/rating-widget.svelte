@@ -22,6 +22,7 @@
   type Props = {
     rating?: number | null;
     count?: number | null;
+    showCount?: boolean;
     mode?: Mode;
     userRating?: number | null;
     onRate?: (rating: number) => Promise<void>;
@@ -32,6 +33,7 @@
   let {
     rating = null,
     count = null,
+    showCount = true,
     mode = "view",
     userRating = null,
     onRate,
@@ -148,7 +150,9 @@
 {#if mode === "view"}
   <span class={cn("inline-flex items-center gap-1 text-sm", className)}>
     {@render starRow(rating, "size-4")}
-    <span class="text-muted-foreground">({count ?? 0})</span>
+    {#if showCount}
+      <span class="text-muted-foreground">({count ?? 0})</span>
+    {/if}
   </span>
 {:else}
   {@render interactiveRow()}

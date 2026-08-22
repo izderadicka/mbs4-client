@@ -35,7 +35,7 @@
   import type { PageProps } from "./$types";
   import { breadcrumb, hasAnyRole } from "$lib/globals.svelte";
   import DetailsTable from "./details-table.svelte";
-  import ReviewDialog from "./review-dialog.svelte";
+  import RatingsDialog from "./ratings-dialog.svelte";
   import DescriptionBlock from "$lib/components/fragments/description-block.svelte";
   import SourcesList from "./sources-list.svelte";
   import EbookMenu from "$lib/components/item-menu.svelte";
@@ -59,7 +59,7 @@
   });
 
   let addToBookshelfDialog: AddToBookshelfDialog | null = null;
-  let reviewDialog: ReviewDialog | null = null;
+  let ratingsDialog: RatingsDialog | null = null;
 
   async function handleRate(value: number) {
     // rating is upserted as a whole, so the review has to be sent along or the
@@ -95,8 +95,8 @@
     };
   }
 
-  function onEditReview() {
-    reviewDialog?.open(rating.myReview);
+  function onOpenReviews() {
+    ratingsDialog?.open();
   }
 
   let menu = $derived([
@@ -163,12 +163,9 @@
   userRating={rating.mine}
   onRate={handleRate}
   onDeleteRating={handleDeleteRating}
-  hasReview={rating.myReview != null}
-  {onEditReview} />
+  {onOpenReviews} />
 
 <DescriptionBlock text={ebook.description} label="Description" class="mt-4" />
-
-<DescriptionBlock text={rating.myReview} label="My review" class="mt-4" />
 
 <div class="mt-4">
   <SourcesList
@@ -183,4 +180,13 @@
   ebookId={ebook.id}
   itemType="EBOOK" />
 
-<ReviewDialog bind:this={reviewDialog} onSave={handleSaveReview} />
+<RatingsDialog
+  bind:this={ratingsDialog}
+  ebookId={ebook.id}
+  average={rating.average}
+  count={rating.count}
+  myRating={rating.mine}
+  myReview={rating.myReview}
+  onRate={handleRate}
+  onDeleteRating={handleDeleteRating}
+  onSaveReview={handleSaveReview} />

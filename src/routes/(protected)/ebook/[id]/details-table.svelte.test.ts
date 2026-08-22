@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { Ebook } from "$lib/api";
 
@@ -40,48 +40,31 @@ const ebook = {
   version: 1,
 } as unknown as Ebook;
 
-function renderTable(userRating: number | null, hasReview = false) {
+function renderTable(onOpenReviews = vi.fn()) {
   return render(DetailsTable, {
     ebook,
-    rating: null,
-    ratingCount: null,
-    userRating,
+    rating: 80,
+    ratingCount: 3,
+    userRating: null,
     onRate: vi.fn(),
     onDeleteRating: vi.fn(),
-    hasReview,
-    onEditReview: vi.fn(),
+    onOpenReviews,
   });
 }
 
-function reviewButton() {
-  return screen.getByRole("button", { name: /review/ });
-}
-
-describe("DetailsTable review button", () => {
-  it("cannot be used before the ebook is rated", () => {
-    renderTable(null);
-    expect((reviewButton() as HTMLButtonElement).disabled).toBe(true);
+describe("DetailsTable reviews link", () => {
+  it("opens the reviews dialog on click", async () => {
+    const onOpenReviews = vi.fn();
+    renderTable(onOpenReviews);
+    await fireEvent.click(screen.getByRole("button", { name: "Reviews" }));
+    expect(onOpenReviews).toHaveBeenCalledOnce();
   });
 
-  it("explains itself on an element that still reacts to hover", () => {
-    // a disabled button has pointer-events: none, so a title on the button
-    // itself would never be shown
-    renderTable(null);
-    const hint = screen.getByTitle("Rate this ebook first to add a review");
-    expect(hint.tagName).not.toBe("BUTTON");
-    expect(hint.contains(reviewButton())).toBe(true);
-  });
-
-  it("is usable and unexplained once the ebook is rated", () => {
-    renderTable(80);
-    expect((reviewButton() as HTMLButtonElement).disabled).toBe(false);
+  it("is always enabled, regardless of the caller's own rating", () => {
+    renderTable();
     expect(
-      screen.queryByTitle("Rate this ebook first to add a review"),
-    ).toBeNull();
-  });
-
-  it("offers editing when a review already exists", () => {
-    renderTable(80, true);
-    expect(screen.getByRole("button", { name: "Edit review" })).toBeTruthy();
+      (screen.getByRole("button", { name: "Reviews" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 });
