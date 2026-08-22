@@ -500,6 +500,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ebook/{id}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listEbookRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ebook/{id}/source": {
         parameters: {
             query?: never;
@@ -1664,6 +1680,32 @@ export interface components {
                 /** Format: int64 */
                 batch_id?: number | null;
                 synthetic: boolean;
+            }[];
+        };
+        Page_EbookRating: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            /** Format: int32 */
+            total_pages: number;
+            /** Format: int64 */
+            total: number;
+            rows: {
+                /** Format: int64 */
+                id: number;
+                /** Format: int64 */
+                ebook_id: number;
+                /** Format: float */
+                rating?: number | null;
+                description?: string | null;
+                /** Format: int64 */
+                version: number;
+                created_by?: string | null;
+                /** Format: date-time */
+                created: string;
+                /** Format: date-time */
+                modified: string;
             }[];
         };
         Page_EbookShort: {
@@ -2968,6 +3010,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Ebook"];
+                };
+            };
+        };
+    };
+    listEbookRatings: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                sort?: string;
+                filter?: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of Ebook Ratings paginated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_EbookRating"];
                 };
             };
         };

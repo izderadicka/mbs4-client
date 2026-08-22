@@ -35,6 +35,8 @@
   import type { PageProps } from "./$types";
   import { breadcrumb, hasAnyRole } from "$lib/globals.svelte";
   import DetailsTable from "./details-table.svelte";
+  import RatingsDialog from "./ratings-dialog.svelte";
+  import DescriptionBlock from "$lib/components/fragments/description-block.svelte";
   import SourcesList from "./sources-list.svelte";
   import EbookMenu from "$lib/components/item-menu.svelte";
   import { goto } from "$app/navigation";
@@ -53,18 +55,48 @@
     average: data.ebook.rating ?? null,
     count: data.ebook.rating_count ?? null,
     mine: data.myRating?.rating ?? null,
+    myReview: data.myRating?.description ?? null,
   });
 
   let addToBookshelfDialog: AddToBookshelfDialog | null = null;
+  let ratingsDialog: RatingsDialog | null = null;
 
   async function handleRate(value: number) {
-    const updated = await apiClient.rateEbook(ebook.id, value);
-    rating = { average: updated.rating ?? null, count: updated.rating_count ?? null, mine: value };
+    // rating is upserted as a whole, so the review has to be sent along or the
+    // server would drop it
+    const updated = await apiClient.rateEbook(ebook.id, value, rating.myReview);
+    rating = {
+      average: updated.rating ?? null,
+      count: updated.rating_count ?? null,
+      mine: value,
+      myReview: rating.myReview,
+    };
   }
 
   async function handleDeleteRating() {
     const updated = await apiClient.deleteEbookRating(ebook.id);
-    rating = { average: updated.rating ?? null, count: updated.rating_count ?? null, mine: null };
+    // deleting the rating removes the review with it
+    rating = {
+      average: updated.rating ?? null,
+      count: updated.rating_count ?? null,
+      mine: null,
+      myReview: null,
+    };
+  }
+
+  async function handleSaveReview(text: string | null) {
+    if (rating.mine == null) return;
+    const updated = await apiClient.rateEbook(ebook.id, rating.mine, text);
+    rating = {
+      average: updated.rating ?? null,
+      count: updated.rating_count ?? null,
+      mine: rating.mine,
+      myReview: text,
+    };
+  }
+
+  function onOpenReviews() {
+    ratingsDialog?.open();
   }
 
   let menu = $derived([
@@ -130,7 +162,11 @@
   ratingCount={rating.count}
   userRating={rating.mine}
   onRate={handleRate}
-  onDeleteRating={handleDeleteRating} />
+  onDeleteRating={handleDeleteRating}
+  {onOpenReviews} />
+
+<DescriptionBlock text={ebook.description} label="Description" class="mt-4" />
+
 <div class="mt-4">
   <SourcesList
     sources={data.sources}
@@ -143,3 +179,14 @@
   title={ebook.title}
   ebookId={ebook.id}
   itemType="EBOOK" />
+
+<RatingsDialog
+  bind:this={ratingsDialog}
+  ebookId={ebook.id}
+  average={rating.average}
+  count={rating.count}
+  myRating={rating.mine}
+  myReview={rating.myReview}
+  onRate={handleRate}
+  onDeleteRating={handleDeleteRating}
+  onSaveReview={handleSaveReview} />

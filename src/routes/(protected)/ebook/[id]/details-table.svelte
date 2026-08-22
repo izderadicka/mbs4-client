@@ -5,6 +5,7 @@
   import * as Table from "$lib/components/ui/table";
   import { hasRole } from "$lib/globals.svelte";
   import RatingWidget from "$lib/components/rating-widget.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
 
   let {
     ebook,
@@ -13,6 +14,7 @@
     userRating,
     onRate,
     onDeleteRating,
+    onOpenReviews,
   }: {
     ebook: Ebook;
     rating: number | null;
@@ -20,6 +22,7 @@
     userRating: number | null;
     onRate: (value: number) => Promise<void>;
     onDeleteRating: () => Promise<void>;
+    onOpenReviews: () => void;
   } = $props();
 </script>
 
@@ -47,8 +50,11 @@
       </Table.Row>
       <Table.Row>
         <Table.Head>Ratings</Table.Head>
-        <Table.Cell>
+        <Table.Cell class="flex items-center gap-2">
           <RatingWidget {rating} count={ratingCount} mode="view" />
+          <Button variant="link" class="h-auto px-0" onclick={onOpenReviews}>
+            Reviews
+          </Button>
         </Table.Cell>
       </Table.Row>
       <Table.Row>
