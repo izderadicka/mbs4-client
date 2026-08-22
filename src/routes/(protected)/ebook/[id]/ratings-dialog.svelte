@@ -35,6 +35,11 @@
   let text = $state("");
   let hadReview = $state(false);
   let submitting = $state(false);
+  // nothing to do without a rating, or without either new text or an
+  // existing review to clear
+  let canSave = $derived(
+    myRating != null && (text.trim() !== "" || hadReview),
+  );
 
   let otherRatings: EbookRating[] = $state([]);
   let loadingList = $state(false);
@@ -136,7 +141,7 @@
           {/if}
           <Button
             size="sm"
-            disabled={submitting || myRating == null}
+            disabled={submitting || !canSave}
             onclick={() => saveReview(text.trim() || null)}>
             {submitting ? "Saving..." : "Save"}
           </Button>

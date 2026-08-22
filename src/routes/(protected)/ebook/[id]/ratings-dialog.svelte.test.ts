@@ -164,6 +164,26 @@ describe("RatingsDialog", () => {
     ).toBeTruthy();
   });
 
+  it("disables saving when rated but there is no text and no existing review", async () => {
+    listEbookRatings.mockResolvedValue(page([]));
+    await renderDialog({ myRating: 80, myReview: null });
+    expect((button("Save") as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("enables saving once text is typed", async () => {
+    listEbookRatings.mockResolvedValue(page([]));
+    await renderDialog({ myRating: 80, myReview: null });
+    await fireEvent.input(textarea(), { target: { value: "Great read" } });
+    expect((button("Save") as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("keeps saving enabled when clearing an existing review's text", async () => {
+    listEbookRatings.mockResolvedValue(page([]));
+    await renderDialog({ myRating: 80, myReview: "Loved it" });
+    await fireEvent.input(textarea(), { target: { value: "" } });
+    expect((button("Save") as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("saves the trimmed review text", async () => {
     listEbookRatings.mockResolvedValue(page([]));
     const onSaveReview = vi.fn().mockResolvedValue(undefined);
@@ -186,6 +206,7 @@ describe("RatingsDialog", () => {
     const onSaveReview = vi.fn().mockRejectedValue(new Error("nope"));
     vi.spyOn(console, "error").mockImplementation(() => {});
     await renderDialog({ onSaveReview });
+    await fireEvent.input(textarea(), { target: { value: "Great read" } });
     await fireEvent.click(button("Save"));
     expect(toastError).toHaveBeenCalledWith("Failed to save review");
   });
