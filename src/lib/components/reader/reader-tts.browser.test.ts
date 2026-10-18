@@ -144,7 +144,7 @@ describe("reader read-aloud (browser)", () => {
     expect(hasSelection()).toBe(false);
 
     // disable TTS: the control bar goes away
-    button(root, "Read aloud").click();
+    button(root, "Turn off read aloud").click();
     await vi.waitFor(() =>
       expect(root.querySelector('button[title="Play"]')).toBeNull(),
     );
@@ -249,7 +249,7 @@ describe("reader read-aloud (browser)", () => {
       { timeout: 10000 },
     );
     // the gesture did not toggle the header away
-    expect(root.querySelector('button[title="Read aloud"]')).not.toBeNull();
+    expect(root.querySelector('button[title="Turn off read aloud"]')).not.toBeNull();
   }, 90000);
 
   it("long press in TTS mode starts speaking from the pressed sentence", async () => {
