@@ -1,5 +1,5 @@
 // Run after `pnpm build`: node --test tests/reader-security.test.mjs
-// Tests the emitted SPA policy, not Vite's deliberately relaxed development CSP.
+// Tests CSP in the built SPA's meta tag, not the dev server's response header.
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";

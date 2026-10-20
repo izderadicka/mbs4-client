@@ -46,6 +46,8 @@ jobs:
       - name: Build app
         run: pnpm build
 
+      # This suite needs the built index.html and its CSP meta tag.
+      # The Vitest browser suite below runs through Vite instead.
       - name: Test production reader security
         run: pnpm test:security
 

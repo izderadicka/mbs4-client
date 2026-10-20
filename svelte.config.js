@@ -10,6 +10,7 @@ const config = {
 	kit: {
 		// Blob-backed EPUB frames inherit this policy. Never allow blob: or
 		// unsafe-inline scripts here; SvelteKit hashes the SPA bootstrap.
+		// Kit sends CSP as a dev response header and embeds it in the static build.
 		csp: {
 			mode: 'hash',
 			directives: {
