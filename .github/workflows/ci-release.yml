@@ -43,11 +43,14 @@ jobs:
       - name: Install Chromium for browser tests
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run browser tests
-        run: pnpm test:browser
-
       - name: Build app
         run: pnpm build
+
+      - name: Test production reader security
+        run: pnpm test:security
+
+      - name: Run browser tests
+        run: pnpm test:browser
 
   release:
     name: Build and Release
