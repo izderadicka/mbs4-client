@@ -43,11 +43,16 @@ jobs:
       - name: Install Chromium for browser tests
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run browser tests
-        run: pnpm test:browser
-
       - name: Build app
         run: pnpm build
+
+      # This suite needs the built index.html and its CSP meta tag.
+      # The Vitest browser suite below runs through Vite instead.
+      - name: Test production reader security
+        run: pnpm test:security
+
+      - name: Run browser tests
+        run: pnpm test:browser
 
   release:
     name: Build and Release
