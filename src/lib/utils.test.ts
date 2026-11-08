@@ -103,6 +103,18 @@ describe("stripHtml", () => {
     expect(stripHtml(text)).toBe(text);
   });
 
+  it("decodes entities in text without tags", () => {
+    expect(stripHtml("Tom &amp; Jerry\n&bdquo;Hi&ldquo;")).toBe(
+      "Tom & Jerry\n„Hi“",
+    );
+  });
+
+  it("keeps table cells apart", () => {
+    expect(
+      stripHtml("<table><tr><td>Year</td><td>1933</td></tr></table>"),
+    ).toBe("Year\n1933");
+  });
+
   it("removes tags and keeps text", () => {
     expect(
       stripHtml(

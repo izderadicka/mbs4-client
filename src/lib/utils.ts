@@ -90,10 +90,10 @@ function decodeEntities(text: string): string {
 
 // Converts text that may contain HTML markup to plain text: tags are dropped,
 // block-level boundaries become line breaks and entities are decoded. Text
-// without any markup is returned unchanged, so plain-text line breaks survive.
+// without any tags only has its entities decoded, so its line breaks survive.
 export function stripHtml(text: string | null | undefined): string {
   if (!text) return "";
-  if (!HTML_TAG_RE.test(text)) return text;
+  if (!HTML_TAG_RE.test(text)) return decodeEntities(text);
   const plain = text
     .replace(/<!--[\s\S]*?(-->|$)/g, "")
     .replace(/<(script|style|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
@@ -101,7 +101,7 @@ export function stripHtml(text: string | null | undefined): string {
     .replace(/\s+/g, " ")
     .replace(/<br\b[^>]*>/gi, "\n")
     .replace(
-      /<\/?(p|div|li|ul|ol|h[1-6]|blockquote|pre|tr|table|section|article|header|footer|dd|dt|dl|hr)\b[^>]*>/gi,
+      /<\/?(p|div|li|ul|ol|h[1-6]|blockquote|pre|tr|td|th|table|caption|section|article|aside|header|footer|main|nav|figure|figcaption|address|dd|dt|dl|hr)\b[^>]*>/gi,
       "\n",
     )
     .replace(/<[^>]*>/g, "");
