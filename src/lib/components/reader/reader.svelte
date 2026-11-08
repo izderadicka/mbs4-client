@@ -20,6 +20,7 @@
   } from "foliate-js/view.js";
   import SpeechControls from "./speech-controls.svelte";
   import { TtsController } from "$lib/reader/tts/controller.svelte";
+  import { installPaginatorGuards } from "$lib/reader/foliate-guards";
   import { LongPressRecognizer } from "$lib/gestures";
 
   let {
@@ -345,6 +346,8 @@
         v.addEventListener("load", onDocumentLoad);
         await v.open(file);
         if (disposed) return;
+        // open() loaded the renderer; guard it before init() loads a section
+        installPaginatorGuards(customElements.get("foliate-paginator"));
         v.renderer?.setAttribute("max-inline-size", MAX_COLUMN_WIDTH);
         v.renderer?.setAttribute("margin", PAGE_MARGIN);
         v.renderer?.setAttribute("gap", PAGE_GAP);
