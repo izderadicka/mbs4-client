@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildOnlineSearchUrl, formatName } from "./utils";
+import { buildOnlineSearchUrl, formatName, stripHtml } from "./utils";
 
 describe("buildOnlineSearchUrl", () => {
   const TEMPLATE_ALL =
@@ -89,5 +89,57 @@ describe("formatName", () => {
 
   it("returns only last name when first is missing", () => {
     expect(formatName({ last_name: "Homer" })).toBe("Homer");
+  });
+});
+
+describe("stripHtml", () => {
+  it("returns empty string for missing text", () => {
+    expect(stripHtml(null)).toBe("");
+    expect(stripHtml(undefined)).toBe("");
+  });
+
+  it("leaves plain text untouched", () => {
+    const text = "First line\n\nSecond line with a < b & c > d";
+    expect(stripHtml(text)).toBe(text);
+  });
+
+  it("removes tags and keeps text", () => {
+    expect(
+      stripHtml(
+        '<div><p style="color: red"><span>Hello</span> <b>world</b></p></div>',
+      ),
+    ).toBe("Hello world");
+  });
+
+  it("turns block boundaries and br into line breaks", () => {
+    expect(stripHtml("<p>One</p><p>Two<br/>Three</p>")).toBe("One\nTwo\nThree");
+  });
+
+  it("collapses source whitespace", () => {
+    expect(stripHtml("<p>Some\n   wrapped\ttext</p>")).toBe(
+      "Some wrapped text",
+    );
+  });
+
+  it("decodes entities", () => {
+    expect(
+      stripHtml("<p>Tom &amp; Jerry&nbsp;&#8211; &quot;x&quot; &#x2026;</p>"),
+    ).toBe('Tom & Jerry – "x" …');
+  });
+
+  it("drops comments, scripts and styles", () => {
+    expect(
+      stripHtml(
+        "<p>A<!-- hidden --></p><style>p{}</style><script>x()</script>B",
+      ),
+    ).toBe("A\nB");
+  });
+
+  it("handles a real-world scraped description", () => {
+    const html =
+      '<div><p id="bdetdesc" class="justify" style="padding: 0px;"><span class="start_text">Představte si, že ve vaší rodné zemi. Ale jednoho dne její t</span><span class="end_text" style="display: inline;">atínek zmizí…</span><a id="346124" href="https://www.databazeknih.cz/"></a></p><div class="clear_right" style="clear: left;"></div><br class="Apple-interchange-newline"></div>';
+    expect(stripHtml(html)).toBe(
+      "Představte si, že ve vaší rodné zemi. Ale jednoho dne její tatínek zmizí…",
+    );
   });
 });
