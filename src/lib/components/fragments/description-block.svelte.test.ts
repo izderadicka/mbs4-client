@@ -45,4 +45,19 @@ describe("DescriptionBlock", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Show less" }));
     expect(paragraph.className).toContain("line-clamp-6");
   });
+
+  it("shows HTML descriptions as plain text", () => {
+    const { container } = render(DescriptionBlock, {
+      text: '<div><p style="color: red"><span>A tale</span> of <b>two</b> cities</p></div>',
+    });
+    expect(screen.getByText("A tale of two cities")).toBeTruthy();
+    expect(container.querySelector("span, b")).toBeNull();
+  });
+
+  it("renders nothing for markup without text", () => {
+    const { container } = render(DescriptionBlock, {
+      text: '<div><br class="x"></div>',
+    });
+    expect(container.textContent?.trim()).toBe("");
+  });
 });
