@@ -111,7 +111,16 @@ function textRuns(doc: Document): Node[][] {
 // is almost always a missing space between two sentences. Requiring two
 // lowercase letters before the mark keeps abbreviations like "Ph.D." intact.
 const MISSING_SPACE_BREAK =
-  /(?<=\p{Ll}\p{Ll}[.!?\u2026]+[\p{Pe}\p{Pf}"'\u2019\u201D\u00BB]*)(?=\p{Lu})/gu;
+  /(?<=\p{Ll}\p{Ll}[.!?\u2026]+[\p{Pe}\p{Pf}"'\u2018\u2019\u201C\u201D\u00BB]*)(?=\p{Lu})/gu;
+
+// A dash opening a new sentence after a terminated one: "Konec. — Další".
+// UAX #29 treats dashes as sentence continuation (rule SB8a), so this is not
+// split either, though in fiction it typically starts a new sentence or line
+// of dialogue. Breaks before the dash, only when an uppercase letter follows.
+// (Czech and German close quotes with U+201C/U+2018, which Unicode classes
+// as opening punctuation, so they are listed explicitly in both patterns.)
+const DASH_BREAK =
+  /(?<=[.!?\u2026][\p{Pe}\p{Pf}"'\u2018\u2019\u201C\u201D\u00BB]*\s+)(?=[-\u2012-\u2015]\s*\p{Lu})/gu;
 
 // Splits `text` into [start, end) spans of sentences, trimmed of whitespace.
 // Exported for tests.
@@ -130,8 +139,14 @@ export function sentenceSpans(
   for (const seg of segmenter.segment(text)) {
     let start = seg.index;
     const end = seg.index + seg.segment.length;
-    for (const m of seg.segment.matchAll(MISSING_SPACE_BREAK)) {
-      const at = seg.index + m.index;
+    const breaks = [
+      ...seg.segment.matchAll(MISSING_SPACE_BREAK),
+      ...seg.segment.matchAll(DASH_BREAK),
+    ]
+      .map((m) => seg.index + m.index)
+      .sort((a, b) => a - b);
+    for (const at of breaks) {
+      if (at <= start) continue;
       push(start, at);
       start = at;
     }

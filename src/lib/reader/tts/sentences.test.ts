@@ -106,6 +106,17 @@ describe("sentenceSpans", () => {
     expect(split("„Pojď.“Šel.")).toEqual(["„Pojď.“", "Šel."]);
     expect(split("Wait!Go now?Yes.")).toEqual(["Wait!", "Go now?", "Yes."]);
     expect(split("domů…Pak spal.")).toEqual(["domů…", "Pak spal."]);
+    expect(split("„Ano.“Pak.")).toEqual(["„Ano.“", "Pak."]);
+  });
+
+  it("splits before a dash starting a new sentence", () => {
+    expect(split("Konec. — Pomlčka začíná.")).toEqual([
+      "Konec.",
+      "— Pomlčka začíná.",
+    ]);
+    expect(split("Proč?“ – Nevím.")).toEqual(["Proč?“", "– Nevím."]);
+    expect(split("Ano. — řekl tiše.")).toEqual(["Ano. — řekl tiše."]);
+    expect(split("A pak – Petr – odešel.")).toEqual(["A pak – Petr – odešel."]);
   });
 
   it("keeps abbreviations and lowercase continuations together", () => {
