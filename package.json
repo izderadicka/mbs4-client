@@ -29,6 +29,7 @@
     "test:unit": "vitest",
     "test": "vitest run",
     "test:browser": "vitest --config vitest.browser.config.ts --run --passWithNoTests",
+    "test:security": "node --test tests/reader-security.test.mjs",
     "openapi": "curl -f http://localhost:3000/api-docs/openapi.json -o openapi/openapi.json && openapi-typescript openapi/openapi.json --output src/lib/api/types.ts",
     "fmt": "prettier --write  \"src/**/*\""
   },
