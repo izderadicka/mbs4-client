@@ -11,7 +11,7 @@
 <script lang="ts">
   import Button from "$lib/components/ui/button/button.svelte";
   import Subtitle from "$lib/components/subtitle.svelte";
-  import { cn } from "$lib/utils";
+  import { cn, stripHtml } from "$lib/utils";
 
   let {
     text = null,
@@ -25,11 +25,12 @@
 
   let expanded = $state(false);
 
-  let content = $derived(text?.trim() ?? "");
+  // descriptions may come scraped from web pages with HTML markup in them
+  let content = $derived(stripHtml(text).trim());
   let collapsible = $derived(content.length > COLLAPSE_THRESHOLD);
 </script>
 
-{#if !isBlank(text)}
+{#if !isBlank(content)}
   <div class={cn("space-y-1", className)}>
     {#if label}
       <Subtitle level={2}>{label}</Subtitle>
