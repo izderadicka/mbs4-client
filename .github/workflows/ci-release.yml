@@ -16,7 +16,9 @@ concurrency:
 jobs:
   ci:
     name: Check and Test
-    runs-on: ubuntu-latest
+    # pinned: Playwright cannot install Chromium on newer Ubuntu releases
+    # that ubuntu-latest moves to before Playwright supports them
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
