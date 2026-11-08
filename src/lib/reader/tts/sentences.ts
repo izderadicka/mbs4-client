@@ -7,7 +7,6 @@
 // currently displayed section. Sections lacking createDocument (image-only
 // formats like CBZ) yield no sentences and are skipped.
 
-import { textWalker } from "foliate-js/text-walker.js";
 import { collapse, compare } from "foliate-js/epubcfi.js";
 import type { FoliateBook, FoliateView } from "foliate-js/view.js";
 
@@ -32,6 +31,115 @@ export interface SentenceCursor {
 
 const SECTION_CACHE_SIZE = 4;
 
+// Elements that start a new block of text. Text on either side of their
+// boundaries (or of a <br>) never belongs to the same sentence. Section
+// documents are not rendered, so this goes by tag name, not computed style.
+const BLOCK_ELEMENTS = new Set(
+  (
+    "address article aside blockquote body br caption center dd details div " +
+    "dl dt figcaption figure footer h1 h2 h3 h4 h5 h6 header hgroup hr li " +
+    "main nav ol p pre section summary table tbody td tfoot th thead tr ul"
+  ).split(" "),
+);
+
+function isBlock(node: Node): boolean {
+  return (
+    node.nodeType === Node.ELEMENT_NODE &&
+    BLOCK_ELEMENTS.has((node as Element).localName.toLowerCase())
+  );
+}
+
+function blockAncestor(node: Node): Node | null {
+  for (let n = node.parentNode; n; n = n.parentNode) {
+    if (isBlock(n)) return n;
+  }
+  return null;
+}
+
+// Collects the text nodes of `doc`, grouped into runs of text that belong to
+// the same block. Concatenating text across blocks would glue e.g. the end of
+// one paragraph to the start of the next ("end.Next"), which sentence
+// segmentation does not split, so the TTS voice would read both sentences as
+// one - including the full stop between them.
+function textRuns(doc: Document): Node[][] {
+  const root = doc.body ?? doc.documentElement;
+  if (!root) return [];
+  const walker = doc.createTreeWalker(
+    root,
+    NodeFilter.SHOW_ELEMENT |
+      NodeFilter.SHOW_TEXT |
+      NodeFilter.SHOW_CDATA_SECTION,
+    {
+      acceptNode(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const name = (node as Element).localName.toLowerCase();
+          if (name === "script" || name === "style") {
+            return NodeFilter.FILTER_REJECT;
+          }
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    },
+  );
+  const runs: Node[][] = [];
+  let run: Node[] = [];
+  let runBlock: Node | null = null;
+  // a block element (or <br>) was entered since the last text node
+  let boundary = false;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (isBlock(node)) boundary = true;
+      continue;
+    }
+    const block = blockAncestor(node);
+    if (run.length > 0 && (boundary || block !== runBlock)) {
+      runs.push(run);
+      run = [];
+    }
+    run.push(node);
+    runBlock = block;
+    boundary = false;
+  }
+  if (run.length > 0) runs.push(run);
+  return runs;
+}
+
+// A full stop, question or exclamation mark (or ellipsis), possibly followed
+// by closing quotes/brackets, right after a lowercase word and directly
+// followed by an uppercase letter without a space: "end.Next". Sentence
+// segmentation (UAX #29, rule SB7) does not break there, but in book text it
+// is almost always a missing space between two sentences. Requiring two
+// lowercase letters before the mark keeps abbreviations like "Ph.D." intact.
+const MISSING_SPACE_BREAK =
+  /(?<=\p{Ll}\p{Ll}[.!?\u2026]+[\p{Pe}\p{Pf}"'\u2019\u201D\u00BB]*)(?=\p{Lu})/gu;
+
+// Splits `text` into [start, end) spans of sentences, trimmed of whitespace.
+// Exported for tests.
+export function sentenceSpans(
+  text: string,
+  segmenter: Intl.Segmenter,
+): [number, number][] {
+  const spans: [number, number][] = [];
+  const push = (start: number, end: number) => {
+    const part = text.slice(start, end);
+    const trimmed = part.trim();
+    if (!trimmed) return;
+    const s = start + part.length - part.trimStart().length;
+    spans.push([s, s + trimmed.length]);
+  };
+  for (const seg of segmenter.segment(text)) {
+    let start = seg.index;
+    const end = seg.index + seg.segment.length;
+    for (const m of seg.segment.matchAll(MISSING_SPACE_BREAK)) {
+      const at = seg.index + m.index;
+      push(start, at);
+      start = at;
+    }
+    push(start, end);
+  }
+  return spans;
+}
+
 // Splits the text of `doc` into sentences with their DOM ranges.
 // Exported for tests.
 export function segmentDocumentSentences(
@@ -47,12 +155,11 @@ export function segmentDocumentSentences(
     segmenter = new Intl.Segmenter(undefined, { granularity: "sentence" });
   }
 
-  const matcher = function* (
-    strings: string[],
-    makeRange: (i: number, o: number, j: number, p: number) => Range,
-  ) {
+  const result: { text: string; range: Range }[] = [];
+  for (const nodes of textRuns(doc)) {
+    const strings = nodes.map((node) => node.nodeValue ?? "");
     const text = strings.join("");
-    if (!text.trim()) return;
+    if (!text.trim()) continue;
     // cumulative start offset of each string
     const offsets: number[] = [];
     let acc = 0;
@@ -72,20 +179,16 @@ export function segmentDocumentSentences(
       }
       return [lo, pos - offsets[lo]];
     };
-    for (const seg of segmenter.segment(text)) {
-      const trimmed = seg.segment.trim();
-      if (!trimmed) continue;
-      // tighten the range to the trimmed sentence
-      const startPad = seg.segment.length - seg.segment.trimStart().length;
-      const start = seg.index + startPad;
-      const end = start + trimmed.length;
+    for (const [start, end] of sentenceSpans(text, segmenter)) {
       const [si, so] = locate(start);
       const [ei, eo] = locate(end);
-      yield { text: trimmed, range: makeRange(si, so, ei, eo) };
+      const range = doc.createRange();
+      range.setStart(nodes[si], so);
+      range.setEnd(nodes[ei], eo);
+      result.push({ text: text.slice(start, end), range });
     }
-  };
-
-  return Array.from(textWalker(doc, matcher));
+  }
+  return result;
 }
 
 function bookLanguage(book: FoliateBook): string | undefined {

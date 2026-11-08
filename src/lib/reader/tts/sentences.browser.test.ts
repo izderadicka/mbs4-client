@@ -35,4 +35,19 @@ describe("segmentDocumentSentences ranges (browser)", () => {
     expect(result[0].range.toString()).toBe("This is bold and important.");
     expect(result[1].range.toString()).toBe("Short one.");
   });
+
+  it("covers sentences across paragraphs and missing spaces", () => {
+    const doc = parseDoc(
+      "<p>End of one.</p><p>Start <b>of</b> two.Glued on.</p>",
+    );
+    const result = segmentDocumentSentences(doc, "en");
+    expect(result.map((s) => s.text)).toEqual([
+      "End of one.",
+      "Start of two.",
+      "Glued on.",
+    ]);
+    for (const { text, range } of result) {
+      expect(range.toString()).toBe(text);
+    }
+  });
 });

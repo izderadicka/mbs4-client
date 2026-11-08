@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { FoliateView } from "foliate-js/view.js";
-import { SentenceSource, segmentDocumentSentences } from "./sentences";
+import {
+  SentenceSource,
+  segmentDocumentSentences,
+  sentenceSpans,
+} from "./sentences";
 
 function parseDoc(bodyHtml: string): Document {
   return new DOMParser().parseFromString(
@@ -47,6 +51,79 @@ describe("segmentDocumentSentences", () => {
     );
     const result = segmentDocumentSentences(doc, "en");
     expect(result.map((s) => s.text)).toEqual(["Visible text."]);
+  });
+
+  it("never joins sentences from adjacent paragraphs", () => {
+    const doc = parseDoc(
+      "<p>Konec odstavce.</p><p>Další odstavec.</p><div>Ve divu.</div>",
+    );
+    const result = segmentDocumentSentences(doc, "cs");
+    expect(result.map((s) => s.text)).toEqual([
+      "Konec odstavce.",
+      "Další odstavec.",
+      "Ve divu.",
+    ]);
+  });
+
+  it("separates headings from the following text", () => {
+    const doc = parseDoc("<h2>Kapitola 1</h2><p>Byl jednou jeden král.</p>");
+    const result = segmentDocumentSentences(doc, "cs");
+    expect(result.map((s) => s.text)).toEqual([
+      "Kapitola 1",
+      "Byl jednou jeden král.",
+    ]);
+  });
+
+  it("breaks at <br> and nested block boundaries", () => {
+    const doc = parseDoc(
+      "<div>First line.<br/>Second line.<p>Nested.</p>Tail text.</div>",
+    );
+    const result = segmentDocumentSentences(doc, "en");
+    expect(result.map((s) => s.text)).toEqual([
+      "First line.",
+      "Second line.",
+      "Nested.",
+      "Tail text.",
+    ]);
+  });
+
+  it("splits sentences missing a space after the full stop", () => {
+    const doc = parseDoc("<p>He left the room.Then <i>silence</i> fell.</p>");
+    const result = segmentDocumentSentences(doc, "en");
+    expect(result.map((s) => s.text)).toEqual([
+      "He left the room.",
+      "Then silence fell.",
+    ]);
+  });
+});
+
+describe("sentenceSpans", () => {
+  const segmenter = new Intl.Segmenter("en", { granularity: "sentence" });
+  const split = (text: string) =>
+    sentenceSpans(text, segmenter).map(([a, b]) => text.slice(a, b));
+
+  it("splits at a missing space before closing quotes and capitals", () => {
+    expect(split("„Pojď.“Šel.")).toEqual(["„Pojď.“", "Šel."]);
+    expect(split("Wait!Go now?Yes.")).toEqual(["Wait!", "Go now?", "Yes."]);
+    expect(split("domů…Pak spal.")).toEqual(["domů…", "Pak spal."]);
+  });
+
+  it("keeps abbreviations and lowercase continuations together", () => {
+    expect(split("She has a Ph.D. in physics.")).toEqual([
+      "She has a Ph.D. in physics.",
+    ]);
+    expect(split("Visit the U.S.A. soon.")).toEqual(["Visit the U.S.A. soon."]);
+    expect(split("see example.com for more.")).toEqual([
+      "see example.com for more.",
+    ]);
+  });
+
+  it("trims whitespace around sentences", () => {
+    const text = "  One.   Two.  ";
+    expect(sentenceSpans(text, segmenter)).toEqual([
+      [2, 6],
+      [9, 13],
+    ]);
   });
 });
 
