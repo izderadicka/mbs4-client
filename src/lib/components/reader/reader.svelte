@@ -291,6 +291,12 @@
     if (target?.closest("a[href]")) return;
     const selection = doc.getSelection();
     if (selection && !selection.isCollapsed) return;
+    // mark the tap as handled: Chrome on Android shows its Touch to Search
+    // panel (and selects the tapped word) for taps the page leaves
+    // unhandled - the bars toggle in the parent document, so the book's
+    // iframe looks untouched to it. Text selection by long press is not
+    // affected (no click is involved there)
+    event.preventDefault();
     chromeVisible = !chromeVisible;
   }
 
