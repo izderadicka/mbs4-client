@@ -296,9 +296,16 @@ describe("reader read-aloud (browser)", () => {
     );
     target.dispatchEvent(new TouchEvent("touchend", { bubbles: true }));
     // the browser-synthesized click after a short tap
-    target.dispatchEvent(
-      new MouseEvent("click", { bubbles: true, clientX: x, clientY: y }),
-    );
+    const click = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      clientX: x,
+      clientY: y,
+    });
+    target.dispatchEvent(click);
+    // the tap is marked handled, so Chrome on Android does not open Touch
+    // to Search on the tapped word
+    expect(click.defaultPrevented).toBe(true);
 
     // header toggled away, no playback started
     await vi.waitFor(() =>
