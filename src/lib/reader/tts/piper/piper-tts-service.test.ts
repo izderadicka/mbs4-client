@@ -364,9 +364,17 @@ describe("PiperTtsService lifecycle", () => {
 });
 
 describe("PiperTtsService inference threads", () => {
-  async function configuredThreads(isolated: boolean, cores: number) {
+  const PHONE = "Mozilla/5.0 (Android 15; Mobile; rv:140.0) Gecko/140.0";
+  const DESKTOP = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101";
+
+  async function configuredThreads(
+    isolated: boolean,
+    cores: number,
+    userAgent = PHONE,
+  ) {
     vi.stubGlobal("crossOriginIsolated", isolated);
     vi.spyOn(navigator, "hardwareConcurrency", "get").mockReturnValue(cores);
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(userAgent);
     try {
       const { service, worker } = makeService();
       await service.listVoices();
@@ -379,8 +387,12 @@ describe("PiperTtsService inference threads", () => {
     }
   }
 
-  it("caps the threads on many-core devices", async () => {
+  it("caps the threads on many-core phones", async () => {
     expect(await configuredThreads(true, 8)).toBe(4);
+  });
+
+  it("uses all cores on desktops", async () => {
+    expect(await configuredThreads(true, 16, DESKTOP)).toBe(16);
   });
 
   it("uses all cores below the cap", async () => {

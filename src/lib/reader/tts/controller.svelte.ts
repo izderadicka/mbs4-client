@@ -158,6 +158,15 @@ export class TtsController {
     }
     // a tap/long-press that snapped back to the current page is not navigation
     if (unchanged) return;
+    // ... and so is a snap that leaves the spoken sentence on the page. The
+    // position check above misses a tap in two cases: the first relocate
+    // after enabling has nothing to compare with, and showing/hiding the
+    // bars re-lays out the page, which changes the fraction of the very
+    // same position (the snap may arrive before the re-anchoring relocate)
+    const spoken = this.currentSentence ?? this.#pipeline?.currentSentence;
+    if (detail.reason === "snap" && spoken && this.#isSentenceVisible(spoken)) {
+      return;
+    }
     this.#onUserNavigation(detail);
   };
 

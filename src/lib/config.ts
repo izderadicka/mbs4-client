@@ -52,7 +52,8 @@ export const TTS_RETRY_WINDOW_MS = 90000;
 export const PIPER_WASM_BASE = "/onnxruntime/";
 // espeak-ng phonemizer assets (espeakng.worker.js/.wasm/.data):
 export const PIPER_ESPEAK_BASE = "/piper/";
-// Upper bound on WASM inference threads. One thread per core is slower on
-// phones with mixed fast/slow cores, and leaves none for the audio thread
-// (heard as crackling while the model synthesizes flat out).
-export const PIPER_MAX_THREADS = 4;
+// Upper bound on WASM inference threads on mobile devices. One thread per
+// core is slower on phones with mixed fast/slow cores, and leaves none for
+// the audio thread (heard as crackling while the model synthesizes flat
+// out). Desktops use all their cores.
+export const PIPER_MAX_THREADS_MOBILE = 4;
