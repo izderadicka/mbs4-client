@@ -498,8 +498,40 @@ describe("TtsController", () => {
     expect(controller.status).toBe("playing");
   });
 
-  it("a snap to a new position still restarts speech", async () => {
+  it("ignores the first snap after enabling when the sentence stays on the page", async () => {
     const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    expect(controller.status).toBe("playing");
+    const requestsBefore = fakes.service.requests.length;
+    // first tap: no earlier relocate to compare the position with
+    rendererRelocate(renderer, "snap", 0, 0.5);
+    await flush();
+    expect(fakes.service.requests.length).toBe(requestsBefore);
+    expect(controller.status).toBe("playing");
+  });
+
+  it("ignores a snap whose fraction changed only by re-layout (bars toggled)", async () => {
+    const { controller, renderer, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    rendererRelocate(renderer, "anchor", 0, 0.5);
+    await flush();
+    const requestsBefore = fakes.service.requests.length;
+    // the tap toggled the bars: same page, but the page count (and with it
+    // the fraction) changed before the snap was reported
+    rendererRelocate(renderer, "snap", 0, 0.52);
+    await flush();
+    expect(fakes.service.requests.length).toBe(requestsBefore);
+    expect(controller.status).toBe("playing");
+  });
+
+  it("a snap to a new position still restarts speech", async () => {
+    const { controller, renderer, player, view } = await setup();
     await controller.play();
     await flush();
     player.startNext();
@@ -509,7 +541,10 @@ describe("TtsController", () => {
     player.startNext();
     await flush();
     const requestsBefore = fakes.service.requests.length;
-    // a real swipe changes the page fraction - speech restarts there
+    // a real swipe changes the page fraction and moves the spoken sentence
+    // off the page - speech restarts there
+    (view as unknown as { lastLocation: { cfi: string } }).lastLocation.cfi =
+      "epubcfi(/6/2!/4,/6/1:0,/8)";
     rendererRelocate(renderer, "snap", 0, 0.9);
     await flush();
     expect(fakes.service.requests.length).toBeGreaterThan(requestsBefore);
