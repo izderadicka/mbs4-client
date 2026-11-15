@@ -42,6 +42,9 @@ export interface SpeechPipeline {
   resume(): Promise<void>;
   stop(): void;
   setRate(rate: number): void;
+  // true when a rate change does not reach audio that is already buffered,
+  // so the caller has to restart playback from the current sentence
+  readonly restartOnRateChange: boolean;
   destroy(): Promise<void>;
 }
 
@@ -141,6 +144,12 @@ export class TtsServicePipeline implements SpeechPipeline {
     return this.#active;
   }
 
+  // buffered sentences are synthesized (appliesRate) or scheduled in the
+  // player at the old rate
+  get restartOnRateChange(): boolean {
+    return true;
+  }
+
   // Begin speaking from the cursor's current sentence. Call from a user
   // gesture the first time (the player creates the AudioContext here).
   async start(cursor: SentenceCursor, voice?: string): Promise<void> {
@@ -186,7 +195,8 @@ export class TtsServicePipeline implements SpeechPipeline {
   }
 
   // Services that bake the rate into the synthesized audio (appliesRate) get
-  // it per request; for the rest the player time-stretches playback.
+  // it per request; for the rest the player time-stretches playback. Either
+  // way it only affects sentences buffered from now on (restartOnRateChange).
   setRate(rate: number): void {
     this.#rate = rate;
     if (!this.#service.appliesRate) this.#player.setRate(rate);

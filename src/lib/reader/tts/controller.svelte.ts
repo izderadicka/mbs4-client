@@ -369,9 +369,9 @@ export class TtsController {
     this.rate = rate;
     setTtsRate(rate);
     this.#pipeline?.setRate(rate);
-    // services that bake the rate into the audio need re-synthesis; buffered
-    // audio has the old rate
-    if (this.#service?.appliesRate) this.#restartFromCurrent();
+    // audio that is already buffered keeps the old rate - start over from
+    // the current sentence (a short pause)
+    if (this.#pipeline?.restartOnRateChange) this.#restartFromCurrent();
   }
 
   // Re-synthesize from the current sentence after a synthesis-parameter

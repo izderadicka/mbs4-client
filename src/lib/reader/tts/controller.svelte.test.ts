@@ -642,6 +642,23 @@ describe("TtsController", () => {
     expect(player.rate).toBe(1);
   });
 
+  it("rate change mid-playback restarts from the current sentence", async () => {
+    const { controller, player } = await setup();
+    await controller.play();
+    await flush();
+    player.startNext();
+    await flush();
+    fakes.service.requests.length = 0;
+    const flushes = player.flushCalls;
+    controller.setRate(1.5);
+    await flush();
+    // buffered audio (scheduled at the old rate) is dropped, and playback
+    // starts over from the current sentence with the player at the new rate
+    expect(player.flushCalls).toBeGreaterThan(flushes);
+    expect(player.rate).toBe(1.5);
+    expect(fakes.service.requests[0].text).toBe("First one.");
+  });
+
   it("disable tears everything down", async () => {
     const { controller, player } = await setup();
     await controller.play();

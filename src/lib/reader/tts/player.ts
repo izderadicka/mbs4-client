@@ -178,29 +178,10 @@ export class SpeechPlayer {
     this.#nextTime = 0;
   }
 
+  // Applies to items scheduled from now on; what is already scheduled keeps
+  // its rate (and its place on the audio clock) - flush to change it at once.
   setRate(rate: number): void {
-    if (rate === this.#rate) return;
-    const oldRate = this.#rate;
     this.#rate = rate;
-    const ctx = this.#ctx;
-    if (!ctx) return;
-    // the schedule was computed for the old rate: keep the item that is
-    // already sounding (adjusting its end time) and re-schedule the rest
-    const now = ctx.currentTime;
-    this.#nextTime = 0;
-    for (const item of this.#items) {
-      if (!item.source) continue;
-      if (item.startTime <= now) {
-        const remaining = Math.max(0, item.endTime - now) * oldRate;
-        item.source.playbackRate.value = rate;
-        item.endTime = now + remaining / rate;
-        this.#nextTime = item.endTime + TTS_SENTENCE_GAP_S / rate;
-      } else {
-        this.#unschedule(item);
-      }
-    }
-    this.#schedule();
-    this.#advance();
   }
 
   async destroy(): Promise<void> {
