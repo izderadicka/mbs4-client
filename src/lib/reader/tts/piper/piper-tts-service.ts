@@ -11,7 +11,7 @@
 
 import {
   PIPER_ESPEAK_BASE,
-  PIPER_MAX_THREADS,
+  PIPER_MAX_THREADS_MOBILE,
   PIPER_WASM_BASE,
 } from "$lib/config";
 import {
@@ -57,15 +57,24 @@ export interface PiperTtsServiceOptions {
   // API client used to fetch the voice list and voice files from the mbs4
   // server; defaults to the shared singleton.
   api?: ApiClient;
-  // WASM inference threads; defaults to hardwareConcurrency capped at
-  // PIPER_MAX_THREADS when the page is cross-origin isolated, else 1
-  // (single-threaded fallback).
+  // WASM inference threads; defaults to hardwareConcurrency (capped at
+  // PIPER_MAX_THREADS_MOBILE on mobile devices) when the page is cross-origin
+  // isolated, else 1 (single-threaded fallback).
   numThreads?: number;
   lengthScale?: number;
   noiseScale?: number;
   noiseWScale?: number;
   // Test seam.
   createWorker?: () => PiperWorkerLike;
+}
+
+function isMobile(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const hinted = (navigator as { userAgentData?: { mobile?: boolean } })
+    .userAgentData?.mobile;
+  return (
+    hinted ?? /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent ?? "")
+  );
 }
 
 function defaultNumThreads(): number {
@@ -76,7 +85,8 @@ function defaultNumThreads(): number {
   if (!isolated) return 1;
   const cores =
     typeof navigator !== "undefined" ? navigator.hardwareConcurrency : 0;
-  return Math.max(1, Math.min(cores || PIPER_MAX_THREADS, PIPER_MAX_THREADS));
+  const threads = Math.max(1, cores || 4);
+  return isMobile() ? Math.min(threads, PIPER_MAX_THREADS_MOBILE) : threads;
 }
 
 function abortReason(signal: AbortSignal): unknown {
