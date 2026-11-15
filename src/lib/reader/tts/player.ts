@@ -2,12 +2,22 @@
 // nothing about sentences, TTS services, or the reader - it decodes and
 // plays opaque items in order and reports lifecycle events.
 //
-// Playback is chained: one AudioBufferSourceNode at a time; when it ends the
-// next queued buffer starts after a short gap. Pause suspends the whole
-// AudioContext (sample-accurate freeze; the chain stays intact because no
-// `ended` events fire while suspended).
+// Playback is scheduled on the audio clock: every decoded item gets its own
+// AudioBufferSourceNode started at a fixed time after the previous one (plus
+// a short gap). The audio thread then plays the whole queue by itself, so
+// the timing between items does not depend on the page's main thread - which
+// browsers throttle heavily while the page is hidden or the screen is
+// locked. Lifecycle events are derived from the same clock; in a throttled
+// page they may be reported late, but always in order.
+//
+// Pause suspends the whole AudioContext (sample-accurate freeze; the audio
+// clock stops, so the schedule stays valid).
 
-import { TTS_SENTENCE_GAP_S } from "$lib/config";
+import {
+  TTS_FADE_S,
+  TTS_SENTENCE_GAP_S,
+  TTS_START_LEAD_S,
+} from "$lib/config";
 import type { SynthesisResult } from "./tts-service";
 
 export type PlayerEvent =
@@ -17,20 +27,57 @@ export type PlayerEvent =
   | { type: "drained" }
   | { type: "item-error"; id: number; error: unknown };
 
+interface Item {
+  id: number;
+  buffer: AudioBuffer;
+  // null until scheduled
+  source: AudioBufferSourceNode | null;
+  // audio clock times (valid once scheduled)
+  startTime: number;
+  endTime: number;
+  // item-started was emitted
+  started: boolean;
+}
+
+// tolerance when comparing against the audio clock, which advances in
+// render-buffer steps
+const CLOCK_EPSILON_S = 0.005;
+// lower bound for the event timer, so clock rounding cannot make it spin
+const MIN_TIMER_MS = 10;
+
+// linear fade-in/out at the edges of the buffer (in place)
+function fadeEdges(buffer: AudioBuffer): void {
+  const n = Math.min(
+    Math.round(TTS_FADE_S * buffer.sampleRate),
+    Math.floor(buffer.length / 2),
+  );
+  if (n <= 0) return;
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < n; i++) {
+      const k = i / n;
+      data[i] *= k;
+      data[data.length - 1 - i] *= k;
+    }
+  }
+}
+
 export class SpeechPlayer {
   // set by the consumer (pipeline); may be replaced after construction
   onEvent: (e: PlayerEvent) => void;
 
   #ctx: AudioContext | null = null;
   #gain: GainNode | null = null;
-  #queue: { id: number; buffer: AudioBuffer }[] = [];
-  #current: { id: number; source: AudioBufferSourceNode } | null = null;
+  // reading order; head = playing (or next to play). Items stay unscheduled
+  // until play() is first called
+  #items: Item[] = [];
   #playing = false;
   #paused = false;
   #rate = 1;
-  #gapTimer: ReturnType<typeof setTimeout> | null = null;
-  // next item is due (gap elapsed / enqueued) but playback is paused
-  #startOnResume = false;
+  // audio clock time at which the next scheduled item may start
+  #nextTime = 0;
+  // wakes #advance at the next item boundary
+  #timer: ReturnType<typeof setTimeout> | null = null;
   #destroyed = false;
   // bumped on flush so in-flight decodes cannot re-queue dropped audio
   #flushGeneration = 0;
@@ -41,7 +88,10 @@ export class SpeechPlayer {
 
   #ensureContext(): AudioContext {
     if (!this.#ctx) {
-      this.#ctx = new AudioContext();
+      // "playback": larger render buffers, robust against glitches when the
+      // CPU is busy (synthesis may be running flat out on the same device);
+      // latency does not matter for read-aloud
+      this.#ctx = new AudioContext({ latencyHint: "playback" });
       this.#gain = this.#ctx.createGain();
       this.#gain.connect(this.#ctx.destination);
     }
@@ -51,12 +101,19 @@ export class SpeechPlayer {
   // decoded audio queued ahead of the playhead, in listened (rate-adjusted)
   // seconds; the currently playing item is not counted
   get bufferedSeconds(): number {
-    const total = this.#queue.reduce((sum, q) => sum + q.buffer.duration, 0);
+    let total = 0;
+    for (const item of this.#items) {
+      if (!item.started) total += item.buffer.duration;
+    }
     return total / this.#rate;
   }
 
   get queuedCount(): number {
-    return this.#queue.length;
+    let count = 0;
+    for (const item of this.#items) {
+      if (!item.started) count++;
+    }
+    return count;
   }
 
   async enqueue(id: number, audio: SynthesisResult): Promise<void> {
@@ -74,10 +131,17 @@ export class SpeechPlayer {
       return;
     }
     if (this.#destroyed || generation !== this.#flushGeneration) return;
-    this.#queue.push({ id, buffer });
-    if (this.#playing && !this.#current && !this.#gapTimer) {
-      this.#startNext();
-    }
+    fadeEdges(buffer);
+    this.#items.push({
+      id,
+      buffer,
+      source: null,
+      startTime: 0,
+      endTime: 0,
+      started: false,
+    });
+    this.#schedule();
+    this.#advance();
   }
 
   // Create/resume the AudioContext - call from a user gesture the first time
@@ -88,42 +152,55 @@ export class SpeechPlayer {
     this.#paused = false;
     this.#playing = true;
     if (ctx.state === "suspended") await ctx.resume();
-    if (this.#startOnResume || (!this.#current && !this.#gapTimer)) {
-      this.#startOnResume = false;
-      this.#startNext();
+    if (this.#destroyed) return;
+    if (this.#paused) {
+      // paused again while the context was resuming
+      if (ctx.state === "running") await ctx.suspend();
+      return;
     }
+    this.#schedule();
+    this.#advance();
   }
 
   async pause(): Promise<void> {
     if (this.#destroyed || !this.#ctx) return;
     this.#paused = true;
+    this.#clearTimer();
     if (this.#ctx.state === "running") await this.#ctx.suspend();
   }
 
   // stop current playback and drop everything queued
   flush(): void {
     this.#flushGeneration++;
-    if (this.#gapTimer) {
-      clearTimeout(this.#gapTimer);
-      this.#gapTimer = null;
-    }
-    this.#startOnResume = false;
-    if (this.#current) {
-      const { source } = this.#current;
-      source.onended = null;
-      try {
-        source.stop();
-      } catch {
-        // not started yet - ignore
-      }
-      this.#current = null;
-    }
-    this.#queue = [];
+    this.#clearTimer();
+    for (const item of this.#items) this.#unschedule(item);
+    this.#items = [];
+    this.#nextTime = 0;
   }
 
   setRate(rate: number): void {
+    if (rate === this.#rate) return;
+    const oldRate = this.#rate;
     this.#rate = rate;
-    if (this.#current) this.#current.source.playbackRate.value = rate;
+    const ctx = this.#ctx;
+    if (!ctx) return;
+    // the schedule was computed for the old rate: keep the item that is
+    // already sounding (adjusting its end time) and re-schedule the rest
+    const now = ctx.currentTime;
+    this.#nextTime = 0;
+    for (const item of this.#items) {
+      if (!item.source) continue;
+      if (item.startTime <= now) {
+        const remaining = Math.max(0, item.endTime - now) * oldRate;
+        item.source.playbackRate.value = rate;
+        item.endTime = now + remaining / rate;
+        this.#nextTime = item.endTime + TTS_SENTENCE_GAP_S / rate;
+      } else {
+        this.#unschedule(item);
+      }
+    }
+    this.#schedule();
+    this.#advance();
   }
 
   async destroy(): Promise<void> {
@@ -141,40 +218,108 @@ export class SpeechPlayer {
     }
   }
 
-  #startNext(): void {
-    if (this.#destroyed || !this.#ctx || !this.#gain) return;
-    if (this.#paused) {
-      // resume will pick it up
-      this.#startOnResume = true;
-      return;
+  #clearTimer(): void {
+    if (this.#timer !== null) {
+      clearTimeout(this.#timer);
+      this.#timer = null;
     }
-    const item = this.#queue.shift();
-    if (!item) {
-      this.#current = null;
-      this.onEvent({ type: "drained" });
-      return;
+  }
+
+  #unschedule(item: Item): void {
+    const source = item.source;
+    if (!source) return;
+    item.source = null;
+    source.onended = null;
+    try {
+      source.stop();
+    } catch {
+      // not started yet - ignore
     }
-    const source = this.#ctx.createBufferSource();
-    source.buffer = item.buffer;
-    source.playbackRate.value = this.#rate;
-    source.connect(this.#gain);
-    this.#current = { id: item.id, source };
-    source.onended = () => {
-      if (this.#current?.source !== source) return;
-      this.#current = null;
-      this.onEvent({ type: "item-ended", id: item.id });
-      if (this.#destroyed) return;
-      // brief pause between sentences
-      this.#gapTimer = setTimeout(
-        () => {
-          this.#gapTimer = null;
-          this.#startNext();
-        },
-        (TTS_SENTENCE_GAP_S * 1000) / this.#rate,
+    source.disconnect();
+  }
+
+  // give every not yet scheduled item its place on the audio clock
+  #schedule(): void {
+    const ctx = this.#ctx;
+    if (this.#destroyed || !ctx || !this.#gain || !this.#playing) return;
+    for (const item of this.#items) {
+      if (item.source) continue;
+      const source = ctx.createBufferSource();
+      source.buffer = item.buffer;
+      source.playbackRate.value = this.#rate;
+      source.connect(this.#gain);
+      item.startTime = Math.max(
+        this.#nextTime,
+        ctx.currentTime + TTS_START_LEAD_S,
       );
-    };
-    this.onEvent({ type: "item-started", id: item.id });
-    source.start();
+      item.endTime = item.startTime + item.buffer.duration / this.#rate;
+      // brief pause between sentences
+      this.#nextTime = item.endTime + TTS_SENTENCE_GAP_S / this.#rate;
+      item.source = source;
+      source.onended = () => this.#advance(item);
+      source.start(item.startTime);
+    }
+  }
+
+  // Report everything that has happened on the audio clock since the last
+  // call, in order. `ended` is an item whose source just fired `ended` - it
+  // (and all before it) is over whatever the clock arithmetic says.
+  #advance(ended?: Item): void {
+    const ctx = this.#ctx;
+    if (this.#destroyed || !ctx) return;
+    const generation = this.#flushGeneration;
+    if (ended) {
+      const index = this.#items.indexOf(ended);
+      if (index < 0) return; // flushed
+      for (let i = 0; i <= index; i++) {
+        this.#items[i].endTime = Math.min(
+          this.#items[i].endTime,
+          ctx.currentTime,
+        );
+      }
+    }
+    let finished = false;
+    while (this.#items.length > 0) {
+      const head = this.#items[0];
+      if (!head.source) break;
+      const now = ctx.currentTime + CLOCK_EPSILON_S;
+      if (!head.started) {
+        if (now < head.startTime) break;
+        head.started = true;
+        this.onEvent({ type: "item-started", id: head.id });
+        // the consumer may flush from within the event
+        if (generation !== this.#flushGeneration || this.#destroyed) return;
+      }
+      if (now < head.endTime) break;
+      this.#items.shift();
+      head.source.onended = null;
+      finished = true;
+      this.onEvent({ type: "item-ended", id: head.id });
+      if (generation !== this.#flushGeneration || this.#destroyed) return;
+    }
+    if (finished && this.#items.length === 0) {
+      this.#nextTime = 0;
+      this.onEvent({ type: "drained" });
+      if (generation !== this.#flushGeneration || this.#destroyed) return;
+    }
+    this.#armTimer();
+  }
+
+  // wake up at the next boundary of the head item (the audio clock is frozen
+  // while paused - play() re-arms)
+  #armTimer(): void {
+    this.#clearTimer();
+    const ctx = this.#ctx;
+    const head = this.#items[0];
+    if (!ctx || this.#paused || !head?.source) return;
+    const boundary = head.started ? head.endTime : head.startTime;
+    this.#timer = setTimeout(
+      () => {
+        this.#timer = null;
+        this.#advance();
+      },
+      Math.max(MIN_TIMER_MS, (boundary - ctx.currentTime) * 1000),
+    );
   }
 }
 

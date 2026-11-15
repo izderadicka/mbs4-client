@@ -115,6 +115,61 @@ describe("SpeechPlayer (browser)", () => {
     await player.destroy();
   });
 
+  it("keeps the gap between items while the main thread is blocked", async () => {
+    const c = collector();
+    const player = new SpeechPlayer(c.onEvent);
+    await player.enqueue(1, tone(0.2));
+    await player.enqueue(2, tone(0.2));
+    await player.play();
+    // a throttled page: nothing runs on the main thread while both items
+    // play (0.05 lead + 0.2 + 0.3 gap + 0.2 = 0.75s)
+    const until = performance.now() + 1000;
+    while (performance.now() < until) {
+      // busy wait
+    }
+    expect(c.types()).toEqual([]);
+    // the audio thread played everything on its own - once the main thread
+    // is back, all events are reported at once, in order
+    await vi.waitFor(
+      () =>
+        expect(c.types()).toEqual([
+          "item-started",
+          "item-ended",
+          "item-started",
+          "item-ended",
+          "drained",
+        ]),
+      { timeout: 300 },
+    );
+    await player.destroy();
+  });
+
+  it("setRate re-schedules items queued behind the current one", async () => {
+    const c = collector();
+    const player = new SpeechPlayer(c.onEvent);
+    await player.enqueue(1, tone(0.3));
+    await player.enqueue(2, tone(1.2));
+    await player.play();
+    await vi.waitFor(() => expect(c.types()).toContain("item-started"), {
+      timeout: 5000,
+    });
+    const t0 = performance.now();
+    player.setRate(2);
+    await vi.waitFor(() => expect(c.types()).toContain("drained"), {
+      timeout: 5000,
+    });
+    // at 1x the rest takes ~1.8s (0.3 + gap 0.3 + 1.2), at 2x about half
+    expect(performance.now() - t0).toBeLessThan(1400);
+    expect(c.types()).toEqual([
+      "item-started",
+      "item-ended",
+      "item-started",
+      "item-ended",
+      "drained",
+    ]);
+    await player.destroy();
+  });
+
   it("reports decode failures as item-error", async () => {
     const c = collector();
     const player = new SpeechPlayer(c.onEvent);
