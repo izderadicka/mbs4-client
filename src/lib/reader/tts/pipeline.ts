@@ -341,7 +341,11 @@ export class TtsServicePipeline implements SpeechPipeline {
       this.#endOfInput &&
       this.#ledger.length === 0 &&
       this.#inFlight === 0 &&
-      this.#player.queuedCount === 0
+      this.#player.queuedCount === 0 &&
+      // nothing still playing: the player reports a sentence's end and the
+      // start of the next one before our async refill finds the end of
+      // input, so the last sentence may be sounding at this point
+      this.#bySeq.size === 0
     ) {
       this.#active = false;
       this.#onEvent({ type: "ended" });
