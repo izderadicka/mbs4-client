@@ -362,3 +362,32 @@ describe("PiperTtsService lifecycle", () => {
     expect(worker.terminated).toBe(true);
   });
 });
+
+describe("PiperTtsService inference threads", () => {
+  async function configuredThreads(isolated: boolean, cores: number) {
+    vi.stubGlobal("crossOriginIsolated", isolated);
+    vi.spyOn(navigator, "hardwareConcurrency", "get").mockReturnValue(cores);
+    try {
+      const { service, worker } = makeService();
+      await service.listVoices();
+      await service.synthesize({ text: "Ahoj", voice: "cs_CZ-jirka-medium" });
+      const configure = worker.posted.find((m) => m.type === "configure");
+      return (configure as { numThreads: number }).numThreads;
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  }
+
+  it("caps the threads on many-core devices", async () => {
+    expect(await configuredThreads(true, 8)).toBe(4);
+  });
+
+  it("uses all cores below the cap", async () => {
+    expect(await configuredThreads(true, 2)).toBe(2);
+  });
+
+  it("falls back to one thread when not cross-origin isolated", async () => {
+    expect(await configuredThreads(false, 8)).toBe(1);
+  });
+});

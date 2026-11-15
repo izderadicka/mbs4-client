@@ -99,7 +99,7 @@ describe("SpeechPlayer (browser)", () => {
     await player.destroy();
   });
 
-  it("setRate speeds up playback of the current item", async () => {
+  it("setRate speeds up playback of items scheduled afterwards", async () => {
     const c = collector();
     const player = new SpeechPlayer(c.onEvent);
     player.setRate(2);
@@ -112,6 +112,35 @@ describe("SpeechPlayer (browser)", () => {
     const elapsed = performance.now() - t0;
     // 0.8s tone at 2x should finish in roughly 0.4s; allow generous slack
     expect(elapsed).toBeLessThan(700);
+    await player.destroy();
+  });
+
+  it("keeps the gap between items while the main thread is blocked", async () => {
+    const c = collector();
+    const player = new SpeechPlayer(c.onEvent);
+    await player.enqueue(1, tone(0.2));
+    await player.enqueue(2, tone(0.2));
+    await player.play();
+    // a throttled page: nothing runs on the main thread while both items
+    // play (0.05 lead + 0.2 + 0.3 gap + 0.2 = 0.75s)
+    const until = performance.now() + 1000;
+    while (performance.now() < until) {
+      // busy wait
+    }
+    expect(c.types()).toEqual([]);
+    // the audio thread played everything on its own - once the main thread
+    // is back, all events are reported at once, in order
+    await vi.waitFor(
+      () =>
+        expect(c.types()).toEqual([
+          "item-started",
+          "item-ended",
+          "item-started",
+          "item-ended",
+          "drained",
+        ]),
+      { timeout: 300 },
+    );
     await player.destroy();
   });
 

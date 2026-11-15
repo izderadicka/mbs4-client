@@ -137,6 +137,11 @@ export class BrowserSpeechPipeline implements SpeechPipeline {
     return this.#active;
   }
 
+  // setRate re-speaks the queued utterances itself
+  get restartOnRateChange(): boolean {
+    return false;
+  }
+
   // Begin speaking from the cursor's current sentence. Call from a user
   // gesture the first time (browsers gate speechSynthesis on activation).
   async start(cursor: SentenceCursor, voice?: string): Promise<void> {

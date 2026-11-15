@@ -9,7 +9,11 @@
 // providers. The model is downloaded and initialized ahead of playback via
 // preload(), invoked by the controller as soon as a voice is chosen.
 
-import { PIPER_ESPEAK_BASE, PIPER_WASM_BASE } from "$lib/config";
+import {
+  PIPER_ESPEAK_BASE,
+  PIPER_MAX_THREADS,
+  PIPER_WASM_BASE,
+} from "$lib/config";
 import {
   TtsServicePipeline,
   type PipelineEvent,
@@ -53,8 +57,9 @@ export interface PiperTtsServiceOptions {
   // API client used to fetch the voice list and voice files from the mbs4
   // server; defaults to the shared singleton.
   api?: ApiClient;
-  // WASM inference threads; defaults to hardwareConcurrency when the page is
-  // cross-origin isolated, else 1 (single-threaded fallback).
+  // WASM inference threads; defaults to hardwareConcurrency capped at
+  // PIPER_MAX_THREADS when the page is cross-origin isolated, else 1
+  // (single-threaded fallback).
   numThreads?: number;
   lengthScale?: number;
   noiseScale?: number;
@@ -71,7 +76,7 @@ function defaultNumThreads(): number {
   if (!isolated) return 1;
   const cores =
     typeof navigator !== "undefined" ? navigator.hardwareConcurrency : 0;
-  return Math.max(1, cores || 4);
+  return Math.max(1, Math.min(cores || PIPER_MAX_THREADS, PIPER_MAX_THREADS));
 }
 
 function abortReason(signal: AbortSignal): unknown {

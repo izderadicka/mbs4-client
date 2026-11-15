@@ -34,6 +34,12 @@ export const TTS_MAX_LOOKAHEAD_SENTENCES = 20;
 export const TTS_MAX_CONCURRENT_SYNTH = 2;
 // silence inserted between sentences during playback
 export const TTS_SENTENCE_GAP_S = 0.3;
+// each sentence is faded in/out over this long, so one that does not begin
+// or end at silence cannot click
+export const TTS_FADE_S = 0.005;
+// scheduled playback starts this far ahead of the audio clock: starting at
+// "now" on a busy or just-resumed context can clip the first samples
+export const TTS_START_LEAD_S = 0.05;
 // retry backoff for transient TTS service failures
 export const TTS_RETRY_INITIAL_MS = 1000;
 export const TTS_RETRY_MAX_MS = 15000;
@@ -46,3 +52,7 @@ export const TTS_RETRY_WINDOW_MS = 90000;
 export const PIPER_WASM_BASE = "/onnxruntime/";
 // espeak-ng phonemizer assets (espeakng.worker.js/.wasm/.data):
 export const PIPER_ESPEAK_BASE = "/piper/";
+// Upper bound on WASM inference threads. One thread per core is slower on
+// phones with mixed fast/slow cores, and leaves none for the audio thread
+// (heard as crackling while the model synthesizes flat out).
+export const PIPER_MAX_THREADS = 4;

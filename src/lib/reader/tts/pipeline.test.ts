@@ -355,6 +355,33 @@ describe("TtsServicePipeline", () => {
     expect(pipeline.active).toBe(false);
   });
 
+  it("does not report ended while the last sentence is still playing", async () => {
+    // lookahead of 2: the end of the book is only discovered after an item
+    // ended
+    const { service, player, events, pipeline, cursor } = setup(2, {
+      maxLookaheadSentences: 2,
+    });
+    await pipeline.start(cursor);
+    await flush();
+    service.complete("Sentence 0.");
+    service.complete("Sentence 1.");
+    await flush();
+    const first = player.startNext()!;
+    await flush();
+    // a throttled page reports the end of one sentence and the start of the
+    // next (already playing) in the same tick, before the pipeline's async
+    // refill finds the end of input
+    player.endItem(first);
+    const last = player.startNext()!;
+    await flush();
+    expect(types(events)).not.toContain("ended");
+    expect(pipeline.active).toBe(true);
+    player.endItem(last);
+    player.startNext(); // drained
+    await flush();
+    expect(types(events).filter((t) => t === "ended")).toEqual(["ended"]);
+  });
+
   it("treats decode failures as terminal errors", async () => {
     const { service, player, events, pipeline, cursor } = setup(4);
     await pipeline.start(cursor);
