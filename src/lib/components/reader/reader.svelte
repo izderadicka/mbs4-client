@@ -62,6 +62,7 @@
   const tts = new TtsController(
     () => view,
     () => language,
+    () => ({ title: bookTitle, artist: bookAuthor }),
   );
   let ttsEnabled = $state(false);
 

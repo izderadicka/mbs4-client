@@ -20,6 +20,7 @@ import type {
   RendererRelocateDetail,
 } from "foliate-js/view.js";
 import { toast } from "svelte-sonner";
+import { BackgroundPlayback, type MediaInfo } from "./background-playback";
 import type { PipelineEvent, SpeechPipeline } from "./pipeline";
 import { SentenceSource, type SentenceRef } from "./sentences";
 import { setTtsRate, setTtsVoice, ttsPrefs, type TtsRate } from "./tts-prefs.svelte";
@@ -53,7 +54,7 @@ const HIGHLIGHT_OPACITY_VAR = "--overlayer-highlight-opacity";
 const SELF_NAV_TIMEOUT_MS = 2000;
 
 export class TtsController {
-  status: TtsStatus = $state("off");
+  #status: TtsStatus = $state("off");
   currentSentence: SentenceRef | null = $state(null);
   voices: Voice[] = $state([]);
   // selected Voice.id
@@ -67,6 +68,10 @@ export class TtsController {
   // language of the book as known to the application (database); takes
   // precedence over the one embedded in the book file
   #getLanguage: () => string | undefined;
+  // title/author shown with the lock screen media controls
+  #getMediaInfo: () => MediaInfo;
+  // background keep-alive + lock screen controls; alive while enabled
+  #background: BackgroundPlayback | null = null;
   #service: TtsService | null = null;
   #source: SentenceSource | null = null;
   #pipeline: SpeechPipeline | null = null;
@@ -159,9 +164,24 @@ export class TtsController {
   constructor(
     getView: () => FoliateView | null,
     getLanguage: () => string | undefined = () => undefined,
+    getMediaInfo: () => MediaInfo = () => ({}),
   ) {
     this.#getView = getView;
     this.#getLanguage = getLanguage;
+    this.#getMediaInfo = getMediaInfo;
+  }
+
+  get status(): TtsStatus {
+    return this.#status;
+  }
+
+  // every status change also drives the background keep-alive, which must
+  // run exactly while speech is playing (or about to)
+  set status(value: TtsStatus) {
+    this.#status = value;
+    const active = value === "playing" || value === "buffering";
+    if (active) this.#background?.setMetadata(this.#getMediaInfo());
+    this.#background?.setPlaying(active);
   }
 
   get #view(): FoliateView | null {
@@ -185,6 +205,13 @@ export class TtsController {
     view.renderer.addEventListener("relocate", this.#onRendererRelocate);
     this.rate = ttsPrefs.rate;
     this.#pipeline.setRate(this.rate);
+    this.#background = new BackgroundPlayback({
+      play: () => void this.play(),
+      pause: () => this.pause(),
+      stop: () => this.stop(),
+      next: () => void this.nextSentence(),
+      prev: () => void this.prevSentence(),
+    });
     this.status = "idle";
     const language = this.#bookLanguage();
     try {
@@ -226,6 +253,8 @@ export class TtsController {
     this.#pipeline = null;
     this.currentSentence = null;
     this.status = "off";
+    this.#background?.destroy();
+    this.#background = null;
   }
 
   async dispose(): Promise<void> {
