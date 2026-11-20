@@ -327,10 +327,17 @@ export class PiperTtsService implements TtsService {
       this.#fetchVoiceFile(() => this.#api.getPiperVoiceConfig(model)),
       this.#fetchVoiceFile(() => this.#api.getPiperVoiceModel(model), "model"),
     ]);
-    // overlapping loads: only the current model's load owns the field
-    if (this.#loadModel === model) {
-      this.#voiceInference = (config as PiperVoiceConfig).inference;
+    // Overlapping loads (voice switched while downloading, or the service
+    // reused by another book with a different voice): a superseded load must
+    // not touch the worker, or its setVoice - finishing after the current
+    // one's - would replace the current model there. The worker runs
+    // requests in order, so checking before posting is enough.
+    if (this.#loadModel !== model) {
+      throw new TtsServiceError(`Piper voice ${model} load superseded`, {
+        retryable: false,
+      });
     }
+    this.#voiceInference = (config as PiperVoiceConfig).inference;
     let response: PiperOkResponse;
     try {
       response = await this.#rpc(
