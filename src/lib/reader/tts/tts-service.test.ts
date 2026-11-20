@@ -66,3 +66,85 @@ describe("createTtsService", () => {
     expect(svc.id).toBe("mock");
   });
 });
+
+describe("createTtsService reuse", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.resetModules();
+  });
+
+  async function load(provider: string, params = "") {
+    localStorage.setItem(
+      "mbs4.settings",
+      JSON.stringify({ ttsProvider: provider, ttsServiceParams: params }),
+    );
+    const mod = await import("./tts-service");
+    const { appSettings } = await import("$lib/settings.svelte");
+    const { TTS_SERVICE_KEEP_MS } = await import("$lib/config");
+    return { ...mod, appSettings, keepMs: TTS_SERVICE_KEEP_MS };
+  }
+
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  it("hands out the same instance while the settings stay the same", async () => {
+    const { createTtsService } = await load("mock");
+    const a = await createTtsService();
+    const b = await createTtsService();
+    expect(b).toBe(a);
+  });
+
+  it("keeps a released service for a while, then destroys it", async () => {
+    vi.useFakeTimers();
+    try {
+      const { createTtsService, releaseTtsService, keepMs } =
+        await load("mock");
+      const svc = await createTtsService();
+      const destroy = vi.fn();
+      svc.destroy = destroy;
+      releaseTtsService(svc);
+      await vi.advanceTimersByTimeAsync(keepMs - 1000);
+      expect(destroy).not.toHaveBeenCalled();
+      // taken back within the keep period - no destroy, same instance
+      expect(await createTtsService()).toBe(svc);
+      await vi.advanceTimersByTimeAsync(keepMs * 2);
+      expect(destroy).not.toHaveBeenCalled();
+      // released for good
+      releaseTtsService(svc);
+      await vi.advanceTimersByTimeAsync(keepMs + 1000);
+      expect(destroy).toHaveBeenCalledTimes(1);
+      // and a fresh one is built next time
+      expect(await createTtsService()).not.toBe(svc);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not destroy while another user still holds the service", async () => {
+    vi.useFakeTimers();
+    try {
+      const { createTtsService, releaseTtsService, keepMs } =
+        await load("mock");
+      const svc = await createTtsService();
+      await createTtsService(); // second user (e.g. reader remounted)
+      const destroy = vi.fn();
+      svc.destroy = destroy;
+      releaseTtsService(svc);
+      await vi.advanceTimersByTimeAsync(keepMs * 2);
+      expect(destroy).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("replaces and destroys the service when the settings change", async () => {
+    const { createTtsService, appSettings } = await load("mock");
+    const old = await createTtsService();
+    const destroy = vi.fn();
+    old.destroy = destroy;
+    appSettings.ttsProvider = "edge";
+    const fresh = await createTtsService();
+    await flush();
+    expect(fresh.id).toBe("edge");
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+});

@@ -40,6 +40,10 @@ export const TTS_FADE_S = 0.005;
 // scheduled playback starts this far ahead of the audio clock: starting at
 // "now" on a busy or just-resumed context can clip the first samples
 export const TTS_START_LEAD_S = 0.05;
+// a TTS service released by the reader (read-aloud turned off, book closed)
+// is kept this long for reuse, so a loaded Piper voice survives toggling
+// read-aloud or opening another book
+export const TTS_SERVICE_KEEP_MS = 10 * 60 * 1000;
 // retry backoff for transient TTS service failures
 export const TTS_RETRY_INITIAL_MS = 1000;
 export const TTS_RETRY_MAX_MS = 15000;
