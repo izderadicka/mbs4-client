@@ -2,6 +2,7 @@
 // No concrete provider is chosen yet; implementations must satisfy this
 // contract so the rest of the read-aloud pipeline never depends on one.
 
+import { TTS_SERVICE_KEEP_MS } from "$lib/config";
 import { TTS_URL } from "$lib/dev";
 import { appSettings } from "$lib/settings.svelte";
 import type { PipelineEvent, SpeechPipeline } from "./pipeline";
@@ -57,8 +58,9 @@ export interface TtsService {
   // the first synthesize is fast (e.g. Piper downloads and warms up the model).
   // No-op for services with nothing to preload.
   preload?(voice?: string): void;
-  // Optional: release resources (workers, WASM, audio graph) when read-aloud is
-  // disabled. Services holding nothing heavy can omit it.
+  // Optional: release resources (workers, WASM, audio graph) once the service
+  // is dropped for good (see releaseTtsService - a released service is kept
+  // for reuse a while). Services holding nothing heavy can omit it.
   destroy?(): void;
 }
 
@@ -102,8 +104,9 @@ function serviceParams(): Record<string, unknown> {
 // Builds the service selected on the settings page (appSettings.ttsProvider);
 // the params object is passed to the provider's constructor, so its keys are
 // provider-specific (e.g. {"baseUrl": ...} for edge).
-export async function createTtsService(): Promise<TtsService> {
-  const params = serviceParams();
+async function buildTtsService(
+  params: Record<string, unknown>,
+): Promise<TtsService> {
   switch (appSettings.ttsProvider) {
     case "mock": {
       const { MockTtsService } = await import("./mock-tts-service");
@@ -137,4 +140,78 @@ export async function createTtsService(): Promise<TtsService> {
       return new BrowserTtsService();
     }
   }
+}
+
+// The last service handed out, kept for reuse while the settings stay the
+// same: loading a Piper voice takes seconds (much longer on a slow phone), so
+// it must not be thrown away when read-aloud is turned off or another book is
+// opened.
+interface CurrentService {
+  key: string;
+  service: Promise<TtsService>;
+  // controllers holding it (created and not yet released)
+  users: number;
+  // pending destroy once nobody holds it
+  releaseTimer: ReturnType<typeof setTimeout> | null;
+}
+let current: CurrentService | null = null;
+
+function dropCurrent(): void {
+  const entry = current;
+  if (!entry) return;
+  current = null;
+  if (entry.releaseTimer) clearTimeout(entry.releaseTimer);
+  void entry.service.then((s) => s.destroy?.()).catch(() => {});
+}
+
+// The service selected on the settings page; reuses the previous instance
+// when the provider and its params did not change. Hand it back with
+// releaseTtsService.
+export function createTtsService(): Promise<TtsService> {
+  const params = serviceParams();
+  const key = JSON.stringify([appSettings.ttsProvider, params]);
+  if (current?.key !== key) {
+    dropCurrent();
+    const entry: CurrentService = {
+      key,
+      service: buildTtsService(params),
+      users: 0,
+      releaseTimer: null,
+    };
+    // a failed build must not be reused
+    entry.service.catch(() => {
+      if (current === entry) current = null;
+    });
+    current = entry;
+  }
+  const entry = current!;
+  entry.users++;
+  if (entry.releaseTimer) clearTimeout(entry.releaseTimer);
+  entry.releaseTimer = null;
+  return entry.service;
+}
+
+// Hand a service back when read-aloud no longer needs it. The current one is
+// kept for TTS_SERVICE_KEEP_MS after its last user left (createTtsService
+// takes it back), anything else is destroyed right away.
+export function releaseTtsService(service: TtsService): void {
+  const entry = current;
+  if (!entry) {
+    service.destroy?.();
+    return;
+  }
+  void entry.service.then(
+    (s) => {
+      if (s !== service || current !== entry) {
+        service.destroy?.();
+        return;
+      }
+      entry.users = Math.max(0, entry.users - 1);
+      if (entry.users > 0 || entry.releaseTimer) return;
+      entry.releaseTimer = setTimeout(() => {
+        if (current === entry && entry.users === 0) dropCurrent();
+      }, TTS_SERVICE_KEEP_MS);
+    },
+    () => service.destroy?.(),
+  );
 }

@@ -15,6 +15,7 @@
 // are imported (erased at build time).
 
 import type * as OrtTypes from "onnxruntime-web";
+import { logRuntimeDownloads, logStep, since } from "./piper-timing";
 
 type OrtModule = typeof OrtTypes;
 
@@ -114,6 +115,8 @@ let espeakBaseUrl = "/piper/";
 let espeakInstance: EspeakInstance | null = null;
 let voiceConfig: PiperVoiceConfig | null = null;
 let voiceModel: OrtTypes.InferenceSession | null = null;
+// the first InferenceSession also fetches and compiles the ORT WASM runtime
+let runtimeInitialized = false;
 
 // --- public API ---------------------------------------------------------------
 
@@ -127,7 +130,11 @@ export async function configure(opts: PiperConfigureOptions): Promise<void> {
   const ortUrl = new URL("ort.bundle.min.mjs", wasmBase).href;
   // Runtime import of the self-hosted ORT ESM bundle (kept out of the app
   // bundle). @vite-ignore stops Vite from trying to resolve/bundle it.
+  const started = performance.now();
   const loaded = (await import(/* @vite-ignore */ ortUrl)) as OrtModule;
+  logStep(
+    `runtime script loaded: ${since(started)} (${opts.numThreads} threads)`,
+  );
 
   loaded.env.wasm.wasmPaths = wasmBase.href;
   loaded.env.wasm.numThreads = Math.max(1, opts.numThreads);
@@ -148,11 +155,22 @@ export async function setVoice(
   voiceConfig = config;
 
   if ((config.phoneme_type ?? "espeak") === "espeak" && !espeakInstance) {
+    const started = performance.now();
     espeakInstance = await loadEspeak();
     espeakInstance._espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, 0, 0);
+    logStep(`espeak loaded: ${since(started)}`);
+    logRuntimeDownloads(["espeakng.worker.wasm", "espeakng.worker.data"]);
   }
 
+  const started = performance.now();
   voiceModel = await ort.InferenceSession.create(new Uint8Array(modelBytes));
+  if (runtimeInitialized) {
+    logStep(`model loaded: ${since(started)}`);
+  } else {
+    runtimeInitialized = true;
+    logStep(`runtime initialized + model loaded: ${since(started)}`);
+    logRuntimeDownloads(ortWasmFiles());
+  }
   return config.audio.sample_rate;
 }
 
@@ -180,6 +198,17 @@ export async function synthesizeSentence(
 }
 
 // --- internals -----------------------------------------------------------------
+
+// the ORT runtime files the worker fetched (the build is chosen by ORT)
+function ortWasmFiles(): string[] {
+  if (typeof performance === "undefined" || !performance.getEntriesByType) {
+    return [];
+  }
+  return performance
+    .getEntriesByType("resource")
+    .map((e) => e.name.split("?")[0].split("/").at(-1) ?? "")
+    .filter((n) => n.startsWith("ort-wasm") && n.endsWith(".wasm"));
+}
 
 async function loadEspeak(): Promise<EspeakInstance> {
   const base = new URL(espeakBaseUrl, self.location.href);

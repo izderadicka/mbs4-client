@@ -13,12 +13,15 @@ import {
   getSampleRate,
 } from "./piper-core";
 import type { PiperRequest, PiperResponse } from "./piper-messages";
+import { logDetail, logStep } from "./piper-timing";
 
 const ctx = self as unknown as Worker;
 
 // Serialize all jobs: each incoming request is appended to a promise chain so
 // exactly one runs at a time.
 let queue: Promise<void> = Promise.resolve();
+// the next synthesis is the first one with a freshly loaded voice
+let firstSynthesis = true;
 
 function post(response: PiperResponse, transfer: Transferable[] = []): void {
   ctx.postMessage(response, transfer);
@@ -38,16 +41,28 @@ async function handle(msg: PiperRequest): Promise<void> {
       }
       case "setVoice": {
         const sampleRate = await setVoice(msg.config, msg.modelBytes);
+        firstSynthesis = true;
         post({ reqId: msg.reqId, ok: true, sampleRate });
         return;
       }
       case "synthesize": {
+        const started = performance.now();
         const pcm = await synthesizeSentence(msg.text, {
           speakerId: msg.speakerId,
           lengthScale: msg.lengthScale,
           noiseScale: msg.noiseScale,
           noiseWScale: msg.noiseWScale,
         });
+        // real-time factor: compute time per second of audio; above 1 the
+        // synthesis cannot keep up with playback
+        const computeS = (performance.now() - started) / 1000;
+        const audioS = pcm.length / getSampleRate();
+        const stats =
+          `${computeS.toFixed(2)} s for ${audioS.toFixed(1)} s of audio ` +
+          `(RTF ${(computeS / Math.max(audioS, 0.01)).toFixed(2)})`;
+        if (firstSynthesis) logStep(`first sentence: ${stats}`);
+        else logDetail(`sentence: ${stats}`);
+        firstSynthesis = false;
         post({ reqId: msg.reqId, ok: true, pcm, sampleRate: getSampleRate() }, [
           pcm.buffer,
         ]);

@@ -24,7 +24,12 @@ import { BackgroundPlayback, type MediaInfo } from "./background-playback";
 import type { PipelineEvent, SpeechPipeline } from "./pipeline";
 import { SentenceSource, type SentenceRef } from "./sentences";
 import { setTtsRate, setTtsVoice, ttsPrefs, type TtsRate } from "./tts-prefs.svelte";
-import { createTtsService, type TtsService, type Voice } from "./tts-service";
+import {
+  createTtsService,
+  releaseTtsService,
+  type TtsService,
+  type Voice,
+} from "./tts-service";
 
 export type TtsStatus =
   | "off"
@@ -255,7 +260,8 @@ export class TtsController {
       view.renderer?.removeEventListener("relocate", this.#onRendererRelocate);
     }
     await this.#pipeline?.destroy();
-    this.#service?.destroy?.();
+    // kept alive for a while: a loaded Piper voice is expensive to reload
+    if (this.#service) releaseTtsService(this.#service);
     this.#source?.dispose();
     this.#service = null;
     this.#source = null;

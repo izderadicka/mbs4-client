@@ -342,6 +342,40 @@ describe("PiperTtsService.synthesize", () => {
   });
 });
 
+describe("PiperTtsService overlapping voice loads", () => {
+  it("a superseded load does not replace the current voice in the worker", async () => {
+    // the first voice's model download is slow, the second one's fast
+    let releaseFirst!: () => void;
+    const firstGate = new Promise<void>((r) => (releaseFirst = r));
+    const base = makeFetch();
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith("cs_CZ-jirka-medium.onnx")) await firstGate;
+      return base(input);
+    }) as unknown as typeof fetch;
+    const { service, worker } = makeService({ fetch: fetchFn });
+    await service.listVoices();
+
+    service.preload("cs_CZ-jirka-medium");
+    service.preload("en_US-lessac-high");
+    await vi.waitFor(() =>
+      expect(worker.posted.filter((m) => m.type === "setVoice")).toHaveLength(1),
+    );
+    releaseFirst();
+    await new Promise((r) => setTimeout(r, 20));
+
+    // only the current voice was handed to the worker
+    expect(worker.posted.filter((m) => m.type === "setVoice")).toHaveLength(1);
+    // and it is still used for synthesis without a reload
+    await service.synthesize({ text: "Hello", voice: "en_US-lessac-high" });
+    expect(worker.posted.map((m) => m.type)).toEqual([
+      "configure",
+      "setVoice",
+      "synthesize",
+    ]);
+  });
+});
+
 describe("PiperTtsService lifecycle", () => {
   it("preload warms the model without a synthesize", async () => {
     const { service, worker } = makeService();

@@ -37,6 +37,7 @@ import type {
 } from "./piper-messages";
 import type { VoiceInfo } from "$lib/api";
 import { apiClient, ApiClient } from "$lib/api/client";
+import { describeDownload, logStep, since } from "./piper-timing";
 
 // Minimal structural view of a Worker so the service can be unit-tested with a
 // fake (the real Worker satisfies this).
@@ -320,14 +321,23 @@ export class PiperTtsService implements TtsService {
   }
 
   async #loadVoice(model: string): Promise<number> {
+    const started = performance.now();
+    logStep(`loading voice ${model}`);
     const [config, modelBytes] = await Promise.all([
       this.#fetchVoiceFile(() => this.#api.getPiperVoiceConfig(model)),
-      this.#fetchVoiceFile(() => this.#api.getPiperVoiceModel(model)),
+      this.#fetchVoiceFile(() => this.#api.getPiperVoiceModel(model), "model"),
     ]);
-    // overlapping loads: only the current model's load owns the field
-    if (this.#loadModel === model) {
-      this.#voiceInference = (config as PiperVoiceConfig).inference;
+    // Overlapping loads (voice switched while downloading, or the service
+    // reused by another book with a different voice): a superseded load must
+    // not touch the worker, or its setVoice - finishing after the current
+    // one's - would replace the current model there. The worker runs
+    // requests in order, so checking before posting is enough.
+    if (this.#loadModel !== model) {
+      throw new TtsServiceError(`Piper voice ${model} load superseded`, {
+        retryable: false,
+      });
     }
+    this.#voiceInference = (config as PiperVoiceConfig).inference;
     let response: PiperOkResponse;
     try {
       response = await this.#rpc(
@@ -344,6 +354,7 @@ export class PiperTtsService implements TtsService {
         cause: e,
       });
     }
+    logStep(`voice ${model} ready: ${since(started)} in total`);
     return (
       response.sampleRate ?? (config as PiperVoiceConfig).audio.sample_rate
     );
@@ -355,10 +366,17 @@ export class PiperTtsService implements TtsService {
   // or ArrayBuffer model bytes, per the request).
   async #fetchVoiceFile(
     request: () => Promise<{ data?: unknown; response: Response }>,
+    // logs the download timing under this label
+    label?: string,
   ): Promise<unknown> {
     let result: { data?: unknown; response: Response };
     try {
+      const started = performance.now();
       result = await request();
+      if (label && result.response.ok) {
+        const timing = describeDownload(result.response.url);
+        logStep(`download ${label}: ${timing || since(started)}`);
+      }
     } catch (e) {
       throw new TtsServiceError("Piper voice file unreachable", {
         retryable: true,
